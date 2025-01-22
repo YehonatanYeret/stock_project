@@ -11,13 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="client\Models\" />
-    <Folder Include="client\Presenters\" />
-    <Folder Include="client\Views\" />
-    <Folder Include="server\Controllers\" />
-    <Folder Include="server\Models\" />
-    <Folder Include="server\Views\" />
-    <Folder Include="server\" />
+    <Folder Include="Client\Presenters\" />
+    <Folder Include="Server\Views\" />
+    <Folder Include="Server\" />
   </ItemGroup>
 
 </Project>
