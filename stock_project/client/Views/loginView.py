@@ -10,7 +10,7 @@ class CombinedMeta(type(QMainWindow), type(ILogin)):
 class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
     def __init__(self):
         super().__init__()
-
+        
         # Set window properties
         self.setWindowTitle("Login")
         self.setFixedSize(500, 600)  # Increased window size
