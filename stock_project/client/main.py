@@ -8,7 +8,7 @@ def main():
     app = QApplication([])
     login_window = LoginWindow()
     login_model = LoginModel()
-    login_window.show()
+    login_window.show() 
     login_window.presenter = LoginPresenter(login_window, login_model)
     app.exec()
 
