@@ -25,7 +25,7 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Login/Signup")
-        self.setFixedSize(800, 500)
+        self.setFixedSize(800, 600)
 
         # Set solid background for main window
         self.setStyleSheet("""
