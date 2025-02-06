@@ -1,19 +1,9 @@
-import sys
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QLineEdit, 
     QPushButton, QVBoxLayout, QStackedWidget
 )
 from PySide6.QtCore import Qt, QPropertyAnimation, QPoint, QEasingCurve, QParallelAnimationGroup, Slot
-
-# Dummy ILogin interface (if you have one, replace accordingly)
-class ILogin:
-    def get_username(self): pass
-    def get_password(self): pass
-    def show_signin_message(self, message): pass
-    def get_signup_username(self): pass
-    def get_signup_password(self): pass
-    def show_signup_message(self, message): pass
-
+from Interfaces.ILogin import ILogin
 # CombinedMeta for multiple inheritance.
 class CombinedMeta(type(QMainWindow), type(ILogin)):
     pass
