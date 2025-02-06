@@ -12,5 +12,5 @@ public class User
     public required string Email { get; set; }
 
     [Required]
-    public required string HashPassword { get; set; }
+    public required byte HashPassword { get; set; }
 }

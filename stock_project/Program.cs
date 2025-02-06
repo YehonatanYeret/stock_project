@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
-using Server.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +22,6 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     SeedData.Initialize(services);
-    Console.WriteLine("Database seeded");
     var context = new StockContext(
                services.GetRequiredService<
                    DbContextOptions<StockContext>>());
