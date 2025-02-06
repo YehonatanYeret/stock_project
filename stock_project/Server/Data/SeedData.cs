@@ -58,6 +58,8 @@ namespace Server.Data
                 Array.Copy(hash, 0, hashBytes, salt.Length, hash.Length);
 
                 // Return the result as a base64 string to store in the DB
+                Console.WriteLine(Convert.ToBase64String(hashBytes));
+                Console.WriteLine(hashBytes);
                 return Convert.ToBase64String(hashBytes);
             }
         }
