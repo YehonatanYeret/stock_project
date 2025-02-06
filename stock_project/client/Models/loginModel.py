@@ -1,25 +1,24 @@
-﻿# Models/loginModel.py
+﻿import requests
 
 class LoginModel:
     def __init__(self):
-        # For demo purposes we start with one default user.
-        self.users = {"admin": "password"}
-    
+        self.api_url = "http://localhost:5039/api/account/signin"
+        self.api_signup_url = "http://localhost:5039/api/account/signup"
+
     def authenticate(self, username, password):
-        """
-        Check if the provided username and password are valid.
-        """
-        return username in self.users and self.users[username] == password
-    
+        data = {
+            "Email": username,
+            "HashPassword": password
+        }
+        response = requests.post(self.api_url, json=data)
+        return response.status_code == 200
+
     def signup(self, username, password):
-        """
-        Perform basic validation for signup.
-        Returns a tuple: (success: bool, message: str)
-        """
-        if username in self.users:
-            return False, "Username already exists."
-        if len(password) < 4:
-            return False, "Password must be at least 4 characters long."
-        # For demo purposes, add the new user.
-        self.users[username] = password
-        return True, "Sign up successful!" + username + password
+        data = {
+            "Email": username,
+            "HashPassword": password
+        }
+        response = requests.post(self.api_signup_url, json=data)
+        return (response.status_code == 200, 
+                "User registered successfully!" if response.status_code == 200 
+                else response.json().get("message", "Error occurred during signup."))

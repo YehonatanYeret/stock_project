@@ -1,6 +1,4 @@
-﻿# Presenters/loginPresenter.py
-
-from Models.loginModel import LoginModel
+﻿from Models.loginModel import LoginModel
 
 class LoginPresenter:
     def __init__(self, controller, view, model: LoginModel):
@@ -14,6 +12,8 @@ class LoginPresenter:
         """
         username = self.view.get_username()
         password = self.view.get_password()
+        
+        # Authenticate via API call (model will handle the HTTP request)
         if self.model.authenticate(username, password):
             self.view.show_signin_message("Login successful!")
             self.controller.switch_to_dashboard()
@@ -27,11 +27,12 @@ class LoginPresenter:
         """
         username = self.view.get_signup_username()
         password = self.view.get_signup_password()
+        
+        # Call the signup method from the model, which sends the data to the API
         success, message = self.model.signup(username, password)
+        
         if success:
             print(message)
-            self.view.clear_signup_fields()
-            # Animate to login mode if currently in signup mode.
             self.controller.switch_to_dashboard()
         else:
             # If signup fails, display the error and remain in signup mode.
