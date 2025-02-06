@@ -4,16 +4,7 @@ from PySide6.QtWidgets import (
     QPushButton, QVBoxLayout, QStackedWidget
 )
 from PySide6.QtCore import Qt, QPropertyAnimation, QPoint, QEasingCurve, QParallelAnimationGroup, Slot
-
-# Dummy ILogin interface (if you have one, replace accordingly)
-class ILogin:
-    def get_username(self): pass
-    def get_password(self): pass
-    def show_signin_message(self, message): pass
-    def get_signup_username(self): pass
-    def get_signup_password(self): pass
-    def show_signup_message(self, message): pass
-
+from Interfaces.ILogin import ILogin
 # CombinedMeta for multiple inheritance.
 class CombinedMeta(type(QMainWindow), type(ILogin)):
     pass
@@ -83,6 +74,82 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
                 font-weight: bold;
                 min-height: 48px;
                 border: none;
+            }
+            
+            QPushButton#form_button:hover {
+                background-color: #2563eb;
+            }
+            
+            QPushButton#form_button:pressed {
+                background-color: #1d4ed8;
+            }
+            
+            QWidget#side_panel {
+                background-color: #3b82f6;
+                border-radius: 12px;
+            }
+            
+            QLabel#side_title {
+                color: white;
+                font-size: 24px;
+                font-weight: bold;
+                letter-spacing: -0.3px;
+            }
+            
+            QLabel#side_text {
+                color: rgba(255, 255, 255, 0.95);
+                font-size: 15px;
+                padding: 12px;
+                line-height: 1.4;
+            }
+            
+            QPushButton#side_button {
+                background-color: transparent;
+                color: white;
+                border: 1.5px solid white;
+                border-radius: 6px;
+                padding: 12px 32px;
+                font-size: 16px;
+                min-height: 48px;
+                font-weight: bold;
+                margin: 12px 0;
+            }
+            
+            QPushButton#side_button:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            
+            QPushButton#side_button:pressed {
+                background-color: rgba(255, 255, 255, 0.15);
+            }
+            
+            QLabel {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            }
+
+            QLabel#error_message,
+            QLabel#sign_in_message, 
+            QLabel#sign_up_message {
+                background-color: #fef2f2;
+                color: #dc2626;
+                border: 1px solid #fecaca;
+                border-radius: 6px;
+                padding: 12px 16px;
+                font-size: 15px;
+                font-weight: 500;
+                margin: 12px 0;
+                qproperty-alignment: AlignCenter;
+                min-height: 24px;
+                letter-spacing: 0.2px;
+            }
+
+            QLabel#error_message:empty,
+            QLabel#sign_in_message:empty, 
+            QLabel#sign_up_message:empty {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
             }
             
             QPushButton#form_button:hover {
@@ -406,3 +473,4 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
         """
         self.signup_email.clear()
         self.signup_password.clear()
+
