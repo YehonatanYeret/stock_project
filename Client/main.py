@@ -26,15 +26,15 @@ class AppController:
         login_model = LoginModel()
         self.login_window.presenter = LoginPresenter(self, self.login_window, login_model)
 
-        portfolioModel = PortfolioModel()
-        self.portfolio_window.presenter = PortfolioPresenter(self, portfolioModel, self.portfolio_window)
-
         # Start with the login view
         self.stack.setCurrentWidget(self.login_window)
         self.stack.show()
 
-    def switch_to_dashboard(self):
+    def switch_to_dashboard(self, user_id):
         """Switch to the dashboard view."""
+        
+        self.portfolioModel = PortfolioModel(user_id)
+        self.portfolio_window.presenter = PortfolioPresenter(self, self.portfolioModel, self.portfolio_window)
         self.stack.setCurrentWidget(self.portfolio_window)
 
     def run(self):

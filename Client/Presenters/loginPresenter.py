@@ -17,8 +17,7 @@ class LoginPresenter:
         success, user_id, message = self.model.authenticate(username, password)
         print(message)
         if success:
-            # self.view.show_signin_message(message)  # Message from server
-            self.controller.switch_to_dashboard()
+            self.controller.switch_to_dashboard(user_id)
         else:
             self.view.show_signin_message(message)  # Display error from server
 
@@ -34,7 +33,6 @@ class LoginPresenter:
         success, user_id, message = self.model.signup(username, password)
         print(message)
         if success:
-            # self.view.show_signup_message(message)  # Show success message from server
-            self.controller.switch_to_dashboard()
+            self.controller.switch_to_dashboard(user_id)
         else:
             self.view.show_signup_message(message)  # Show error message from server

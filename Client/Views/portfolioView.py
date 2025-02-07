@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Slot
 
-
+# PortfolioView.py
 class PortfolioWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -72,6 +72,11 @@ class PortfolioWindow(QMainWindow):
         self.label_title.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.label_title)
 
+        # User ID display
+        self.label_user_id = QLabel("User ID: Not Provided")
+        self.label_user_id.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.label_user_id)
+
         # Portfolio table
         self.table = QTableWidget()
         self.table.setColumnCount(3)
@@ -119,3 +124,10 @@ class PortfolioWindow(QMainWindow):
         :param message: Message string.
         """
         self.label_message.setText(message)
+
+    def update_user_id(self, user_id):
+        """
+        Update the user ID label in the PortfolioWindow.
+        :param user_id: The user ID to display.
+        """
+        self.label_user_id.setText(f"User ID: {user_id}")
