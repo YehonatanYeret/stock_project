@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QPropertyAnimation, QPoint, QEasingCurve, QParallelAnimationGroup, Slot
 from Interfaces.ILogin import ILogin
+
 # CombinedMeta for multiple inheritance.
 class CombinedMeta(type(QMainWindow), type(ILogin)):
     pass
@@ -17,10 +18,14 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
         self.setup_ui()
         self.apply_styles()   # Apply QSS styles
         self.center_window()
-        self.is_login = True
-        self.animation_group = None
+        self.is_login = True  # Flag to determine if we are in login mode
+        self.animation_group = None  # Holds animations for the transition
 
     def apply_styles(self):
+        """
+        Applies styles (QSS) to the main window and its widgets.
+        This includes colors, borders, and other visual aspects.
+        """
         style = """
             QMainWindow {
                 background-color: #f8fafc;
@@ -74,82 +79,6 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
                 font-weight: bold;
                 min-height: 48px;
                 border: none;
-            }
-            
-            QPushButton#form_button:hover {
-                background-color: #2563eb;
-            }
-            
-            QPushButton#form_button:pressed {
-                background-color: #1d4ed8;
-            }
-            
-            QWidget#side_panel {
-                background-color: #3b82f6;
-                border-radius: 12px;
-            }
-            
-            QLabel#side_title {
-                color: white;
-                font-size: 24px;
-                font-weight: bold;
-                letter-spacing: -0.3px;
-            }
-            
-            QLabel#side_text {
-                color: rgba(255, 255, 255, 0.95);
-                font-size: 15px;
-                padding: 12px;
-                line-height: 1.4;
-            }
-            
-            QPushButton#side_button {
-                background-color: transparent;
-                color: white;
-                border: 1.5px solid white;
-                border-radius: 6px;
-                padding: 12px 32px;
-                font-size: 16px;
-                min-height: 48px;
-                font-weight: bold;
-                margin: 12px 0;
-            }
-            
-            QPushButton#side_button:hover {
-                background-color: rgba(255, 255, 255, 0.1);
-            }
-            
-            QPushButton#side_button:pressed {
-                background-color: rgba(255, 255, 255, 0.15);
-            }
-            
-            QLabel {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            }
-
-            QLabel#error_message,
-            QLabel#sign_in_message, 
-            QLabel#sign_up_message {
-                background-color: #fef2f2;
-                color: #dc2626;
-                border: 1px solid #fecaca;
-                border-radius: 6px;
-                padding: 12px 16px;
-                font-size: 15px;
-                font-weight: 500;
-                margin: 12px 0;
-                qproperty-alignment: AlignCenter;
-                min-height: 24px;
-                letter-spacing: 0.2px;
-            }
-
-            QLabel#error_message:empty,
-            QLabel#sign_in_message:empty, 
-            QLabel#sign_up_message:empty {
-                background-color: transparent;
-                border: none;
-                padding: 0;
-                margin: 0;
             }
             
             QPushButton#form_button:hover {
@@ -466,11 +395,3 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
         self.signup_email.style().polish(self.signup_email)
         self.signup_password.style().unpolish(self.signup_password)
         self.signup_password.style().polish(self.signup_password)
-
-    def clear_signup_fields(self):
-        """
-        Clear the signup email and password fields.
-        """
-        self.signup_email.clear()
-        self.signup_password.clear()
-

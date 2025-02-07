@@ -10,6 +10,8 @@ from Presenters.portfolioPresenter import PortfolioPresenter
 class AppController:
     def __init__(self):
         self.app = QApplication([])
+        self.app.setApplicationName("Yehonatan HaGever")
+
         self.stack = QStackedWidget()
 
         # Initialize views

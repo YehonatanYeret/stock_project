@@ -1,20 +1,35 @@
 ﻿import requests
+api_url = 'http://localhost:5039/api/account'
 
 class LoginModel:
     def __init__(self):
-        self.api_url = "http://localhost:5039/api/account/signin"
-        self.api_signup_url = "http://localhost:5039/api/account/signup"
+        self.api_signin_url = f"{api_url}/signin"
+        self.api_signup_url = f"{api_url}/signup"
 
     def authenticate(self, username, password):
+    
+        # Validate email address before sending request 
+        if '@' not in username or '.' not in username or len(username) < 5:
+            return False, None, "Invalid email address. Please enter a valid email address."
+
+        # Validate password before sending request
+        if len(password) < 3:
+            return False, None, "Password must be at least 3 characters long."
+
         data = {
             "email": username,
             "hashPassword": password
         }
+
+        # Send request to server
         try:
-            response = requests.post(self.api_url, json=data)
+            response = requests.post(self.api_signin_url, json=data)
             
+            # Check response status code
             if response.status_code == 200:
                 result = response.json()
+
+                # Return success message and user ID
                 return True, result.get("userId", None), "User logged in successfully."
             elif response.status_code == 400 or response.status_code == 401:
                 error_data = response.json()
@@ -30,15 +45,28 @@ class LoginModel:
             return False, None, "An unexpected error occurred. Please try again."
 
     def signup(self, username, password):
+        # Validate email address before sending request
+        if '@' not in username or '.' not in username or len(username) < 5:
+            return False, None, "Invalid email address. Please enter a valid email address."
+
+        # Validate password before sending request
+        if len(password) < 6:
+            return False, None, "Password must be at least 6 characters long."
+
         data = {
             "email": username,
             "hashPassword": password
         }
+
+        # Send request to server
         try:
             response = requests.post(self.api_signup_url, json=data)
             
+            # Check response status code
             if response.status_code == 200:
                 result = response.json()
+
+                # Return success message and user ID
                 return True, result.get("userId", None), "User registered successfully!"
             elif response.status_code == 400:
                 error_data = response.json()

@@ -11,7 +11,7 @@ class LoginPresenter:
         Process login: get credentials from the view and authenticate via the model.
         """
         username = self.view.get_username()
-        password = self.view.get_password()
+        password = self.view.get_password() 
         
         # Authenticate via API call (model will handle the HTTP request)
         success, user_id, message = self.model.authenticate(username, password)
