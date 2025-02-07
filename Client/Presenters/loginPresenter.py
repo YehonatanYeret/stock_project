@@ -14,11 +14,13 @@ class LoginPresenter:
         password = self.view.get_password()
         
         # Authenticate via API call (model will handle the HTTP request)
-        if self.model.authenticate(username, password):
-            self.view.show_signin_message("Login successful!")
+        success, user_id, message = self.model.authenticate(username, password)
+        print(message)
+        if success:
+            # self.view.show_signin_message(message)  # Message from server
             self.controller.switch_to_dashboard()
         else:
-            self.view.show_signin_message("Invalid username or password. Please try again.")
+            self.view.show_signin_message(message)  # Display error from server
 
     def signup(self):
         """
@@ -29,11 +31,10 @@ class LoginPresenter:
         password = self.view.get_signup_password()
         
         # Call the signup method from the model, which sends the data to the API
-        success, message = self.model.signup(username, password)
-        
+        success, user_id, message = self.model.signup(username, password)
+        print(message)
         if success:
-            print(message)
+            # self.view.show_signup_message(message)  # Show success message from server
             self.controller.switch_to_dashboard()
         else:
-            # If signup fails, display the error and remain in signup mode.
-            self.view.show_signup_message(message)
+            self.view.show_signup_message(message)  # Show error message from server
