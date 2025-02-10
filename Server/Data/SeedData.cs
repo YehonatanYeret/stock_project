@@ -27,8 +27,8 @@ namespace Server.Data
                 // Add users
                 var users = new List<User>
                 {
-                    new User { Email = "yeret@gmail.com", HashPassword = HashPassword("123") },
-                    new User { Email = "manoy@gmail.com", HashPassword = HashPassword("123") },
+                    new User { Email = "yeret@gmail.com", HashPassword = HashPassword("123456") },
+                    new User { Email = "manoy@gmail.com", HashPassword = HashPassword("123456") },
                 };
 
                 context.Users.AddRange(users);
