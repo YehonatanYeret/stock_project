@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Server.Data;
 using Server.Models;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Configuration;
 
 namespace Server.Controllers;
 
@@ -12,14 +13,24 @@ namespace Server.Controllers;
 public class TransactionController : ControllerBase
 {
     private readonly StockContext _context;
+    private readonly string _polygonApiKey;
 
-    public TransactionController(StockContext context)
+    public TransactionController(StockContext context, IConfiguration configuration)
     {
+        if (context == null)
+            throw new ArgumentNullException(nameof(context));
+
+        if (configuration == null)
+            throw new ArgumentNullException(nameof(configuration));
+
         _context = context;
+        _polygonApiKey = configuration["ApiKeys:polygon"]
+                         ?? throw new InvalidOperationException("Polygon API key is missing from configuration.");
     }
 
+
+
     // Consider storing this securely (e.g., in web.config or appsettings.json)
-    private readonly string _polygonApiKey = "TpkyBNLwOOQ5Tzltvzdltppw8RlzYU5M";
 
     // Example action to get aggregate data
     [HttpGet("transaction")]

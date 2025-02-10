@@ -51,4 +51,7 @@ class StockSearchPage(QWidget):
         if not ticker:
             return  # Do nothing if ticker is empty
 
-        self.stock_chart.fetch_and_display_chart(ticker, start_date, end_date)  # Update chart
+        # self.stock_chart.fetch_and_display_chart(ticker, start_date, end_date)  # Update chart
+        #TODO: add a presenter so that the view can interact with the model
+        #the model will fetch the data and the presenter will update the view
+        #send the data to the widget to display the chart
