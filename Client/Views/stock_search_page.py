@@ -35,7 +35,7 @@ class StockSearchPage(QWidget):
         input_layout.addWidget(self.search_btn)
 
         # Stock Chart Widget
-        self.stock_chart = StockChartWidget()  # Pass API key
+        self.stock_chart = StockChartWidget(None, None, None, None)  # Pass API key
 
         layout.addLayout(input_layout)
         layout.addWidget(self.stock_chart)  # Add stock chart widget
