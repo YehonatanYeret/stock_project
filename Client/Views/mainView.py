@@ -1,4 +1,5 @@
 # File: views/main_view.py
+import os
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QStackedWidget, 
                                QHBoxLayout, QPushButton)
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, QPoint

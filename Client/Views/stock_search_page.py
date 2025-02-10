@@ -1,7 +1,6 @@
-# File: views/stock_search_page.py
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
-                               QLineEdit, QPushButton, QLabel)
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QDateEdit
+from PySide6.QtCore import Qt, QDate
+from Widgets.StockChartWidget import StockChartWidget  # Import StockChartWidget
 
 class StockSearchPage(QWidget):
     def __init__(self, parent=None):
@@ -10,42 +9,46 @@ class StockSearchPage(QWidget):
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
-        
-        # Search Section
-        search_layout = QHBoxLayout()
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Enter Stock Symbol")
-        self.search_btn = QPushButton("Search")
-        
-        search_layout.addWidget(self.search_input)
-        search_layout.addWidget(self.search_btn)
-        
-        # Stock Info Display
-        self.stock_symbol_label = QLabel("Symbol: -")
-        self.stock_name_label = QLabel("Name: -")
-        self.stock_price_label = QLabel("Price: -")
-        self.stock_change_label = QLabel("Change: -")
-        
-        # Style labels
-        for label in [self.stock_symbol_label, self.stock_name_label, 
-                      self.stock_price_label, self.stock_change_label]:
-            label.setStyleSheet("""
-                font-size: 16px;
-                color: #4CAF50;
-                padding: 5px;
-            """)
-            label.setAlignment(Qt.AlignCenter)
-        
-        layout.addLayout(search_layout)
-        layout.addWidget(self.stock_symbol_label)
-        layout.addWidget(self.stock_name_label)
-        layout.addWidget(self.stock_price_label)
-        layout.addWidget(self.stock_change_label)
-        layout.addStretch(1)
 
-    def update_stock_info(self, stock_data):
-        """Update UI with retrieved stock information"""
-        self.stock_symbol_label.setText(f"Symbol: {stock_data.get('symbol', '-')}")
-        self.stock_name_label.setText(f"Name: {stock_data.get('name', '-')}")
-        self.stock_price_label.setText(f"Price: ${stock_data.get('price', '-'):.2f}")
-        self.stock_change_label.setText(f"Change: {stock_data.get('change', '-'):.2f}%")
+        # Input Section
+        input_layout = QHBoxLayout()
+
+        self.ticker_input = QLineEdit()
+        self.ticker_input.setPlaceholderText("Enter Stock Symbol (e.g., AAPL)")
+
+        self.start_date_input = QDateEdit()
+        self.start_date_input.setCalendarPopup(True)
+        self.start_date_input.setDate(QDate.currentDate().addMonths(-1))  # Default to 1 month ago
+
+        self.end_date_input = QDateEdit()
+        self.end_date_input.setCalendarPopup(True)
+        self.end_date_input.setDate(QDate.currentDate())  # Default to today
+
+        self.search_btn = QPushButton("Search")
+        self.search_btn.clicked.connect(self.search_stock)  # Connect button
+
+        input_layout.addWidget(self.ticker_input)
+        input_layout.addWidget(QLabel("Start:"))
+        input_layout.addWidget(self.start_date_input)
+        input_layout.addWidget(QLabel("End:"))
+        input_layout.addWidget(self.end_date_input)
+        input_layout.addWidget(self.search_btn)
+
+        # Stock Chart Widget
+        self.stock_chart = StockChartWidget()  # Pass API key
+
+        layout.addLayout(input_layout)
+        layout.addWidget(self.stock_chart)  # Add stock chart widget
+
+        self.setLayout(layout)
+
+    def search_stock(self):
+        """Fetch stock data and update chart."""
+        ticker = self.ticker_input.text().strip().upper()
+        start_date = self.start_date_input.date().toString("yyyy-MM-dd")
+        end_date = self.end_date_input.date().toString("yyyy-MM-dd")
+
+        if not ticker:
+            return  # Do nothing if ticker is empty
+
+        self.stock_chart.fetch_and_display_chart(ticker, start_date, end_date)  # Update chart
