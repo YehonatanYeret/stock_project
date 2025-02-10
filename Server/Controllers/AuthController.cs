@@ -8,16 +8,16 @@ namespace Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AuthController : ControllerBase
     {
         private readonly StockContext _context;
 
-        public AccountController(StockContext context)
+        public AuthController(StockContext context)
         {
             _context = context;
         }
 
-        // POST: api/account/signup
+        // POST: api/auth/signup
         [HttpPost("signup")]
         public async Task<ActionResult<object>> SignUp([FromBody] User model)
         {
@@ -53,7 +53,7 @@ namespace Server.Controllers
             }
         }
 
-        // POST: api/account/signin
+        // POST: api/auth/signin
         [HttpPost("signin")]
         public async Task<ActionResult<object>> SignIn([FromBody] User model)
         {

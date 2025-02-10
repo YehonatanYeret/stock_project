@@ -1,5 +1,5 @@
 ﻿import requests
-api_url = 'http://localhost:5039/api/account'
+api_url = 'http://localhost:5039/api/auth'
 
 class LoginModel:
     def __init__(self):
