@@ -1,7 +1,8 @@
 ﻿from Models.loginModel import LoginModel
+from Views.loginView import LoginWindow
 
 class LoginPresenter:
-    def __init__(self, controller, view, model: LoginModel):
+    def __init__(self, controller, view:LoginWindow, model: LoginModel):
         self.controller = controller
         self.view = view
         self.model = model
