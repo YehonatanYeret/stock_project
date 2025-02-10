@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # virtual enviroment 
 venv
+
+# App setings (with all the API)
+/Server/appsettings.json
