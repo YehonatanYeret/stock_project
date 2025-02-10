@@ -5,6 +5,10 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QStackedWidget,
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, QPoint
 from PySide6.QtGui import QIcon
 
+from Models.portfolioModel import PortfolioModel
+from Models.stockModel import StockModel
+from Presenters.portfolioPresenter import PortfolioPresenter
+from Presenters.stockPresenter import StockPresenter
 from Views.home_page import HomePage
 from Views.portfolio_page import PortfolioPage
 from Views.stock_search_page import StockSearchPage
@@ -12,7 +16,14 @@ from Views.stock_search_page import StockSearchPage
 class MainView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setup_ui()
+        
+        # Initialize portfolio model
+        self.portfolio_model = PortfolioModel()
+
+        self.setup_ui()  # Now self.portfolio_page is created
+
+        # Initialize portfolio presenter after UI is set up
+        self.portfolio_presenter = PortfolioPresenter(self.portfolio_model, self.portfolio_page)
 
     def setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -35,7 +46,11 @@ class MainView(QWidget):
         # Create Pages
         self.home_page = HomePage()
         self.portfolio_page = PortfolioPage()
+
+        # Create Stock Search Page with mvp pattern
         self.stock_search_page = StockSearchPage()
+        self.stock_model = StockModel()
+        self.stock_search_page.presenter = StockPresenter(self.stock_model, self.stock_search_page)
         
         self.stacked_widget.addWidget(self.home_page)
         self.stacked_widget.addWidget(self.portfolio_page)

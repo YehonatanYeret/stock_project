@@ -1,133 +1,47 @@
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QWidget, 
-    QTableWidget, QTableWidgetItem, QLabel, QPushButton
-)
-from PySide6.QtCore import Qt, Slot
+# File: views/portfolio_page.py
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView
+from PySide6.QtCore import Signal
 
-# PortfolioView.py
-class PortfolioWindow(QMainWindow):
+class PortfolioPage(QWidget):
+    add_stock_signal = Signal(str, str, int, float)
+    remove_stock_signal = Signal(str)
+    refresh_signal = Signal()
+
     def __init__(self):
         super().__init__()
+        self.setup_ui()
 
-        # Set window properties
-        self.setWindowTitle("Portfolio")
-        self.setFixedSize(800, 600)  # Adjusted size
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #000000;
-            }
-            QWidget#container {
-                background-color: white;
-                border-radius: 8px;
-            }
-            QLabel#title {
-                color: #1a73e8;
-                font-size: 28px;
-                font-weight: bold;
-            }
-            QLabel {
-                color: #333333;
-                font-size: 16px;
-                margin-bottom: 8px;
-            }
-            QTableWidget {
-                border: 1px solid #dddddd;
-                border-radius: 6px;
-                font-size: 16px;
-                color: #333333;
-                background-color: #f8f9fa;
-            }
-            QTableWidget::item {
-                padding: 10px;
-            }
-            QPushButton {
-                background-color: #1a73e8;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 10px;
-                font-size: 18px;
-                margin-top: 15px;
-                min-height: 40px;
-            }
-            QPushButton:hover {
-                background-color: #1557b0;
-            }
-        """)
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
 
-        # Create main container widget
-        self.central_widget = QWidget()
-        self.central_widget.setObjectName("container")
-        self.setCentralWidget(self.central_widget)
-
-        # Create layout
-        layout = QVBoxLayout()
-        layout.setContentsMargins(50, 50, 50, 50)
-        layout.setSpacing(20)
-        self.central_widget.setLayout(layout)
-
-        # Title
-        self.label_title = QLabel("Portfolio Overview")
-        self.label_title.setObjectName("title")
-        self.label_title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.label_title)
-
-        # User ID display
-        self.label_user_id = QLabel("User ID: Not Provided")
-        self.label_user_id.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.label_user_id)
-
-        # Portfolio table
+        # Table for displaying stock portfolio
         self.table = QTableWidget()
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Stock", "Quantity", "Value"])
-        self.table.setRowCount(0)  # Start with an empty table
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["Symbol", "Company", "Quantity", "Avg Buy Price", "Current Price", "Market Value"])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        # Buttons for adding/removing stocks and refreshing
+        self.refresh_btn = QPushButton("Refresh Prices")
+        self.add_btn = QPushButton("Add Stock")
+        self.remove_btn = QPushButton("Remove Stock")
+
+        # Button signals
+        self.refresh_btn.clicked.connect(self.refresh_signal.emit)
+
         layout.addWidget(self.table)
+        layout.addWidget(self.refresh_btn)
+        layout.addWidget(self.add_btn)
+        layout.addWidget(self.remove_btn)
+        self.setLayout(layout)
 
-        # Refresh button
-        self.btn_refresh = QPushButton("Refresh Portfolio")
-        self.btn_refresh.setCursor(Qt.PointingHandCursor)
-        self.btn_refresh.clicked.connect(self.refresh_portfolio)
-        layout.addWidget(self.btn_refresh)
+    def update_portfolio(self, stocks):
+        """Updates table with portfolio data."""
+        self.table.setRowCount(len(stocks))
+        for row, stock in enumerate(stocks):
+            self.table.setItem(row, 0, QTableWidgetItem(stock["symbol"]))
+            self.table.setItem(row, 1, QTableWidgetItem(stock["company"]))
+            self.table.setItem(row, 2, QTableWidgetItem(str(stock["quantity"])))
+            self.table.setItem(row, 3, QTableWidgetItem(f"${stock['avg_price']:.2f}"))
+            self.table.setItem(row, 4, QTableWidgetItem(f"${stock['current_price']:.2f}"))
+            self.table.setItem(row, 5, QTableWidgetItem(f"${stock['market_value']:.2f}"))
 
-        # Message label
-        self.label_message = QLabel()
-        self.label_message.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.label_message)
-
-        # Center the window
-        screen = QApplication.primaryScreen().geometry()
-        self.move(
-            (screen.width() - self.width()) // 2,
-            (screen.height() - self.height()) // 2
-        )
-
-    @Slot()
-    def refresh_portfolio(self):
-        # Call presenter to fetch portfolio data
-        self.presenter.fetch_portfolio()
-
-    def update_table(self, portfolio_data):
-        """
-        Update the table with new portfolio data.
-        :param portfolio_data: List of dictionaries containing stock data.
-        """
-        self.table.setRowCount(len(portfolio_data))
-        for row, stock in enumerate(portfolio_data):
-            self.table.setItem(row, 0, QTableWidgetItem(stock["stock"]))
-            self.table.setItem(row, 1, QTableWidgetItem(str(stock["quantity"])))
-            self.table.setItem(row, 2, QTableWidgetItem(f"${stock['value']:.2f}"))
-
-    def show_message(self, message):
-        """
-        Display a message to the user.
-        :param message: Message string.
-        """
-        self.label_message.setText(message)
-
-    def update_user_id(self, user_id):
-        """
-        Update the user ID label in the PortfolioWindow.
-        :param user_id: The user ID to display.
-        """
-        self.label_user_id.setText(f"User ID: {user_id}")

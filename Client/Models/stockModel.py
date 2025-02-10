@@ -1,41 +1,45 @@
 import requests
-api_url = 'http://localhost:5039/api/transaction'
+
+API_URL = "http://localhost:5039/api/Transaction"
 
 class StockModel:
-    def __init__(self):
-        pass
-        # Validate email address before sending request
-        if '@' not in username or '.' not in username or len(username) < 5:
-            return False, None, "Invalid email address. Please enter a valid email address."
+    def get_stock_details(self, ticker, start_date, end_date):
+        """
+        Fetch stock details from the API.
 
-        # Validate password before sending request
-        if len(password) < 6:
-            return False, None, "Password must be at least 6 characters long."
+        :return: Tuple (success: bool, data: dict, message: str)
+        """
+        if not ticker or not start_date or not end_date:
+            return False, None, "Ticker, start date, and end date are required."
 
-        data = {
-            "email": username,
-            "hashPassword": password
+        # Use `params` to pass query parameters safely
+        params = {
+            "ticker": ticker,
+            "startDate": start_date,
+            "endDate": end_date
         }
 
-        # Send request to server
         try:
-            response = requests.post(self.api_signup_url, json=data)
-            
-            # Check response status code
+            response = requests.get(f"{API_URL}/getDetails", params=params)
+            print(response)
+            # Handle API response
             if response.status_code == 200:
-                result = response.json()
-
-                # Return success message and user ID
-                return True, result.get("userId", None), "User registered successfully!"
+                data = response.json().get("results")
+                return True, data, "Stock data retrieved successfully!"
+            
             elif response.status_code == 400:
-                error_data = response.json()
-                return False, None, error_data.get("message", "An error occurred during signup. Please try again.")
+                error_msg = response.json().get("message", "Invalid request parameters.")
+                return False, None, f"Error: {error_msg}"
+            
+            elif response.status_code == 500:
+                return False, None, "Server error. Please try again later."
+            
             else:
-                return False, None, "An error occurred during signup. Please try again."
-                
+                return False, None, f"Unexpected error: {response.status_code}"
+
         except requests.exceptions.ConnectionError:
-            return False, None, "Unable to connect to the server. Please check your internet connection."
+            return False, None, "Unable to connect to the server."
         except requests.exceptions.Timeout:
-            return False, None, "The request timed out. Please try again."
-        except requests.exceptions.RequestException:
-            return False, None, "An unexpected error occurred. Please try again."
+            return False, None, "The request timed out."
+        except requests.exceptions.RequestException as e:
+            return False, None, f"An unexpected error occurred: {str(e)}"

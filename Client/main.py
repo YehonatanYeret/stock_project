@@ -2,15 +2,15 @@
 from PySide6.QtWidgets import QApplication, QStackedWidget
 
 from Views.loginView import LoginWindow
-from Views.portfolioView import PortfolioWindow
+#from Views.portfolioView import PortfolioWindow
 from Views.mainView import MainView
 
 from Models.loginModel import LoginModel
-from Models.portfolioModel import PortfolioModel
+#from Models.portfolioModel import PortfolioModel
 from Models.mainModel import MainModel
 
 from Presenters.loginPresenter import LoginPresenter
-from Presenters.portfolioPresenter import PortfolioPresenter
+#from Presenters.portfolioPresenter import PortfolioPresenter
 from Presenters.mainPresenter import MainPresenter
 
 import sys
