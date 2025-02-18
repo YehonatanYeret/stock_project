@@ -1,100 +1,329 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHBoxLayout, QSizePolicy
-from PySide6.QtGui import QPixmap, QIcon
-from PySide6.QtCore import Qt
-from lightweight_charts.widgets import QtChart
-from PySide6.QtCore import Signal
-import pandas as pd
+"""
+portfolio_page.py - Portfolio Page Implementation for Stock Management System
 
+This module implements the Portfolio page view component following the MVP pattern.
+It provides a modern, interactive interface for users to view their stock portfolio,
+including performance charts, holdings information, and trade history.
 
+Key Features:
+- Interactive performance chart with time range selection
+- Toggle-able table view switching between holdings and trade history
+- Modern blue-themed UI with consistent styling
+- Responsive layout that adjusts to window size
+
+Dependencies:
+- PySide6: Qt framework for the UI components
+- Qt Charts: For rendering portfolio performance charts
+
+Author: [Your Name]
+Date: February 2025
+"""
+
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
+    QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
+    QStackedWidget, QStyle
+)
+from PySide6.QtCore import Signal, Qt, QSize
+from PySide6.QtCharts import QChart, QChartView, QLineSeries, QDateTimeAxis, QValueAxis
+from PySide6.QtGui import QPainter, QFont, QPalette, QColor
+
+# Style constants for consistent theming
+STYLE_CONSTANTS = {
+    'COLORS': {
+        'background': '#f8fafc',
+        'primary': '#3b82f6',
+        'primary_hover': '#2563eb',
+        'primary_pressed': '#1d4ed8',
+        'text': '#1e293b',
+        'text_light': '#64748b',
+        'border': '#e2e8f0',
+        'success': '#10b981',
+        'danger': '#ef4444'
+    },
+    'FONTS': {
+        'header': QFont('Segoe UI', 12, QFont.Bold),
+        'body': QFont('Segoe UI', 10),
+        'small': QFont('Segoe UI', 9)
+    }
+}
+
+# Main stylesheet for the portfolio page
+PORTFOLIO_STYLE = """
+    QWidget {
+        background-color: #f8fafc;
+        color: #1e293b;
+        font-family: 'Segoe UI';
+    }
+    
+    QPushButton {
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 16px;
+        font-weight: bold;
+        min-width: 80px;
+    }
+    
+    QPushButton:hover {
+        background-color: #2563eb;
+    }
+    
+    QPushButton:pressed {
+        background-color: #1d4ed8;
+    }
+    
+    QPushButton:checked {
+        background-color: #1d4ed8;
+    }
+    
+    QTableWidget {
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        gridline-color: #e2e8f0;
+    }
+    
+    QHeaderView::section {
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+        border-right: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 8px;
+        font-weight: bold;
+    }
+    
+    QLabel#portfolioValue {
+        font-size: 24px;
+        font-weight: bold;
+        color: #1e293b;
+    }
+    
+    QLabel#dailyPL {
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    QFrame#chartFrame {
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+    }
+"""
 
 class PortfolioPage(QWidget):
-    # Signal for adding a stock (can be connected to presenter logic)
-    add_stock_signal = Signal(str, str, int, float)
-    remove_stock_signal = Signal(str)
-    refresh_signal = Signal()
+    """
+    Main portfolio page widget that displays user's portfolio information.
+    
+    Signals:
+        refresh_requested: Emitted when user requests data refresh
+        stock_selected: Emitted when user selects a stock from the holdings table
+    """
+
+    refresh_requested = Signal()
+    stock_selected = Signal(str)
+
     def __init__(self, parent=None):
+        """Initialize the portfolio page."""
         super().__init__(parent)
-        self.init_ui()
-    
-    def init_ui(self):
-        """Initialize the portfolio page UI"""
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
-        
-        # --- USER PROFILE SECTION ---
-        profile_layout = QHBoxLayout()
-        
-        self.user_icon = QLabel()
-        pixmap = QPixmap("user_icon.png")  # Dummy icon
-        self.user_icon.setPixmap(pixmap.scaled(50, 50, Qt.KeepAspectRatio))
-        
-        self.username_label = QLabel("Username: JohnDoe")  # Dummy name
-        self.username_label.setStyleSheet("color: white; font-size: 18px;")
-        
-        profile_layout.addWidget(self.user_icon)
-        profile_layout.addWidget(self.username_label)
-        layout.addLayout(profile_layout)
-        
-        # --- STOCK CHART SECTION ---
-        self.chart = QtChart(self)
-        self.chart.get_webview().setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.chart.get_webview().setMinimumSize(800, 400)
-        layout.addWidget(self.chart.get_webview(), stretch=1)
-        
-        # --- LOGS BUTTON ---
-        self.log_button = QPushButton("Show Logs")
-        self.log_button.setStyleSheet("background-color: #4a4d4f; color: white; padding: 10px;")
-        self.log_button.clicked.connect(self.fetch_logs)
-        layout.addWidget(self.log_button)
-        
-        self.setLayout(layout)
-        self.load_dummy_chart()
-    
-    def fetch_logs(self):
-        """Fetch logs from the server"""
-        print("Fetching logs...")
-        # TODO: Replace with real API request
-        # response = requests.get("http://server.com/api/logs")
-        # logs = response.json()
-        print("Dummy logs: [Trade Executed, Market Closed]")
-    
-    def load_dummy_chart(self):
-        """Load dummy stock data into the chart"""
-        dummy_data = [
-            {'t': 1707600000000, 'o': 100, 'h': 110, 'l': 99, 'c': 105, 'v': 5000},
-            {'t': 1707686400000, 'o': 105, 'h': 115, 'l': 104, 'c': 112, 'v': 6000},
-            {'t': 1707774800000, 'o': 112, 'h': 118, 'l': 110, 'c': 116, 'v': 7000},
-            {'t': 1707776800000, 'o': 113, 'h': 110, 'l': 110, 'c': 115, 'v': 8000},
-            {'t': 1707778800000, 'o': 111, 'h': 115, 'l': 166, 'c': 112, 'v': 9000},
-            {'t': 1707782800000, 'o': 108, 'h': 111, 'l': 75, 'c': 146, 'v': 10000},
-            {'t': 1707782800000, 'o': 92, 'h': 98, 'l': 34, 'c': 115, 'v': 11000},
-            {'t': 1707787000000, 'o': 12, 'h': 118, 'l': 150, 'c': 116, 'v': 12000},
-            {'t': 1709779800000, 'o': 112, 'h': 118, 'l': 120, 'c': 116, 'v': 13000}
-        ]
-        df = pd.DataFrame(dummy_data)
-        df['date'] = pd.to_datetime(df['t'], unit='ms')
-        df = df.rename(columns={'o': 'open', 'h': 'high', 'l': 'low', 'c': 'close', 'v': 'volume'})
-        self.chart.set(df[['date', 'open', 'high', 'low', 'close', 'volume']])
-        
-        # Compute SMA and add to chart
-        sma = df['close'].rolling(window=2).mean()
-        sma_df = pd.DataFrame({'time': df['date'], 'SMA 2': sma}).dropna()
-        line = self.chart.create_line('SMA 2')
-        line.set(sma_df)
-        self.chart.get_webview().update()
-        print(" Dummy chart loaded")
-        print(df[['date', 'open', 'high', 'low', 'close', 'volume']])
+        self.setup_ui()
 
+    def setup_ui(self):
+        """Setup the main user interface components."""
+        self.setStyleSheet(PORTFOLIO_STYLE)
 
+        # Main layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(20, 20, 20, 20)
 
-    def update_portfolio(self, portfolio_data):
-        """Update portfolio summary and holdings table."""
-        self.portfolio_value.setText(f"Portfolio Value: ${portfolio_data['value']}")
-        self.daily_change.setText(f"Daily Change: {portfolio_data['change']}")
-        # Update holdings table
-        self.table.setRowCount(len(portfolio_data['holdings']))
-        for row, (stock, shares, price) in enumerate(portfolio_data['holdings']):
-            self.table.setItem(row, 0, QTableWidgetItem(stock))
-            self.table.setItem(row, 1, QTableWidgetItem(str(shares)))
-            self.table.setItem(row, 2, QTableWidgetItem(f"${price:.2f}"))
+        # Add UI sections
+        main_layout.addLayout(self.setup_header())
+        main_layout.addWidget(self.setup_chart_section(), 2)
+        main_layout.addWidget(self.setup_table_section(), 1)
 
+    def setup_header(self):
+        """
+        Setup the header section with user info and portfolio summary.
+        Returns:
+            QHBoxLayout: The header layout
+        """
+        header_layout = QHBoxLayout()
+
+        # User information
+        user_section = QVBoxLayout()
+        user_name = QLabel("John Doe")
+        user_name.setFont(STYLE_CONSTANTS['FONTS']['header'])
+        user_section.addWidget(user_name)
+
+        # Portfolio value and daily change
+        self.portfolio_value = QLabel("$0.00")
+        self.portfolio_value.setObjectName("portfolioValue")
+
+        self.daily_pl = QLabel("+$0.00 (0.00%)")
+        self.daily_pl.setObjectName("dailyPL")
+
+        value_section = QVBoxLayout()
+        value_section.addWidget(self.portfolio_value)
+        value_section.addWidget(self.daily_pl)
+
+        # Refresh button
+        refresh_btn = QPushButton("Refresh")
+        refresh_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        refresh_btn.clicked.connect(self.refresh_requested.emit)
+
+        header_layout.addLayout(user_section)
+        header_layout.addStretch()
+        header_layout.addLayout(value_section)
+        header_layout.addWidget(refresh_btn)
+
+        return header_layout
+
+    def setup_chart_section(self):
+        """
+        Setup the chart section with performance chart and time range controls.
+        Returns:
+            QFrame: The chart container frame
+        """
+        chart_frame = QFrame()
+        chart_frame.setObjectName("chartFrame")
+        chart_layout = QVBoxLayout(chart_frame)
+
+        # Time range controls
+        controls_layout = QHBoxLayout()
+        self.time_range_buttons = []
+
+        for range_text in ["1D", "1W", "1M", "3M", "1Y", "ALL"]:
+            btn = QPushButton(range_text)
+            btn.setCheckable(True)
+            btn.setAutoExclusive(True)
+            self.time_range_buttons.append(btn)
+            controls_layout.addWidget(btn)
+
+        controls_layout.addStretch()
+
+        # Chart view
+        self.chart_view = QChartView()
+        self.chart_view.setRenderHint(QPainter.Antialiasing)
+        self.chart_view.setRubberBand(QChartView.RectangleRubberBand)
+        self.chart_view.setMinimumHeight(400)
+
+        # Initialize empty chart
+        chart = QChart()
+        chart.setAnimationOptions(QChart.SeriesAnimations)
+        chart.setBackgroundVisible(False)
+        chart.legend().hide()
+        self.chart_view.setChart(chart)
+
+        chart_layout.addLayout(controls_layout)
+        chart_layout.addWidget(self.chart_view)
+
+        return chart_frame
+
+    def setup_table_section(self):
+        """
+        Setup the table section with toggle-able views for holdings and trade history.
+        Returns:
+            QFrame: The table container frame
+        """
+        table_frame = QFrame()
+        layout = QVBoxLayout(table_frame)
+
+        # View toggle controls
+        toggle_layout = QHBoxLayout()
+        self.view_toggle = QPushButton("Switch to Trade History")
+        self.view_toggle.setCheckable(True)
+        toggle_layout.addWidget(self.view_toggle)
+        toggle_layout.addStretch()
+
+        # Main table
+        self.table = QTableWidget()
+        self.table.setAlternatingRowColors(True)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SingleSelection)
+
+        layout.addLayout(toggle_layout)
+        layout.addWidget(self.table)
+
+        return table_frame
+
+    def update_portfolio_value(self, value: float, daily_change: float, daily_change_pct: float):
+        """
+        Update the portfolio value and daily change displays.
+        
+        Args:
+            value: Current portfolio value
+            daily_change: Daily change in absolute terms
+            daily_change_pct: Daily change as a percentage
+        """
+        self.portfolio_value.setText(f"${value:,.2f}")
+
+        change_color = (STYLE_CONSTANTS['COLORS']['success']
+                        if daily_change >= 0
+                        else STYLE_CONSTANTS['COLORS']['danger'])
+        sign = "+" if daily_change >= 0 else ""
+
+        self.daily_pl.setText(
+            f"{sign}${daily_change:,.2f} ({sign}{daily_change_pct:.2f}%)"
+        )
+        self.daily_pl.setStyleSheet(f"color: {change_color}")
+
+    def set_holdings_view(self):
+        """Configure table for displaying holdings data."""
+        headers = ["Symbol", "Quantity", "Buy Price", "Current Price",
+                   "Daily Change (%)", "Profit/Loss"]
+        self.table.setColumnCount(len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
+
+    def set_trade_history_view(self):
+        """Configure table for displaying trade history data."""
+        headers = ["Date", "Symbol", "Type", "Quantity", "Price", "Fees"]
+        self.table.setColumnCount(len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
+
+    def update_chart_data(self, series: QLineSeries):
+        """
+        Update the performance chart with new data.
+        
+        Args:
+            series: QLineSeries containing the chart data points
+        """
+        chart = self.chart_view.chart()
+        chart.removeAllSeries()
+        chart.addSeries(series)
+
+        # Update axes
+        axis_x = QDateTimeAxis()
+        axis_x.setFormat("MMM dd")
+        axis_y = QValueAxis()
+        axis_y.setLabelFormat("$%.2f")
+
+        chart.addAxis(axis_x, Qt.AlignBottom)
+        chart.addAxis(axis_y, Qt.AlignLeft)
+
+        series.attachAxis(axis_x)
+        series.attachAxis(axis_y)
+
+    def resizeEvent(self, event):
+        """Handle widget resize events to maintain responsive layout."""
+        super().resizeEvent(event)
+        # Adjust chart size based on new widget size
+        if hasattr(self, 'chart_view'):
+            min_height = min(400, self.height() * 0.4)
+            self.chart_view.setMinimumHeight(int(min_height))
+
+"""
+Usage Example:
+
+from PySide6.QtWidgets import QApplication
+import sys
+
+app = QApplication(sys.argv)
+portfolio_page = PortfolioPage()
+portfolio_page.show()
+sys.exit(app.exec())
+"""

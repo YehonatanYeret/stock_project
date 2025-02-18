@@ -1,6 +1,6 @@
 # File: views/main_view.py
 import os
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QStackedWidget, 
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QStackedWidget,
                                QHBoxLayout, QPushButton)
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, QPoint
 from PySide6.QtGui import QIcon
@@ -13,10 +13,11 @@ from Views.home_page import HomePage
 from Views.portfolio_page import PortfolioPage
 from Views.stock_search_page import StockSearchPage
 
+
 class MainView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
         # Initialize portfolio model
         self.portfolio_model = PortfolioModel()
 
@@ -27,22 +28,22 @@ class MainView(QWidget):
 
     def setup_ui(self):
         main_layout = QVBoxLayout(self)
-        
+
         # Navigation Layout
         nav_layout = QHBoxLayout()
-        
+
         # Navigation Buttons
         self.home_btn = self.create_nav_button("Home", "home_icon.png")
         self.portfolio_btn = self.create_nav_button("Portfolio", "portfolio_icon.png")
         self.search_btn = self.create_nav_button("Search", "search_icon.png")
-        
+
         nav_layout.addWidget(self.home_btn)
         nav_layout.addWidget(self.portfolio_btn)
         nav_layout.addWidget(self.search_btn)
-        
+
         # Stacked Widget for Pages
         self.stacked_widget = QStackedWidget()
-        
+
         # Create Pages
         self.home_page = HomePage()
         self.portfolio_page = PortfolioPage()
@@ -51,11 +52,11 @@ class MainView(QWidget):
         self.stock_search_page = StockSearchPage()
         self.stock_model = StockModel()
         self.stock_search_page.presenter = StockPresenter(self.stock_model, self.stock_search_page)
-        
+
         self.stacked_widget.addWidget(self.home_page)
         self.stacked_widget.addWidget(self.portfolio_page)
         self.stacked_widget.addWidget(self.stock_search_page)
-        
+
         main_layout.addLayout(nav_layout)
         main_layout.addWidget(self.stacked_widget)
 
@@ -91,9 +92,9 @@ class MainView(QWidget):
         # Set initial positions
         current_widget.setGeometry(0, 0, current_widget.width(), current_widget.height())
         next_widget.setGeometry(
-            direction * current_widget.width(), 
-            0, 
-            next_widget.width(), 
+            direction * current_widget.width(),
+            0,
+            next_widget.width(),
             next_widget.height()
         )
 
