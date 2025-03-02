@@ -1,24 +1,4 @@
-"""
-portfolio_page.py - Portfolio Page Implementation for Stock Management System
-
-This module implements the Portfolio page view component following the MVP pattern.
-It provides a modern, interactive interface for users to view their stock portfolio,
-including performance charts, holdings information, and trade history.
-
-Key Features:
-- Interactive performance chart with time range selection
-- Toggle-able table view switching between holdings and trade history
-- Modern blue-themed UI with consistent styling
-- Responsive layout that adjusts to window size
-
-Dependencies:
-- PySide6: Qt framework for the UI components
-- Qt Charts: For rendering portfolio performance charts
-
-Author: [Your Name]
-Date: February 2025
-"""
-
+# File: views/portfolio_page.py
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
@@ -113,6 +93,7 @@ PORTFOLIO_STYLE = """
     }
 """
 
+
 class PortfolioPage(QWidget):
     """
     Main portfolio page widget that displays user's portfolio information.
@@ -120,10 +101,12 @@ class PortfolioPage(QWidget):
     Signals:
         refresh_requested: Emitted when user requests data refresh
         stock_selected: Emitted when user selects a stock from the holdings table
+        chart_range_changed: Emitted when user selects a different time range
     """
 
     refresh_requested = Signal()
     stock_selected = Signal(str)
+    chart_range_changed = Signal(str)
 
     def __init__(self, parent=None):
         """Initialize the portfolio page."""
@@ -199,6 +182,7 @@ class PortfolioPage(QWidget):
             btn = QPushButton(range_text)
             btn.setCheckable(True)
             btn.setAutoExclusive(True)
+            btn.clicked.connect(lambda checked, r=range_text: self.chart_range_changed.emit(r))
             self.time_range_buttons.append(btn)
             controls_layout.addWidget(btn)
 
@@ -315,15 +299,3 @@ class PortfolioPage(QWidget):
         if hasattr(self, 'chart_view'):
             min_height = min(400, self.height() * 0.4)
             self.chart_view.setMinimumHeight(int(min_height))
-
-"""
-Usage Example:
-
-from PySide6.QtWidgets import QApplication
-import sys
-
-app = QApplication(sys.argv)
-portfolio_page = PortfolioPage()
-portfolio_page.show()
-sys.exit(app.exec())
-"""
