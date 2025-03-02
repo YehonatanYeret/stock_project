@@ -45,6 +45,10 @@ namespace Server.Controllers
                     return StatusCode((int)response.StatusCode, "Error fetching data from Polygon API.");
                 }
             }
+
+
         }
+
+
     }
 }

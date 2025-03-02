@@ -12,13 +12,13 @@ public class StockContext(DbContextOptions<StockContext> options) : DbContext(op
 {
     // dbsets for the models
     public DbSet<User> Users { get; set; } = default!;
+    public DbSet<Holding> Holdings { get; set; } = default!;
+    public DbSet<Trade> Trades { get; set; } = default!;
 
     /// <summary>
     /// When the model is created, the configurations for the models are applied.
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // apply the configurations for each model
-        modelBuilder.ApplyConfiguration(new UserConfiguration());
 
         // call the base method to complete the model creation for each model
         base.OnModelCreating(modelBuilder);
