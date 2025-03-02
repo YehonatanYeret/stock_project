@@ -79,10 +79,12 @@ class PortfolioPresenter(QObject):
     def update_holdings_table(self, holdings):
         """
         Update the table with holdings data.
-        
+
         Args:
             holdings: List of dictionaries containing holdings information
         """
+        # Clear table first
+        self._view.table.setRowCount(0)
         self._view.table.setRowCount(len(holdings))
 
         for row, holding in enumerate(holdings):
@@ -110,6 +112,8 @@ class PortfolioPresenter(QObject):
         Args:
             history: List of dictionaries containing trade history information
         """
+        # Clear table first
+        self._view.table.setRowCount(0)
         self._view.table.setRowCount(len(history))
 
         for row, trade in enumerate(history):
