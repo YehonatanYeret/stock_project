@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QDateEdit
 from PySide6.QtCore import Qt, QDate
 from Widgets.StockChartWidget import StockChartWidget  # Import the stock chart widget
-from Presenters.stockPresenter import StockPresenter  # Import the presenter
+from Presenters.mainPresenters.stockPresenter import StockPresenter  # Import the presenter
 
 class StockSearchPage(QWidget):
     def __init__(self, parent=None):

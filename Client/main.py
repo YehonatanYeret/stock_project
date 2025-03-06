@@ -31,20 +31,16 @@ class AppController:
         self.stack.addWidget(self.login_window)
         self.stack.addWidget(self.main_window)
 
-        # Initialize models
-        login_model = LoginModel()
-        main_model = MainModel()
-
         # Link presenters
         self.login_window.presenter = LoginPresenter(
             self,
             self.login_window,
-            login_model
+            LoginModel()
         )
 
         # Set main window presenter
         self.main_window.presenter = MainPresenter(
-            main_model,
+            MainModel(),
             self.main_window
         )
 

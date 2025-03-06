@@ -1,6 +1,6 @@
 import requests
 
-API_URL = "http://localhost:5039/api/Transaction"
+API_URL = "http://localhost:5039/api/transaction"
 
 class StockModel:
     def get_stock_details(self, ticker, start_date, end_date):
@@ -20,8 +20,8 @@ class StockModel:
         }
 
         try:
-            response = requests.get(f"{API_URL}/getDetails", params=params)
-            print(response)
+            response = requests.get(f"{API_URL}/query/getDetails", params=params)
+
             # Handle API response
             if response.status_code == 200:
                 data = response.json().get("results")

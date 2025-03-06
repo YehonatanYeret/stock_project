@@ -7,7 +7,7 @@ class LoginPresenter:
         self.view = view
         self.model = model
 
-    def login(self):
+    def signin(self):
         """
         Process login: get credentials from the view and authenticate via the model.
         """
@@ -15,13 +15,13 @@ class LoginPresenter:
         password = self.view.get_password()
         
         
+        # TODO: Remove this hardcoded login
         if username == "1" and password == "1":
             self.controller.switch_to_dashboard(1)
             return
         
         # Authenticate via API call (model will handle the HTTP request)
         success, user_id, message = self.model.authenticate(username, password)
-        print(message)
         if success:
             self.controller.switch_to_dashboard(user_id)
         else:
@@ -37,7 +37,6 @@ class LoginPresenter:
         
         # Call the signup method from the model, which sends the data to the API
         success, user_id, message = self.model.signup(username, password)
-        print(message)
         if success:
             self.controller.switch_to_dashboard(user_id)
         else:

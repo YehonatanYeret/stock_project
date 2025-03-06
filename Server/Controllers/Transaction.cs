@@ -7,16 +7,14 @@ using System.Threading.Tasks;
 
 namespace Server.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/transaction/query")]
     [ApiController]
     public class TransactionController : ControllerBase
     {
-        private readonly StockContext _context;
         private readonly string _polygonApiKey;
 
-        public TransactionController(StockContext context, IConfiguration configuration)
+        public TransactionController(IConfiguration configuration)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
             _polygonApiKey = configuration["ApiKeys:polygon"]
                              ?? throw new InvalidOperationException("Polygon API key is missing from configuration.");
         }
@@ -31,7 +29,7 @@ namespace Server.Controllers
             }
 
             string url = $"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/1/day/{startDate}/{endDate}?apiKey={_polygonApiKey}";
-            Console.WriteLine(url);
+
             using (var client = new HttpClient())
             {
                 HttpResponseMessage response = await client.GetAsync(url);

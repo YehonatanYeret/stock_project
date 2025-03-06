@@ -217,7 +217,7 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
         
         login_button = QPushButton("Sign In")
         login_button.setObjectName("form_button")
-        login_button.clicked.connect(self.login)
+        login_button.clicked.connect(self.signin)
         layout.addWidget(login_button)
         
         self.sign_in_message = QLabel()
@@ -289,12 +289,12 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
                   (screen.height() - self.height()) // 2)
 
     @Slot()
-    def login(self):
+    def signin(self):
         """
         Called when the Sign In button is pressed.
         Delegates action to the presenter.
         """
-        self.presenter.login()
+        self.presenter.signin()
 
     @Slot()
     def signup(self):

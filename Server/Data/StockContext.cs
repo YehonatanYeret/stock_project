@@ -17,6 +17,7 @@ public class StockContext(DbContextOptions<StockContext> options) : DbContext(op
 
     /// <summary>
     /// When the model is created, the configurations for the models are applied.
+    /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
