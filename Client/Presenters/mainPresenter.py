@@ -22,4 +22,4 @@ class MainPresenter(QObject):
 
     # def update_portfolio(self, portfolio_data):
         """Update portfolio page with current portfolio"""
-        self._view.portfolio_page.update_portfolio(portfolio_data)
+        # self._view.portfolio_page.update_portfolio(portfolio_data)

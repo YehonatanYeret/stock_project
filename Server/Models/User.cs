@@ -13,4 +13,7 @@ public class User
 
     [Required]
     public required string HashPassword { get; set; }
+
+    public required string Name { get; set; }
+
 }

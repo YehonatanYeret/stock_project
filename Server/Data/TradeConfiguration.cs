@@ -24,8 +24,5 @@ public class TradeConfiguration : IEntityTypeConfiguration<Trade>
 
         builder.Property(t => t.Price)
             .IsRequired();
-
-        builder.Property(t => t.Fees)
-            .IsRequired();
     }
 }
