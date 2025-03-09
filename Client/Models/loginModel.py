@@ -10,6 +10,7 @@ class LoginModel:
     def authenticate(self, username, password):
         data = {
             "email": username,
+            "name": "",
             "hashPassword": password
         }
 
@@ -39,13 +40,19 @@ class LoginModel:
         except requests.exceptions.RequestException:
             return False, None, "An unexpected error occurred. Please try again."
 
-    def signup(self, username, password):
+    def signup(self, email, username, password):
         # Validate password before sending request
         if len(password) < 6:
             return False, None, "Password must be at least 6 characters long."
 
+        if len(username) < 4:
+            return False, None, "Username must be at least 4 characters long."
+        if username.isnumeric():
+            return False, None, "Username cannot be all numbers."
+
         data = {
-            "email": username,
+            "email": email,
+            "name": username,
             "hashPassword": password
         }
 

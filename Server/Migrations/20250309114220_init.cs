@@ -20,12 +20,7 @@ namespace Server.Migrations
                     UserId = table.Column<int>(type: "int", nullable: false),
                     Symbol = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
-                    BuyPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    CurrentPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    DailyChange = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ProfitLoss = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    MarketCap = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PeRatio = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    BuyPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -38,12 +33,12 @@ namespace Server.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
                     Symbol = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Fees = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -57,7 +52,8 @@ namespace Server.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    HashPassword = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    HashPassword = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

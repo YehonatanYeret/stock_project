@@ -16,6 +16,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Email)
                .IsRequired();
 
+        builder.Property(u => u.Name)
+               .IsRequired();
+
         // password: required
         builder.Property(u => u.HashPassword)
                 .IsRequired();

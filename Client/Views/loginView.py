@@ -227,32 +227,37 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
 
     def setup_signup_form(self):
         """
-        Build the signup form with email and password inputs and a sign up button.
+        Build the signup form with username, email, and password inputs and a sign up button.
         """
         layout = QVBoxLayout(self.signup_widget)
         layout.setContentsMargins(40, 40, 40, 40)
-        
+
         title = QLabel("Create Account")
         title.setObjectName("title")
         layout.addWidget(title)
         layout.addSpacing(20)
-        
+
+        self.signup_username = QLineEdit()
+        self.signup_username.setPlaceholderText("Username")
+        self.signup_username.setMinimumHeight(45)
+        layout.addWidget(self.signup_username)
+
         self.signup_email = QLineEdit()
         self.signup_email.setPlaceholderText("Email")
         self.signup_email.setMinimumHeight(45)
         layout.addWidget(self.signup_email)
-        
+
         self.signup_password = QLineEdit()
         self.signup_password.setPlaceholderText("Password")
         self.signup_password.setEchoMode(QLineEdit.Password)
         self.signup_password.setMinimumHeight(45)
         layout.addWidget(self.signup_password)
-        
+
         signup_button = QPushButton("Sign Up")
         signup_button.setObjectName("form_button")
         signup_button.clicked.connect(self.signup)
         layout.addWidget(signup_button)
-        
+
         self.sign_up_message = QLabel()
         self.sign_up_message.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.sign_up_message)
@@ -354,11 +359,14 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
     def get_password(self):
         return self.login_password.text()
 
-    def get_signup_username(self):
+    def get_signup_email(self):
         return self.signup_email.text()
 
     def get_signup_password(self):
         return self.signup_password.text()
+
+    def get_signup_username(self):
+        return self.signup_username.text()
 
     def show_signin_message(self, message):
        """
