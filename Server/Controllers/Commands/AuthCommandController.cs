@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
-using Server.Models;
+using Server.Models.Domain;
+using Server.Models.DTOs.Commands;
 using Server.Utils;
 
-namespace Server.Controllers
+namespace Server.Controllers.Commands
 {
     [Route("api/auth/command")]
     [ApiController]
@@ -19,16 +20,13 @@ namespace Server.Controllers
 
         // POST: api/auth/signup
         [HttpPost("signup")]
-        public async Task<ActionResult<object>> SignUp([FromBody] User model)
+        public async Task<ActionResult<object>> SignUp([FromBody] SignUpRequest model)
         {
             try
             {
-                if (!ModelState.IsValid)
+                if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password) || string.IsNullOrWhiteSpace(model.Name))
                 {
-                    var error = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .FirstOrDefault()?.ErrorMessage;
-                    return BadRequest(new { message = error ?? "Invalid user data." });
+                    return BadRequest(new { message = "Email, password, and name are required." });
                 }
 
                 var existingUser = await _context.Users
@@ -39,13 +37,17 @@ namespace Server.Controllers
                     return BadRequest(new { message = "Email is already in use." });
                 }
 
-                var plainPassword = model.HashPassword;
-                model.HashPassword = HashUtils.HashPassword(plainPassword);
+                User user = new User
+                {
+                    Email = model.Email,
+                    HashPassword = HashUtils.HashPassword(model.Password),
+                    Name = model.Name,
+                };
 
-                _context.Users.Add(model);
+                _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                return Ok(new { userId = model.Id, message = "User registered successfully." });
+                return Ok(new { userId = user.Id, message = "User registered successfully." });
             }
             catch (Exception)
             {
@@ -53,5 +55,5 @@ namespace Server.Controllers
             }
         }
 
-   }
+    }
 }

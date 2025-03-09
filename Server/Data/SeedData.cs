@@ -1,6 +1,7 @@
 ﻿using Server.Models;
 using Microsoft.EntityFrameworkCore;
 using Server.Utils;
+using Server.Models.Domain;
 
 namespace Server.Data;
 

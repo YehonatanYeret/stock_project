@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
-using Server.Models;
+using Server.Models.Domain;
+using Server.Models.DTOs.Queries;
 using Server.Utils;
 using System.Threading.Tasks;
 
-namespace Server.Controllers
+namespace Server.Controllers.Queries
 {
     [Route("api/auth/query")]
     [ApiController]
@@ -20,9 +21,9 @@ namespace Server.Controllers
 
         // POST: api/auth/signin
         [HttpPost("signin")]
-        public async Task<ActionResult<object>> SignIn([FromBody] User model)
+        public async Task<ActionResult<object>> SignIn([FromBody] SignInRequest model)
         {
-            if (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.HashPassword))
+            if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
             {
                 return BadRequest(new { message = "Email and password are required." });
             }
@@ -33,7 +34,7 @@ namespace Server.Controllers
                     .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Email == model.Email);
 
-                if (user == null || !HashUtils.VerifyPassword(model.HashPassword, user.HashPassword))
+                if (user == null || !HashUtils.VerifyPassword(model.Password, user.HashPassword))
                 {
                     return Unauthorized(new { message = "Invalid credentials." });
                 }

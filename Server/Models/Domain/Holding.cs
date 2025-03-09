@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Server.Models;
+namespace Server.Models.Domain;
 
 
+/// <summary>
+/// this class represent the holding of a user. the user can have multiple holdings
+/// </summary>
 public class Holding
 {
     [Key]

@@ -9,9 +9,8 @@ class LoginModel:
 
     def authenticate(self, username, password):
         data = {
-            "email": username,
-            "name": "",
-            "hashPassword": password
+            "Email": username,
+            "Password": password
         }
 
         # Send request to server
@@ -53,7 +52,7 @@ class LoginModel:
         data = {
             "email": email,
             "name": username,
-            "hashPassword": password
+            "password": password
         }
 
         # Send request to server

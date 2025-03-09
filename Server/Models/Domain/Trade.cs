@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-namespace Server.Models;
+namespace Server.Models.Domain;
 
 public class Trade
 {
