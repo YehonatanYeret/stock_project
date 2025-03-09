@@ -393,9 +393,11 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
         self.sign_up_message.setText(message)
         if message:  # If there's an error message
             self.signup_email.setProperty("error", True)
+            self.signup_username.setProperty("error", True)
             self.signup_password.setProperty("error", True)
         else:
             self.signup_email.setProperty("error", False)
+            self.signup_username.setProperty("error", False)
             self.signup_password.setProperty("error", False)
         
         # Force style refresh
@@ -403,3 +405,6 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
         self.signup_email.style().polish(self.signup_email)
         self.signup_password.style().unpolish(self.signup_password)
         self.signup_password.style().polish(self.signup_password)
+        self.signup_username.style().unpolish(self.signup_username)
+        self.signup_username.style().polish(self.signup_username)
+
