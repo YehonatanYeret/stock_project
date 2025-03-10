@@ -1,18 +1,18 @@
 # File: views/main_view.py
-import os
+
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QStackedWidget,
                                QHBoxLayout, QPushButton)
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, QPoint
 from PySide6.QtGui import QIcon
 
 from Models.mainModels.portfolioModel import PortfolioModel
-from Models.mainModels.stockModel import StockModel
 from Presenters.mainPresenters.portfolioPresenter import PortfolioPresenter
-from Presenters.mainPresenters.stockPresenter import StockPresenter
 from Views.mainViews.home_page import HomePage
 from Views.mainViews.portfolio_page import PortfolioPage
 from Views.mainViews.stock_search_page import StockSearchPage
 
+
+# File: views/main_view.py
 
 class MainView(QWidget):
     def __init__(self, parent=None):
@@ -21,10 +21,15 @@ class MainView(QWidget):
         # Initialize portfolio model
         self.portfolio_model = PortfolioModel()
 
-        self.setup_ui()  # Now self.portfolio_page is created
+        # Create PortfolioPage first
+        self.portfolio_page = PortfolioPage()
 
-        # Initialize portfolio presenter after UI is set up
+        # Initialize portfolio presenter with the created PortfolioPage
         self.portfolio_presenter = PortfolioPresenter(self.portfolio_model, self.portfolio_page)
+
+        # Set the presenter in the PortfolioPage
+        self.portfolio_page.set_presenter(self.portfolio_presenter)
+        self.setup_ui()
 
     def setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -46,14 +51,7 @@ class MainView(QWidget):
 
         # Create Pages
         self.home_page = HomePage()
-        # self.home_page.presenter = MainPresenter(MainModel(), self.home_page) need to be implemented
-
-        self.portfolio_page = PortfolioPage()
-        self.portfolio_page.presenter = PortfolioPresenter(PortfolioModel(), self.portfolio_page)
-
-        # Create Stock Search Page with mvp pattern
         self.stock_search_page = StockSearchPage()
-        self.stock_search_page.presenter = StockPresenter(StockModel(), self.stock_search_page)
 
         self.stacked_widget.addWidget(self.home_page)
         self.stacked_widget.addWidget(self.portfolio_page)

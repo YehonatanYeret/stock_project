@@ -23,3 +23,7 @@ class MainPresenter(QObject):
     # def update_portfolio(self, portfolio_data):
         """Update portfolio page with current portfolio"""
         # self._view.portfolio_page.update_portfolio(portfolio_data)
+
+    def set_user(self, user_id):
+        """Pass user_id to the model."""
+        self._model.set_user_id(user_id)

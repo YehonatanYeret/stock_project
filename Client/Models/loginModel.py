@@ -7,9 +7,9 @@ class LoginModel:
         self.api_signin_url = f"{api_url}/query/signin"
         self.api_signup_url = f"{api_url}/command/signup"
 
-    def authenticate(self, username, password):
+    def authenticate(self, email, password):
         data = {
-            "Email": username,
+            "Email": email,
             "Password": password
         }
 
@@ -50,9 +50,9 @@ class LoginModel:
             return False, None, "Username cannot be all numbers."
 
         data = {
-            "email": email,
-            "name": username,
-            "password": password
+            "Email": email,
+            "Name": username,
+            "Password": password
         }
 
         # Send request to server

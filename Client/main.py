@@ -14,7 +14,7 @@ from Presenters.mainPresenter import MainPresenter
 
 import sys
 
-
+# File: main.py
 class AppController:
     def __init__(self):
         self.app = QApplication(sys.argv)
@@ -51,7 +51,9 @@ class AppController:
 
     def switch_to_dashboard(self, user_id):
         """Switch to the main dashboard view."""
-        # You could pass user_id to MainModel if needed
+        # Set the user_id in the portfolio model
+        self.main_window.portfolio_model.set_user_id(user_id)
+        self.main_window.presenter.set_user(user_id)
         self.stack.setCurrentWidget(self.main_window)
 
     def run(self):
