@@ -13,9 +13,9 @@ namespace Server.Controllers.Commands;
 public class TransactionCommandController : Controller
 {
     private readonly StockContext _context;
-    private readonly IPolygonGateway _polygonGateway;
+    private readonly IStocksGateway _polygonGateway;
 
-    public TransactionCommandController(StockContext context, IPolygonGateway polygonGateway)
+    public TransactionCommandController(StockContext context, IStocksGateway polygonGateway)
     {
         _context = context;
         _polygonGateway = polygonGateway;

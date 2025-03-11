@@ -8,9 +8,9 @@ namespace Server.Controllers.Queries
     [ApiController]
     public class TransactionQueryController : ControllerBase
     {
-        private readonly IPolygonGateway _polygonGateway;
+        private readonly IStocksGateway _polygonGateway;
 
-        public TransactionQueryController(IPolygonGateway polygonGateway)
+        public TransactionQueryController(IStocksGateway polygonGateway)
         {
             _polygonGateway = polygonGateway;
         }

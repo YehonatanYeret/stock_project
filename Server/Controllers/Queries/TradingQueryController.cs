@@ -12,9 +12,9 @@ namespace Server.Controllers;
 public class TradingQueryController : ControllerBase
 {
     private readonly StockContext _context;
-    private readonly IPolygonGateway _polygonGateway;
+    private readonly IStocksGateway _polygonGateway;
 
-    public TradingQueryController(StockContext context, IPolygonGateway polygonGateway)
+    public TradingQueryController(StockContext context, IStocksGateway polygonGateway)
     {
         _context = context;
         _polygonGateway = polygonGateway;

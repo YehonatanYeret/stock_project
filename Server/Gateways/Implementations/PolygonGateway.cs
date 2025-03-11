@@ -1,86 +1,103 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Newtonsoft.Json.Linq;
 using Server.Gateways.Interfaces;
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+using Server.Models.DTOs;
 
 namespace Server.Gateways.Implementations
 {
-    public class PolygonGateway : IPolygonGateway
+    public class PolygonGateway : IStocksGateway
     {
         private readonly string _polygonApiKey;
+        private readonly HttpClient _httpClient;
+        private const string BaseUrl = "https://api.polygon.io";
 
-        // Constructor to initialize the Polygon API key from app settings
         public PolygonGateway(IConfiguration configuration)
         {
             _polygonApiKey = configuration["ApiKeys:polygon"]
-                             ?? throw new InvalidOperationException("Polygon API key is missing from configuration.");
+                ?? throw new InvalidOperationException("Polygon API key is missing from configuration.");
+            _httpClient = new HttpClient();
         }
-
-        /// <summary>
-        /// This method fetches the closing price for the given ticker symbol on a specific date.
-        /// </summary>
-        /// <param name="ticker">The stock ticker symbol</param>
-        /// <param name="date">The date to fetch the closing price for</param>
-        /// <returns>The closing price for the given ticker on the specified date</returns>
         public async Task<decimal> GetSellPriceAsync(string ticker, DateTime date)
         {
-            string url = $"https://api.polygon.io/v2/aggs/ticker/{ticker}/prev?adjusted=true&apiKey={_polygonApiKey}";
-            Console.WriteLine($"Fetching data from: {url}");
+            var endpoint = $"/v2/aggs/ticker/{ticker}/prev?adjusted=true&apiKey={_polygonApiKey}";
 
-            using (var client = new HttpClient())
+            var response = await SendRequestAsync(endpoint);
+            var json = JObject.Parse(response);
+
+            if (json["results"] is JArray results && results.Count > 0)
             {
-                HttpResponseMessage response = await client.GetAsync(url);
+                return results[0]["c"]?.Value<decimal>()
+                    ?? throw new InvalidOperationException("Closing price not found.");
+            }
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new InvalidOperationException($"Error fetching data from Polygon API. Status: {response.StatusCode}");
-                }
+            throw new InvalidOperationException("No results found in API response.");
+        }
 
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                var json = JObject.Parse(jsonResponse);
-                Console.WriteLine($"API Response: {json}");
+        public async Task<string> GetAggregateDataAsync(string ticker, string startDate, string endDate)
+        {
+            var endpoint = $"/v2/aggs/ticker/{ticker}/range/1/day/{startDate}/{endDate}?apiKey={_polygonApiKey}";
 
-                if (json["results"] is JArray results && results.Count > 0)
-                {
-                    decimal closePrice = results[0]["c"]?.Value<decimal>() ?? throw new InvalidOperationException("Closing price not found.");
-                    return closePrice;
-                }
-
-                throw new InvalidOperationException("No results found in API response.");
+            try
+            {
+                return await SendRequestAsync(endpoint);
+            }
+            catch (HttpRequestException ex)
+            {
+                return $"Error fetching data from Polygon API: {ex.Message}";
             }
         }
 
-        /// <summary>
-        /// This method fetches the aggregate data for the given ticker symbol from the Polygon API.
-        /// </summary>
-        /// <param name="ticker">The stock ticker symbol</param>
-        /// <param name="startDate">The start date for the data range</param>
-        /// <param name="endDate">The end date for the data range</param>
-        /// <returns>A JSON string containing the aggregate data for the given ticker symbol</returns>
-        public async Task<string> GetAggregateDataAsync(string ticker, string startDate, string endDate)
+        public async Task<TickerMetadataDto> GetTickerMetadataAsync(string ticker)
         {
-            // Construct the URL to get data from the Polygon API
-            string url = $"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/1/day/{startDate}/{endDate}?apiKey={_polygonApiKey}";
+            var endpoint = $"/v3/reference/tickers/{ticker}?apiKey={_polygonApiKey}";
 
-            using (var client = new HttpClient())
+            var response = await SendRequestAsync(endpoint);
+            var json = JObject.Parse(response);
+
+            if (json["results"] is not null)
             {
-                // Send the GET request to the Polygon API
-                HttpResponseMessage response = await client.GetAsync(url);
-
-                if (response.IsSuccessStatusCode)
+                var result = json["results"];
+                return new TickerMetadataDto
                 {
-                    // Read the response as JSON string
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    return jsonResponse;
-                }
-                else
-                {
-                    // Handle errors by returning a failure message (or you can throw an exception)
-                    return $"Error fetching data from Polygon API. Status: {response.StatusCode}";
-                }
+                    Ticker = result["ticker"]?.Value<string>(),
+                    Name = result["name"]?.Value<string>(),
+                    Exchange = result["primary_exchange"]?.Value<string>(),
+                    Industry = result["industry"]?.Value<string>(),
+                    Logo = result["logo"]?.Value<string>()
+                };
             }
+
+            throw new InvalidOperationException("No results found in API response.");
+        }
+
+        public async Task<string> GetTickerImageUrlAsync(string ticker)
+        {
+            try
+            {
+                var metadata = await GetTickerMetadataAsync(ticker);
+                return !string.IsNullOrEmpty(metadata?.Logo)
+                    ? metadata.Logo
+                    : GetDefaultLogoUrl(ticker);
+            }
+            catch (Exception)
+            {
+                return GetDefaultLogoUrl(ticker);
+            }
+        }
+
+        private static string GetDefaultLogoUrl(string ticker)
+        {
+            // Implementation for a default logo based on ticker
+            return $"https://your-default-logo-service.com/logo/{ticker}.png";
+        }
+
+        private async Task<string> SendRequestAsync(string endpoint)
+        {
+            var url = $"{BaseUrl}{endpoint}";
+            var response = await _httpClient.GetAsync(url);
+
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync();
         }
     }
 }
