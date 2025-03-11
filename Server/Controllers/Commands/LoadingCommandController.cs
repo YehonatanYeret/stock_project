@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
-using Server.Gateways.Interfaces;
 using Server.Models.Domain;
-using Server.Models.DTOs.Commands;
+using Server.Utils;
 
 namespace Server.Controllers.Commands;
 
@@ -27,7 +26,14 @@ public class LoadingCommandController : Controller
         {
             return BadRequest(new { message = "User not found." });
         }
-        user.PortfolioValue += amount;
+        try
+        {
+            user.PortfolioValue = PortfolioValueUtils.CalculatePortfolioValue(user.PortfolioValue, amount);
+        }
+        catch (InvalidOperationException e)
+        {
+            return BadRequest(new { message = e.Message });
+        }
         await _context.SaveChangesAsync();
         return Ok(new { message = "Successfully loaded funds." });
     }

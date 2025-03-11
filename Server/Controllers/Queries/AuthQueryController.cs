@@ -39,7 +39,7 @@ namespace Server.Controllers.Queries
                     return Unauthorized(new { message = "Invalid credentials." });
                 }
 
-                return Ok(new { userId = user.Id, message = "User logged in successfully." });
+                return Ok(new { user, message = "User logged in successfully." });
             }
             catch
             {

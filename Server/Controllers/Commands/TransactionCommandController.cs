@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Server.Gateways.Interfaces;
 using Server.Models.Domain;
 using Server.Models.DTOs.Commands;
+using Server.Utils;
 
 namespace Server.Controllers.Commands;
 
@@ -33,10 +34,10 @@ public class TransactionCommandController : Controller
         try
         {
             // Find the holding by HoldingId
-            var holding = await _context.Holdings
+            Holding? holding = await _context.Holdings
                 .FirstOrDefaultAsync(h => h.Id == model.HoldingId);
 
-            if (holding == null)
+            if (holding is null)
             {
                 return BadRequest(new { message = "Holding not found." });
             }
@@ -67,14 +68,21 @@ public class TransactionCommandController : Controller
             {
                 UserId = holding.UserId,
                 Symbol = holding.Symbol,
-                Date = DateTime.UtcNow,
+                Date = model.SellDate,
                 Type = Enums.historyType.Sell,
                 Quantity = model.Quantity,
                 Price = currentPrice
             };
 
             _context.Trades.Add(trade);
-            _context.Users.FirstOrDefault(u => u.Id == holding.UserId)!.PortfolioValue += profitLoss;
+
+            // Update the user's profit and portfolio value
+            User user = _context.Users.FirstOrDefault(u => u.Id == holding.UserId)!;
+
+            // The profit/loss is added to the user's profit and the portfolio value is updated by the amount of the sale
+            user.profit += profitLoss;
+            user.PortfolioValue = PortfolioValueUtils.CalculatePortfolioValue(user.PortfolioValue, currentPrice * model.Quantity);
+
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Sell trade completed successfully.", profitLoss });
@@ -100,14 +108,25 @@ public class TransactionCommandController : Controller
             // Fetch the current stock price from Polygon API
             decimal currentPrice = await _polygonGateway.GetSellPriceAsync(model.Symbol, model.BuyDate);
 
+            User? user = _context.Users.FirstOrDefault(u => u.Id == model.UserId);
+            if (user is null)
+            {
+                return BadRequest(new { message = "User not found." });
+            }
+
+            // Check if the user has enough funds to buy and update the portfolio value
+            decimal cost = model.Quantity * currentPrice;
+            user.PortfolioValue = PortfolioValueUtils.CalculatePortfolioValue(user.PortfolioValue, -cost);
+
+
             // Find existing holding for the user and stock
-            var holding = await _context.Holdings
+            Holding? holding = await _context.Holdings
                 .FirstOrDefaultAsync(h => h.UserId == model.UserId && h.Symbol == model.Symbol);
 
-            if (holding != null)
+            if (holding is not null)
             {
                 // Update existing holding (average buy price)
-                decimal totalCost = holding.Quantity * holding.BuyPrice + model.Quantity * currentPrice;
+                decimal totalCost = holding.Quantity * holding.BuyPrice + cost;
                 holding.Quantity += model.Quantity;
                 holding.BuyPrice = totalCost / holding.Quantity; // New average price
             }
@@ -129,7 +148,7 @@ public class TransactionCommandController : Controller
             {
                 UserId = model.UserId,
                 Symbol = model.Symbol,
-                Date = DateTime.UtcNow,
+                Date = model.BuyDate,
                 Type = Enums.historyType.Buy,
                 Quantity = model.Quantity,
                 Price = currentPrice
@@ -137,7 +156,6 @@ public class TransactionCommandController : Controller
 
             _context.Trades.Add(trade);
 
-            _context.Users.FirstOrDefault(u => u.Id == holding.UserId)!.PortfolioValue -= model.Quantity * currentPrice;
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Buy trade completed successfully.", holdingId = holding.Id });
