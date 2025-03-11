@@ -14,6 +14,7 @@ class PortfolioModel(QObject):
         super().__init__()
         self.use_api = use_api
         self.api_base_url = "http://localhost:5000/api"
+        self._user_id = None
         self._generate_dummy_data()
 
     def _generate_dummy_data(self):
@@ -199,3 +200,9 @@ class PortfolioModel(QObject):
 
         start_date = (today - timedelta(days=days)).strftime('%Y-%m-%d')
         return [point for point in data if point['date'] >= start_date]
+
+    def set_user_id(self, user_id):
+            self._user_id = user_id
+
+    def get_user_id(self):
+        return self._user_id

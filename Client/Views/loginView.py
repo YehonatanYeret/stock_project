@@ -353,7 +353,7 @@ class LoginWindow(QMainWindow, ILogin, metaclass=CombinedMeta):
         self.is_login = not self.is_login
 
     # ILogin interface methods
-    def get_username(self):
+    def get_email(self):
         return self.login_email.text()
 
     def get_password(self):

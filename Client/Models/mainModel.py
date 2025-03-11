@@ -1,5 +1,5 @@
-
 from PySide6.QtCore import QObject, Signal
+
 
 class MainModel(QObject):
     stock_data_updated = Signal(dict)
@@ -9,6 +9,15 @@ class MainModel(QObject):
         super().__init__()
         self._portfolio = []
         self._stocks = {}
+        self.user_id = None  # Default value
+
+    def set_user_id(self, user_id):
+        """Store the logged-in user_id."""
+        self.user_id = user_id
+
+    def get_user_id(self):
+        """Return the stored user_id."""
+        return self.user_id
 
     # def add_to_portfolio(self, stock_info):
     #     """Placeholder for adding stock to portfolio"""

@@ -228,3 +228,7 @@ class PortfolioPresenter(QObject):
         # Update the chart
         if filtered_data:
             self.update_chart_data(filtered_data)
+
+    def get_user_id(self):
+        """Return the user ID from the model."""
+        return self._model.get_user_id()
