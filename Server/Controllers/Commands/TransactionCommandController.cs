@@ -74,7 +74,7 @@ public class TransactionCommandController : Controller
             };
 
             _context.Trades.Add(trade);
-
+            _context.Users.FirstOrDefault(u => u.Id == holding.UserId)!.PortfolioValue += profitLoss;
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Sell trade completed successfully.", profitLoss });
@@ -137,6 +137,7 @@ public class TransactionCommandController : Controller
 
             _context.Trades.Add(trade);
 
+            _context.Users.FirstOrDefault(u => u.Id == holding.UserId)!.PortfolioValue -= model.Quantity * currentPrice;
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Buy trade completed successfully.", holdingId = holding.Id });
