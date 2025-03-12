@@ -1,55 +1,81 @@
 import sys
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QHBoxLayout, QStackedWidget
+)
+from PySide6.QtCore import Signal
 
-from models.user_model import UserModel
-from models.portfolio_model import PortfolioModel
-from models.stock_model import StockModel
-
-from views.auth_views import AuthStackedWidget
-from views.main_view import MainWindow
-from views.portfolio_view import PortfolioView
-from views.stock_view import StockView
-
+from views.auth_view import Auth_view
 from presenters.auth_presenter import AuthPresenter
-from presenters.main_presenter import MainPresenter
-from presenters.portfolio_presenter import PortfolioPresenter
-from presenters.stock_presenter import StockPresenter
+from models.auth_model import AuthModel
+from views.main_view import Main_view
+
 
 from services.api_service import ApiService
 
+from presenters.main_presenter import MainPresenter
+
+
+class MainWindow(QMainWindow):
+    """Main application window"""
+    # Authentication signals
+    login_requested = Signal(str, str)
+    register_requested = Signal(str, str, str)
+    logout_requested = Signal()
+    
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Stock Portfolio Manager")
+        
+        # Create central widget and main layout
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.main_layout = QHBoxLayout(self.central_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        
+        # Create authentication stack
+        self.auth_view = Auth_view()
+        self.auth_view.presenter = AuthPresenter(self.auth_view, AuthModel(), ApiService())
+        self.auth_view.completed.connect(self.show_app)
+        #TODO: connect logout_requested signal to show_auth
+        
+        # Main application widget
+        self.app_widget = Main_view()
+        
+        # Main stacked widget to switch between auth and app
+        self.main_stack = QStackedWidget()
+        self.main_stack.addWidget(self.auth_view)
+        self.main_stack.addWidget(self.app_widget)
+        
+        # Add main stack to main layout
+        self.main_layout.addWidget(self.main_stack)
+        
+        # Start with auth screen
+        self.show_auth()
+        
+        # Set window size
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #F8F9FA;
+            }
+        """)
+    
+    def show_auth(self):
+        """Show the authentication screen"""
+        self.main_stack.setCurrentWidget(self.auth_view)
+    
+    def show_app(self):
+        """Show the main application screen"""
+        self.main_stack.setCurrentWidget(self.app_widget)
 
 def main():
     # Create application
     app = QApplication(sys.argv)
     
-    # Create API service
-    api_service = ApiService()
-    
-    # Create models
-    user_model = UserModel()
-    portfolio_model = PortfolioModel()
-    stock_model = StockModel()
-    
-    # Create main window and views
+    # Create views
     main_window = MainWindow()
-    auth_view = AuthStackedWidget()
-    portfolio_view = PortfolioView()
-    stock_view = StockView()
-    
-    # Set up views in main window
-    main_window.set_auth_widget(auth_view)
-    main_window.set_portfolio_widget(portfolio_view)
-    main_window.set_stocks_widget(stock_view)
-    
-    # Create presenters
-    auth_presenter = AuthPresenter(auth_view, main_window, user_model, api_service)
-    main_presenter = MainPresenter(main_window, user_model)
-    portfolio_presenter = PortfolioPresenter(portfolio_view, user_model, portfolio_model, api_service)
-    stock_presenter = StockPresenter(stock_view, user_model, stock_model, api_service)
-    
-    # Initialize application
-    main_presenter.initialize_app()
-    
+
+
     # Show main window in full screen
     main_window.showMaximized()
     

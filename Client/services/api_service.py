@@ -33,16 +33,23 @@ class ApiService:
         """Authenticate a user with the API"""
         url = self.get_url("login")
         data = {
-            "email": email,
-            "password": password
+            "Email": email,
+            "Password": password
         }
         try:
             response = requests.post(url, json=data, headers=self.get_headers())
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Login error: {str(e)}")
-            return {"error": str(e)}
+            if response.status_code == 200:
+                return True, response.json()
+            elif response.status_code == 400 or response.status_code == 401:
+                error_data = response.json()
+                return False, self._get_first_error_message(error_data, "Invalid username or password.")
+            return False, "An error occurred. Please try again."
+        except requests.exceptions.ConnectionError:
+            return False, "Unable to connect to the server. Please check your internet connection."
+        except requests.exceptions.Timeout:
+            return False, "The request timed out. Please try again."
+        except requests.exceptions.RequestException:
+            return False, "An unexpected error occurred. Please try again."
     
     def register(self, email, username, password):
         """Register a new user with the API"""
@@ -54,11 +61,18 @@ class ApiService:
         }
         try:
             response = requests.post(url, json=data, headers=self.get_headers())
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Registration error: {str(e)}")
-            return {"error": str(e)}
+            if response.status_code == 200:
+                return True, response.json()
+            elif response.status_code == 400:
+                error_data = response.json()
+                return False, self._get_first_error_message(error_data, "An error occurred during registration. Please try again.")
+            return False, "An error occurred during registration. Please try again."
+        except requests.exceptions.ConnectionError:
+            return False, "Unable to connect to the server. Please check your internet connection."
+        except requests.exceptions.Timeout:
+            return False, "The request timed out. Please try again."
+        except requests.exceptions.RequestException:
+            return False, "An unexpected error occurred. Please try again."
     
     def get_user_profile(self):
         """Get the authenticated user's profile"""
@@ -165,3 +179,13 @@ class ApiService:
         except requests.exceptions.RequestException as e:
             print(f"Execute transaction error: {str(e)}")
             return {"error": str(e)}
+
+    def _get_first_error_message(self, error_data, default_message):
+        """
+        Helper function to extract the first error message from the validation errors.
+        """
+        if 'errors' in error_data:
+            validation_errors = error_data['errors']
+            for field, errors in validation_errors.items():
+                return errors[0]  # Return the first error for the first field
+        return default_message

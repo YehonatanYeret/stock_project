@@ -73,23 +73,32 @@ class StyledLineEdit(QLineEdit):
         """)
 
 class StyledLabel(QLabel):
-    def __init__(self, text, is_title=False, parent=None):
+    def __init__(self, text, is_title=False, size=None, color=None, parent=None):
         super().__init__(text, parent)
-        if is_title:
-            self.setStyleSheet("""
-                QLabel {
-                    font-size: 18px;
-                    font-weight: bold;
-                    color: #333333;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QLabel {
-                    font-size: 14px;
-                    color: #555555;
-                }
-            """)
+
+        # Default values
+        default_size = 18 if is_title else 14
+        default_weight = "bold" if is_title else "normal"
+        default_color = "#333333" if is_title else "#555555"
+
+        # Use provided values or defaults
+        font_size = size or default_size
+        font_weight = default_weight
+        font_color = color or default_color
+
+        # Apply stylesheet
+        self.setStyleSheet(f"""
+            QLabel {{
+                font-size: {font_size}px;
+                font-weight: {font_weight};
+                color: {font_color};
+                background: transparent;  /* Ensure no background */
+                border: none;  /* Remove any unexpected borders */
+                padding: 0px;  /* Remove unwanted padding */
+                margin: 0px;  /* Avoid extra spacing */
+            }}
+        """)
+
 
 class Card(QFrame):
     def __init__(self, parent=None):
