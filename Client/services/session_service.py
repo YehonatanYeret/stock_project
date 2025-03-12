@@ -17,7 +17,7 @@ class SessionService:
         """Save the user session to a file"""
         session_data = {
             "user_id": user_id,
-            "token": token
+            "token" : token
         }
         try:
             with open(self._session_file, 'w') as f:

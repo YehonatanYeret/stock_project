@@ -6,7 +6,7 @@ class ApiService:
     def __init__(self):
         self.base_url = API_BASE_URL
         self.endpoints = ENDPOINTS
-        self.token = None
+        self.token = "1"
     
     def set_token(self, token):
         """Set the authentication token for API requests"""
