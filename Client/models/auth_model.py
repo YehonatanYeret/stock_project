@@ -1,0 +1,35 @@
+import requests
+from PySide6.QtCore import Signal
+from PySide6.QtCore import QObject
+from services.api_service import ApiService
+
+api_url = 'http://localhost:5039/api/auth'
+
+class AuthModel(QObject):
+    completed = Signal()
+    def __init__(self):
+        super().__init__()
+        self.api_service = ApiService()
+
+    def authenticate(self, email, password):
+        status, msg = self.api_service.login(email, password)
+        if status:
+            self.completed.emit()
+        else:
+            return msg
+
+    def signup(self, email, username, password):
+        # Validate password before sending request
+        if len(password) < 6:
+            return False, None, "Password must be at least 6 characters long."
+
+        if len(username) < 4:
+            return False, None, "Username must be at least 4 characters long."
+        if username.isnumeric():
+            return False, None, "Username cannot be all numbers."
+
+        status, msg = self.api_service.register(email, username, password)
+        if status:
+            self.completed.emit()
+        else:
+            return msg
