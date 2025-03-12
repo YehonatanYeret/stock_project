@@ -10,7 +10,7 @@ from PySide6.QtCharts import QChart, QChartView, QPieSeries
 from views.components.styled_widgets import (
     StyledButton, ContentCard, PageHeader, SectionTitle
 )
-from views.components.chart import StockChart
+from views.components.chart import StockPerformanceChart
 
 
 class PortfolioView(QWidget):

@@ -10,7 +10,7 @@ from PySide6.QtGui import QColor, QFont
 from views.components.styled_widgets import (
     StyledButton, ContentCard, PageHeader, SectionTitle
 )
-from views.components.chart import StockChart
+from views.components.chart import StockPerformanceChart
 
 
 class StockView(QWidget):
@@ -349,4 +349,159 @@ class StockView(QWidget):
         
         # Add index labels to grid
         row = 0
-        self.
+        self.indices_grid.addWidget(self.sp500_label, row, 0)
+        self.indices_grid.addWidget(self.sp500_value, row, 1)
+        self.indices_grid.addWidget(self.sp500_change, row, 2)
+
+        row += 1
+        self.indices_grid.addWidget(self.dow_label, row, 0)
+        self.indices_grid.addWidget(self.dow_value, row, 1)
+        self.indices_grid.addWidget(self.dow_change, row, 2)
+
+        row += 1
+        self.indices_grid.addWidget(self.nasdaq_label, row, 0)
+        self.indices_grid.addWidget(self.nasdaq_value, row, 1)
+        self.indices_grid.addWidget(self.nasdaq_change, row, 2)
+
+        self.indices_card.content_layout.addLayout(self.indices_grid)
+        self.watchlist_layout.addWidget(self.indices_card)
+
+        # Add widgets to splitter
+        self.splitter.addWidget(self.details_widget)
+        self.splitter.addWidget(self.watchlist_widget)
+
+        self.scroll_layout.addWidget(self.splitter)
+
+    def on_search(self):
+        """Emit signal with search query"""
+        search_query = self.search_input.text().strip()
+        if search_query:
+            self.search_stock_requested.emit(search_query)
+        else:
+            QMessageBox.information(self, "Search", "Please enter a stock symbol or company name to search")
+
+    def on_period_changed(self, index):
+        """Emit signal with selected period index"""
+        self.refresh_data_requested.emit()
+
+    def on_buy_stock(self):
+        """Show buy stock form"""
+        self.buy_card.setVisible(True)
+        self.buy_button.setVisible(False)
+        self.watchlist_button.setVisible(False)
+
+    def on_toggle_watchlist(self):
+        """Toggle watchlist status"""
+        if self.watchlist_button.text() == "Add to Watchlist":
+            self.add_to_watchlist_requested.emit(self.stock_id)
+        else:
+            self.remove_from_watchlist_requested.emit(self.stock_id)
+
+
+    def on_confirm_purchase(self):
+        """Handle buy stock confirmation"""
+        shares = self.shares_input.text().strip()
+        if shares:
+            self.buy_stock_requested.emit(self.stock_id, float(shares), self.current_price)
+        else:
+            QMessageBox.information(self, "Buy Stock", "Please enter the number of shares to purchase")
+
+    def on_cancel_purchase(self):
+        """Hide buy stock form"""
+        self.buy_card.setVisible(False)
+        self.buy_button.setVisible(True)
+        self.watchlist_button.setVisible(True)
+
+    def update_total_cost(self):
+        """Update total cost based on number of shares"""
+        shares = self.shares_input.text().strip()
+        if shares:
+            total_cost = float(shares) * self.current_price
+            self.total_display.setText(f"${total_cost:.2f}")
+        else:
+            self.total_display.setText("$0.00")
+
+    def show_error(self, message):
+        """Display an error message"""
+        QMessageBox.critical(self, "Error", message)
+
+    def update_stock_details(self, stock_data):
+        """Update stock details with new data"""
+        self.stock_id = stock_data.get("symbol")
+        self.company_name.setText(stock_data.get("name"))
+        self.current_price.setText(f"${stock_data.get('price', 0):,.2f}")
+        self.change.setText(stock_data.get("change", ""))
+        self.open_price.setText(f"${stock_data.get('open', 0):,.2f}")
+        self.high_price.setText(f"${stock_data.get('high', 0):,.2f}")
+        self.low_price.setText(f"${stock_data.get('low', 0):,.2f}")
+        self.volume.setText(f"{stock_data.get('volume', 0):,}")
+        self.market_cap.setText(f"${stock_data.get('market_cap', 0):,.0f}")
+        self.pe_ratio.setText(str(stock_data.get('pe_ratio', "")))
+        self.dividend.setText(str(stock_data.get('dividend_yield', "")))
+        # Update watchlist button text
+        if stock_data.get('watchlisted'):
+            self.watchlist_button.setText("Remove from Watchlist")
+        else:
+            self.watchlist_button.setText("Add to Watchlist")
+        # Update buy form price
+        self.price_display.setText(f"${stock_data.get('price', 0):,.2f}")
+        self.update_total_cost()
+
+        
+    def update_stock_chart(self, dates, values):
+        """Update stock price chart with historical data"""
+        self.stock_chart.plot(dates, values)
+
+    def update_watchlist(self, watchlist_data):
+        """Update watchlist table with new data"""
+        self.watchlist_table.setRowCount(len(watchlist_data))
+        for row, stock_data in enumerate(watchlist_data):
+            symbol_item = QTableWidgetItem(stock_data.get("symbol"))
+            name_item = QTableWidgetItem(stock_data.get("name"))
+            price_item = QTableWidgetItem(f"${stock_data.get('price', 0):,.2f}")
+            change_item = QTableWidgetItem(stock_data.get("change"))
+            action_button = QPushButton("View")
+            action_button.clicked.connect(lambda _, s=stock_data.get("symbol"): self.view_stock_details_requested.emit(s))
+            self.watchlist_table.setItem(row, 0, symbol_item)
+            self.watchlist_table.setItem(row, 1, name_item)
+            self.watchlist_table.setItem(row, 2, price_item)
+            self.watchlist_table.setItem(row, 3, change_item)
+            self.watchlist_table.setCellWidget(row, 4, action_button)
+
+    def update_market_indices(self, indices_data):
+        """Update market indices with new data"""
+        self.sp500_value.setText(f"${indices_data.get('sp500', 0):,.2f}")
+        self.sp500_change.setText(indices_data.get('sp500_change', ""))
+        self.dow_value.setText(f"${indices_data.get('dow', 0):,.2f}")
+        self.dow_change.setText(indices_data.get('dow_change', ""))
+        self.nasdaq_value.setText(f"${indices_data.get('nasdaq', 0):,.2f}")
+        self.nasdaq_change.setText(indices_data.get('nasdaq_change', ""))
+
+    def clear_search_input(self):
+        """Clear the search input field"""
+        self.search_input.clear()
+
+    def clear_stock_details(self):
+        """Clear the stock details view"""
+        self.company_name.clear()
+
+        self.current_price.clear()
+        self.change.clear()
+        self.open_price.clear()
+        self.high_price.clear()
+        self.low_price.clear()
+        self.volume.clear()
+        self.market_cap.clear()
+        self.pe_ratio.clear()
+        self.dividend.clear()
+        self.watchlist_button.setVisible(False)
+        self.buy_button.setVisible(False)
+        self.details_card.setVisible(False)
+        self.chart_card.setVisible(False)
+        self.buy_card.setVisible(False)
+
+    def clear_watchlist(self):
+        """Clear the watchlist table"""
+        self.watchlist_table.setRowCount(0)
+
+
