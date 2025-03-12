@@ -80,7 +80,7 @@ public class TransactionCommandController : Controller
             User user = _context.Users.FirstOrDefault(u => u.Id == holding.UserId)!;
 
             // The profit/loss is added to the user's profit and the portfolio value is updated by the amount of the sale
-            user.profit += profitLoss;
+            user.Profit += profitLoss;
             user.PortfolioValue = PortfolioValueUtils.CalculatePortfolioValue(user.PortfolioValue, currentPrice * model.Quantity);
 
             await _context.SaveChangesAsync();

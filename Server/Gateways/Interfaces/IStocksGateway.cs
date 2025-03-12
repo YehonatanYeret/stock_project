@@ -33,6 +33,6 @@ namespace Server.Gateways.Interfaces
         /// </summary>
         /// <param name="ticker">the given ticker</param>
         /// <returns>the url</returns>
-        Task<string> GetTickerImageUrlAsync(string ticker);
+        Task<string> GetTickerImageBase64Async(string ticker);
     }
 }

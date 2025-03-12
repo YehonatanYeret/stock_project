@@ -21,6 +21,6 @@ public class User
     public decimal PortfolioValue { get; set; } = 0;
 
     [Column(TypeName = "decimal(18,2)")]  // Ensures proper precision in the database
-    public decimal profit { get; set; } = 0;
+    public decimal Profit { get; set; } = 0;
 
 }
