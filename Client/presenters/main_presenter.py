@@ -16,23 +16,6 @@ class MainPresenter:
         # Register as observer to receive updates from user model
         self.user_model.register_observer(self)
         
-        # Connect signals from main window
-        self.connect_signals()
-    
-    def connect_signals(self):
-        """Connect signals from the main window to handler methods"""
-        # Authentication signals
-        self.view.login_requested.connect(self.handle_login)
-        self.view.register_requested.connect(self.handle_register)
-        self.view.logout_requested.connect(self.handle_logout)
-        
-        # Navigation signals
-        self.view.dashboard_requested.connect(lambda: self.handle_navigation("dashboard"))
-        self.view.portfolio_requested.connect(lambda: self.handle_navigation("portfolio"))
-        self.view.stocks_requested.connect(lambda: self.handle_navigation("stocks"))
-        self.view.transactions_requested.connect(lambda: self.handle_navigation("transactions"))
-        self.view.settings_requested.connect(lambda: self.handle_navigation("settings"))
-    
     def initialize_app(self):
         """Initialize the application based on authentication status"""
         if self.user_model.is_authenticated:

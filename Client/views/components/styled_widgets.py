@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import (
-    QPushButton, QLineEdit, QLabel, QFrame
+    QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout
 )
-
-from PySide6.QtWidgets import QVBoxLayout
 
 
 class PrimaryButton(QPushButton):
@@ -14,7 +12,7 @@ class PrimaryButton(QPushButton):
                 color: white;
                 border: none;
                 border-radius: 4px;
-                padding: 10px 20px;
+                padding: 8px 16px;  /* Slightly reduced padding */
                 font-size: 14px;
                 font-weight: bold;
             }
@@ -30,6 +28,7 @@ class PrimaryButton(QPushButton):
             }
         """)
 
+
 class SecondaryButton(QPushButton):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
@@ -39,7 +38,7 @@ class SecondaryButton(QPushButton):
                 color: #4C6FFF;
                 border: 1px solid #4C6FFF;
                 border-radius: 4px;
-                padding: 10px 20px;
+                padding: 8px 16px;
                 font-size: 14px;
                 font-weight: bold;
             }
@@ -55,6 +54,7 @@ class SecondaryButton(QPushButton):
             }
         """)
 
+
 class StyledLineEdit(QLineEdit):
     def __init__(self, placeholder="", parent=None):
         super().__init__(parent)
@@ -63,7 +63,7 @@ class StyledLineEdit(QLineEdit):
             QLineEdit {
                 border: 1px solid #EAEAEA;
                 border-radius: 4px;
-                padding: 10px;
+                padding: 8px;
                 font-size: 14px;
                 background-color: white;
             }
@@ -71,6 +71,7 @@ class StyledLineEdit(QLineEdit):
                 border: 1px solid #4C6FFF;
             }
         """)
+
 
 class StyledLabel(QLabel):
     def __init__(self, text, is_title=False, size=None, color=None, parent=None):
@@ -86,16 +87,15 @@ class StyledLabel(QLabel):
         font_weight = default_weight
         font_color = color or default_color
 
-        # Apply stylesheet
         self.setStyleSheet(f"""
             QLabel {{
                 font-size: {font_size}px;
                 font-weight: {font_weight};
                 color: {font_color};
-                background: transparent;  /* Ensure no background */
-                border: none;  /* Remove any unexpected borders */
-                padding: 0px;  /* Remove unwanted padding */
-                margin: 0px;  /* Avoid extra spacing */
+                background: none;
+                border: none;
+                padding: 0px;
+                margin: 0px;
             }}
         """)
 
@@ -108,32 +108,6 @@ class Card(QFrame):
                 background-color: white;
                 border-radius: 8px;
                 border: 1px solid #EAEAEA;
-            }
-        """)
-
-
-class StyledButton(QPushButton):
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: #4C6FFF;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 10px 20px;
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #3A5BCC;
-            }
-            QPushButton:pressed {
-                background-color: #2D49A3;
-            }
-            QPushButton:disabled {
-                background-color: #CCCCCC;
-                color: #888888;
             }
         """)
 
@@ -156,32 +130,36 @@ class PageHeader(QFrame):
         self.setStyleSheet("""
             QFrame {
                 background-color: white;
-                border-radius: 8px;
-                border: 1px solid #EAEAEA;
+                border: none;
             }
         """)
+
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
         title_label = QLabel(title)
         title_label.setStyleSheet("""
             QLabel {
                 font-size: 24px;
                 font-weight: bold;
-                color: #333333;
+                color: #222222;
+                background: none;
+                border: none;
             }
         """)
         layout.addWidget(title_label)
-        
+
         subtitle_label = QLabel(subtitle)
         subtitle_label.setStyleSheet("""
             QLabel {
                 font-size: 14px;
-                color: #555555;
+                color: #666666;
+                background: none;
+                border: none;
             }
         """)
         layout.addWidget(subtitle_label)
-        
 
 
 class SectionTitle(QLabel):
@@ -192,5 +170,31 @@ class SectionTitle(QLabel):
                 font-size: 18px;
                 font-weight: bold;
                 color: #333333;
+            }
+        """)
+
+
+class SmallButton(QPushButton):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #FF4D4D;  /* Red for selling stocks */
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 4px 10px;  /* Smaller button size */
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #D43F3F;
+            }
+            QPushButton:pressed {
+                background-color: #B53131;
+            }
+            QPushButton:disabled {
+                background-color: #CCCCCC;
+                color: #888888;
             }
         """)

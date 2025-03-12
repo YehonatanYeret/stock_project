@@ -4,6 +4,7 @@
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
+from views.mainViews.dashboard_view import Dashboard_view
 
 class SidebarButton(QPushButton):
     """Styled button for sidebar navigation with exclusive selection."""
@@ -61,15 +62,13 @@ class SidebarButton(QPushButton):
         else:
             self.set_default_style()
             self.setChecked(False)
-
-
 class Sidebar(QFrame):
     """Application sidebar for navigation with exclusive selection."""
     
     dashboard_clicked = Signal()
-    portfolio_clicked = Signal()
-    stocks_clicked = Signal()
-    transactions_clicked = Signal()
+    trade_clicked = Signal()
+    history_clicked = Signal()
+    chatbot_clicked = Signal()
     settings_clicked = Signal()
     logout_clicked = Signal()
     
@@ -88,7 +87,7 @@ class Sidebar(QFrame):
         self.layout.setSpacing(8)
 
         # Logo
-        self.logo_label = QLabel("📈 STOCK PORTFOLIO")
+        self.logo_label = self.logo_label = QLabel("📈 STOCK PORTFOLIO")
         self.logo_label.setStyleSheet("""
             QLabel {
                 font-size: 18px;
@@ -103,15 +102,14 @@ class Sidebar(QFrame):
         self.buttons = {}
 
         self.dashboard_button = self.create_sidebar_button("Dashboard", "icons/dashboard.png", self.dashboard_clicked)
-        self.portfolio_button = self.create_sidebar_button("Portfolio", "icons/portfolio.png", self.portfolio_clicked)
-        self.stocks_button = self.create_sidebar_button("Stocks", "icons/stocks.png", self.stocks_clicked)
-        self.transactions_button = self.create_sidebar_button("Transactions", "icons/transactions.png", self.transactions_clicked)
+        self.trade_button = self.create_sidebar_button("Trade", "icons/trade.png", self.trade_clicked)
+        self.history_button = self.create_sidebar_button("History", "icons/history.png", self.history_clicked)
+        self.chatbot_button = self.create_sidebar_button("Chatbot", "icons/chatbot.png", self.chatbot_clicked)
         self.settings_button = self.create_sidebar_button("Settings", "icons/settings.png", self.settings_clicked)
 
-        # Add spacer to push logout to bottom
         self.layout.addStretch()
-
-        # Logout button (not part of active selection)
+        
+        # Add spacer to push logout to bottom
         self.logout_button = self.create_sidebar_button("Logout", "icons/logout.png", self.logout_clicked, logout=True)
 
         # Set fixed width
@@ -142,21 +140,19 @@ class Sidebar(QFrame):
         """Set the active button in the sidebar."""
         for name, button in self.buttons.items():
             button.set_active(name == button_name)
-
-
 class Main_view(QMainWindow):
     """Main application window"""
     
     # Navigation signals
     dashboard_requested = Signal()
-    portfolio_requested = Signal()
-    stocks_requested = Signal()
-    transactions_requested = Signal()
+    trade_requested = Signal()
+    history_requested = Signal()
+    chatbot_requested = Signal()
     settings_requested = Signal()
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Stock Portfolio Manager")
+        self.setWindowTitle("Trading App")
 
         # Create central widget and main layout
         self.central_widget = QWidget()
@@ -168,25 +164,25 @@ class Main_view(QMainWindow):
         # Create sidebar
         self.sidebar = Sidebar()
         self.sidebar.dashboard_clicked.connect(self.show_dashboard)
-        self.sidebar.portfolio_clicked.connect(self.show_portfolio)
-        self.sidebar.stocks_clicked.connect(self.show_stocks)
-        self.sidebar.transactions_clicked.connect(self.show_transactions)
+        self.sidebar.trade_clicked.connect(self.show_trade)
+        self.sidebar.history_clicked.connect(self.show_history)
+        self.sidebar.chatbot_clicked.connect(self.show_chatbot)
         self.sidebar.settings_clicked.connect(self.show_settings)
 
         # Create content stack
         self.content_stack = QStackedWidget()
 
-        # Create placeholder content (will be replaced later)
-        self.dashboard_widget = QWidget()
-        self.portfolio_widget = QWidget()
-        self.stocks_widget = QWidget()
-        self.transactions_widget = QWidget()
+        # Create placeholder content (replace later with actual UI)
+        self.dashboard_widget = Dashboard_view()
+        self.trade_widget = QWidget()
+        self.history_widget = QWidget()
+        self.chatbot_widget = QWidget()
         self.settings_widget = QWidget()
 
         self.content_stack.addWidget(self.dashboard_widget)
-        self.content_stack.addWidget(self.portfolio_widget)
-        self.content_stack.addWidget(self.stocks_widget)
-        self.content_stack.addWidget(self.transactions_widget)
+        self.content_stack.addWidget(self.trade_widget)
+        self.content_stack.addWidget(self.history_widget)
+        self.content_stack.addWidget(self.chatbot_widget)
         self.content_stack.addWidget(self.settings_widget)
 
         # Main application layout (sidebar + content)
@@ -220,20 +216,20 @@ class Main_view(QMainWindow):
         self.content_stack.setCurrentWidget(self.dashboard_widget)
         self.sidebar.set_active_button("dashboard")
 
-    def show_portfolio(self):
-        """Show the portfolio screen"""
-        self.content_stack.setCurrentWidget(self.portfolio_widget)
-        self.sidebar.set_active_button("portfolio")
+    def show_trade(self):
+        """Show the trade screen"""
+        self.content_stack.setCurrentWidget(self.trade_widget)
+        self.sidebar.set_active_button("trade")
 
-    def show_stocks(self):
-        """Show the stocks screen"""
-        self.content_stack.setCurrentWidget(self.stocks_widget)
-        self.sidebar.set_active_button("stocks")
+    def show_history(self):
+        """Show the history screen"""
+        self.content_stack.setCurrentWidget(self.history_widget)
+        self.sidebar.set_active_button("history")
 
-    def show_transactions(self):
-        """Show the transactions screen"""
-        self.content_stack.setCurrentWidget(self.transactions_widget)
-        self.sidebar.set_active_button("transactions")
+    def show_chatbot(self):
+        """Show the chatbot screen"""
+        self.content_stack.setCurrentWidget(self.chatbot_widget)
+        self.sidebar.set_active_button("chatbot")
 
     def show_settings(self):
         """Show the settings screen"""
