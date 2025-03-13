@@ -1,240 +1,614 @@
+import sys
+import datetime
+
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QComboBox,
-    QMessageBox, QFrame, QScrollArea
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+    QTableWidget, QTableWidgetItem, QSizePolicy, QComboBox, QPushButton,
+    QGraphicsDropShadowEffect, QHeaderView, QScrollArea
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor
-from views.components.styled_widgets import (
-    PrimaryButton, SecondaryButton, ContentCard, PageHeader, SectionTitle, StyledLabel
+from PySide6.QtGui import (
+    QPixmap, QColor, QFont, QPainter, QPen, QBrush, QLinearGradient
 )
-from views.components.chart import StockChartWidget
+from PySide6.QtCore import Qt, QMargins, QDateTime, QPointF
+from PySide6.QtCharts import (
+    QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
+)
 
+# ---------------------------------------------------------------------
+# 1) MODEL
+# ---------------------------------------------------------------------
+class HoldingDto:
+    def __init__(self, Id, Symbol, Quantity, CurrentPrice, TotalValue, TotalGain, TotalGainPercentage):
+        self.Id = Id
+        self.Symbol = Symbol
+        self.Quantity = Quantity
+        self.CurrentPrice = CurrentPrice
+        self.TotalValue = TotalValue
+        self.TotalGain = TotalGain
+        self.TotalGainPercentage = TotalGainPercentage
 
-class Dashboard_view(QWidget):
-    """Dashboard view displaying performance and holdings with option to sell stocks."""
-    
-    remove_stock_requested = Signal(str)
-    refresh_data_requested = Signal()
-    
+class PortfolioModel:
+    """Holds portfolio data and logic for chart generation, money additions/removals, etc."""
+    def __init__(self):
+        # Mock data for demonstration
+        self.holdings = [
+            HoldingDto(1, "AAPL", 10, 150.00, 1500.00, 200.00, 15.38),
+            HoldingDto(2, "GOOGL", 5, 2800.00, 14000.00, -500.00, -3.45),
+            HoldingDto(3, "TSLA", 8, 750.00, 6000.00, 800.00, 15.38),
+            HoldingDto(4, "MSFT", 12, 320.00, 3840.00, 100.00, 2.67),
+        ]
+        # Extra cash added/removed via "Add Money"/"Remove Money" buttons
+        self.cash = 0.0
+
+    def get_holdings(self):
+        """Return the current list of holdings."""
+        return self.holdings
+
+    def get_total_value(self):
+        """Sum of all holdings + extra cash."""
+        portfolio_value = sum(h.TotalValue for h in self.holdings)
+        return portfolio_value + self.cash
+
+    def get_total_gain(self):
+        """Sum of total gains for all holdings (does not include extra cash)."""
+        return sum(h.TotalGain for h in self.holdings)
+
+    def get_total_gain_pct(self):
+        """Compute a simplistic gain%: (total_gain / total_value_of_holdings)*100."""
+        holdings_value = sum(h.TotalValue for h in self.holdings)
+        if holdings_value == 0:
+            return 0.0
+        total_gain = sum(h.TotalGain for h in self.holdings)
+        return (total_gain / holdings_value) * 100.0
+
+    def add_money(self, amount):
+        """Add extra cash to the portfolio."""
+        self.cash += amount
+
+    def remove_money(self, amount):
+        """Remove cash from the portfolio (never going below 0)."""
+        self.cash = max(0, self.cash - amount)
+
+    def sell_stock(self, symbol):
+        """Remove a holding from the list (simple example)."""
+        self.holdings = [h for h in self.holdings if h.Symbol != symbol]
+
+    def get_chart_data(self, months):
+        """
+        Generate sample chart data for 'months' months back from now.
+        Returns a list of (datetime, value) for demonstration.
+        """
+        end_date = datetime.datetime.now()
+        data = []
+        base_value = 10000
+        for i in range(months):
+            month_date = end_date - datetime.timedelta(days=30 * (months - 1 - i))
+            fluctuation = (i / 10) * base_value * (0.95 + 0.1 * (i % 3))
+            value = base_value + fluctuation
+            data.append((month_date, value))
+        return data
+
+# ---------------------------------------------------------------------
+# 2) PRESENTER
+# ---------------------------------------------------------------------
+class DashboardPresenter:
+    """Coordinates interactions between the PortfolioModel and Dashboard_view."""
+    def __init__(self, model, view):
+        self.model = model
+        self.view = view
+        # Let the view know who its presenter is (so it can call back)
+        self.view.set_presenter(self)
+        
+        # Initial load of data into the view
+        self.update_view()
+
+    def update_view(self, months=6):
+        """Refresh the entire UI with current model data."""
+        # Update holdings
+        holdings = self.model.get_holdings()
+        self.view.set_holdings_data(holdings)
+
+        # Update stats
+        total_value = self.model.get_total_value()
+        total_gain = self.model.get_total_gain()
+        total_gain_pct = self.model.get_total_gain_pct()
+        self.view.set_portfolio_summary(total_value, total_gain, total_gain_pct)
+
+        # Update chart
+        data = self.model.get_chart_data(months)
+        self.view.set_chart_data(data)
+
+    # Called when the user changes the "Period" combo box
+    def on_period_changed(self, period_label):
+        if period_label == "Last 3 Months":
+            months = 3
+        elif period_label == "Last 6 Months":
+            months = 6
+        elif period_label == "Last Year":
+            months = 12
+        elif period_label == "All Time":
+            months = 24
+        else:
+            months = 6
+        self.update_view(months)
+
+    # Called when user clicks "Add Money"
+    def on_add_money(self):
+        self.model.add_money(1000)
+        self.update_view()
+
+    # Called when user clicks "Remove Money"
+    def on_remove_money(self):
+        self.model.remove_money(1000)
+        self.update_view()
+
+    # Called when user clicks "Sell"
+    def on_sell_stock(self, symbol):
+        self.model.sell_stock(symbol)
+        self.update_view()
+
+# ---------------------------------------------------------------------
+# 3) VIEW
+# ---------------------------------------------------------------------
+class SellButton(QPushButton):
+    def __init__(self, text="Sell", parent=None):
+        super().__init__(text, parent)
+        self.setFixedSize(60, 24)
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #FF4D4D;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 4px 10px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #D43F3F;
+            }
+            QPushButton:pressed {
+                background-color: #B53131;
+            }
+            QPushButton:disabled {
+                background-color: #CCCCCC;
+                color: #888888;
+            }
+        """)
+
+class StockPerformanceChart(QChartView):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.init_ui()
-        self.load_mock_data()  # Load mock data on initialization
-    
-    def init_ui(self):
-        """Initialize UI components."""
-        self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(24, 24, 24, 24)
-        self.main_layout.setSpacing(20)
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
-        # Page header
-        self.header = PageHeader("Dashboard", "Overview of your portfolio")
-        self.main_layout.addWidget(self.header)
+        self.chart = QChart()
+        self.chart.setTitle("Portfolio Performance")
+        self.chart.setTitleFont(QFont("Arial", 14, QFont.Bold))
+        self.chart.setAnimationOptions(QChart.SeriesAnimations)
+        self.chart.legend().hide()
+        self.chart.setBackgroundVisible(False)
+        self.chart.setMargins(QMargins(10, 10, 10, 10))
         
-        # Scrollable content area
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFrameShape(QFrame.NoFrame)
+        self.series = QLineSeries()
+        self.series.setName("Portfolio Value")
+        pen = QPen(QColor("#5851DB"))
+        pen.setWidth(3)
+        self.series.setPen(pen)
         
-        self.scroll_content = QWidget()
-        self.scroll_layout = QVBoxLayout(self.scroll_content)
-        self.scroll_layout.setContentsMargins(0, 0, 0, 0)
-        self.scroll_layout.setSpacing(20)
-        self.scroll_area.setWidget(self.scroll_content)
-        self.main_layout.addWidget(self.scroll_area)
+        gradient = QLinearGradient(QPointF(0, 0), QPointF(0, 300))
+        gradient.setColorAt(0.0, QColor(88, 81, 219, 100))
+        gradient.setColorAt(1.0, QColor(88, 81, 219, 0))
+        self.series.setBrush(QBrush(gradient))
         
-        # ─── METRICS ROW ──────────────────────────────────────────────────
-        self.metrics_row = QHBoxLayout()
-        self.metrics_row.setSpacing(16)
+        self.axisX = QDateTimeAxis()
+        self.axisX.setFormat("MMM yyyy")
+        self.axisX.setTitleText("Date")
+        self.axisX.setLabelsAngle(-45)
+        self.axisX.setLabelsFont(QFont("Arial", 9))
         
-        self.portfolio_value_card = self.create_metric_card("Portfolio Value", "$0.00", "+0.0% today")
-        self.total_stocks_card = self.create_metric_card("Total Stocks", "0", "Across 0 companies")
-        self.days_gain_card = self.create_metric_card("Day's Gain", "$0.00", "+0.0%")
-        self.total_return_card = self.create_metric_card("Total Return", "$0.00", "+0.0% all time")
+        self.axisY = QValueAxis()
+        self.axisY.setTitleText("Portfolio Value ($)")
+        self.axisY.setLabelFormat("$%.0f")
+        self.axisY.setLabelsFont(QFont("Arial", 9))
         
-        self.metrics_row.addWidget(self.portfolio_value_card)
-        self.metrics_row.addWidget(self.total_stocks_card)
-        self.metrics_row.addWidget(self.days_gain_card)
-        self.metrics_row.addWidget(self.total_return_card)
-        self.scroll_layout.addLayout(self.metrics_row)
+        self.chart.addAxis(self.axisX, Qt.AlignBottom)
+        self.chart.addAxis(self.axisY, Qt.AlignLeft)
+        self.chart.addSeries(self.series)
+        self.series.attachAxis(self.axisX)
+        self.series.attachAxis(self.axisY)
         
-        # ─── PERFORMANCE CHART CARD ───────────────────────────────────────
-        self.performance_card = ContentCard()
-        self.performance_card_layout = QVBoxLayout(self.performance_card)
-        self.performance_card_layout.setContentsMargins(20, 20, 20, 20)
+        self.setChart(self.chart)
+        self.chart.setBackgroundBrush(QColor("white"))
+        self.setMinimumHeight(350)
         
-        self.performance_title = SectionTitle("Portfolio Performance")
-        self.performance_card_layout.addWidget(self.performance_title)
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 25))
+        shadow.setOffset(0, 4)
+        self.setGraphicsEffect(shadow)
         
-        # Time period selector
-        self.period_layout = QHBoxLayout()
-        self.period_label = QLabel("Time Period:")
-        self.period_combo = QComboBox()
-        self.period_combo.addItems(["1 Week", "1 Month", "3 Months", "6 Months", "1 Year", "All Time"])
-        self.period_combo.setCurrentIndex(3)
-        # self.period_combo.currentIndexChanged.connect(self.on_period_changed)
-        self.period_layout.addWidget(self.period_label)
-        self.period_layout.addWidget(self.period_combo)
-        self.period_layout.addStretch()
-        self.performance_card_layout.addLayout(self.period_layout)
+    def load_data(self, data):
+        self.series.clear()
+        if not data:
+            return
         
-        # Stock chart
-        self.portfolio_chart = StockChartWidget()
-        self.performance_card_layout.addWidget(self.portfolio_chart)
-        self.scroll_layout.addWidget(self.performance_card)
+        min_value = float('inf')
+        max_value = float('-inf')
         
-        # ─── HOLDINGS TABLE ───────────────────────────────────────────────
-        self.holdings_card = ContentCard()
-        self.holdings_card_layout = QVBoxLayout(self.holdings_card)
-        self.holdings_card_layout.setContentsMargins(20, 20, 20, 20)
+        for date, value in data:
+            timestamp = int(date.timestamp() * 1000)
+            self.series.append(timestamp, value)
+            min_value = min(min_value, value)
+            max_value = max(max_value, value)
         
-        self.holdings_title = SectionTitle("Your Holdings")
-        self.holdings_card_layout.addWidget(self.holdings_title)
+        first_date = data[0][0]
+        last_date = data[-1][0]
+        self.axisX.setRange(first_date, last_date)
         
-        self.holdings_table = QTableWidget()
-        self.holdings_table.setColumnCount(8)
-        self.holdings_table.setHorizontalHeaderLabels([
-            "Symbol", "Name", "Shares", "Purchase Price",
-            "Current Price", "Market Value", "Gain/Loss", "Actions"
-        ])
-        
-        # Styling: Remove borders and gray backgrounds
-        self.holdings_table.setStyleSheet("""
-            QTableWidget {
-                border: none;
-                font-size: 14px;
-            }
-            QHeaderView::section {
+        padding = (max_value - min_value) * 0.1
+        self.axisY.setRange(max(0, min_value - padding), max_value + padding)
+
+class StatCard(QFrame):
+    def __init__(self, title, value, subtitle=None, icon=None, color="#5851DB", parent=None):
+        super().__init__(parent)
+        self.setObjectName("StatCard")
+        self.setStyleSheet("""
+            #StatCard {
                 background-color: white;
-                border: none;
-                font-weight: bold;
-                padding: 8px;
+                border-radius: 12px;
+                border: 1px solid #EAEAEA;
             }
-            QTableWidget::item {
+        """)
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 25))
+        shadow.setOffset(0, 4)
+        self.setGraphicsEffect(shadow)
+        
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(24, 20, 24, 20)
+        self.layout.setSpacing(5)
+        
+        header_layout = QHBoxLayout()
+        title_label = QLabel(title)
+        title_label.setStyleSheet("color: #666; font-size: 15px; font-weight: 500;")
+        header_layout.addWidget(title_label)
+        
+        if icon:
+            icon_label = QLabel()
+            pixmap = QPixmap(icon)
+            icon_label.setPixmap(pixmap.scaled(24, 24, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            header_layout.addWidget(icon_label)
+        else:
+            header_layout.addStretch()
+        
+        self.layout.addLayout(header_layout)
+        
+        self.value_label = QLabel(value)
+        self.value_label.setStyleSheet("color: #000; font-size: 28px; font-weight: bold;")
+        self.layout.addWidget(self.value_label)
+        
+        if subtitle:
+            subtitle_layout = QHBoxLayout()
+            arrow_label = QLabel()
+            if "+" in subtitle:
+                arrow_label.setText("↗")
+                arrow_label.setStyleSheet(f"color: {color}; font-size: 18px;")
+            elif "-" in subtitle:
+                arrow_label.setText("↘")
+                arrow_label.setStyleSheet("color: #F44336; font-size: 18px;")
+            
+            subtitle_text = QLabel(subtitle)
+            subtitle_text.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: 500;")
+            
+            subtitle_layout.addWidget(arrow_label)
+            subtitle_layout.addWidget(subtitle_text)
+            subtitle_layout.addStretch()
+            self.layout.addLayout(subtitle_layout)
+
+class PortfolioValueCard(StatCard):
+    def __init__(self, title, value, subtitle=None, icon=None, color="#5851DB", parent=None):
+        super().__init__(title, value, subtitle, icon, color, parent)
+        button_layout = QHBoxLayout()
+        
+        self.add_money_btn = QPushButton("Add Money")
+        self.remove_money_btn = QPushButton("Remove Money")
+        
+        self.add_money_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4C6FFF;
+                color: white;
                 border: none;
-                padding: 6px;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #3A5BCC;
+            }
+            QPushButton:pressed {
+                background-color: #2D49A3;
             }
         """)
         
-        # Column resizing
-        header = self.holdings_table.horizontalHeader()
+        self.remove_money_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #FF4D4D;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #D43F3F;
+            }
+            QPushButton:pressed {
+                background-color: #B53131;
+            }
+        """)
+        
+        button_layout.addWidget(self.add_money_btn)
+        button_layout.addWidget(self.remove_money_btn)
+        self.layout.addLayout(button_layout)
+
+class HoldingsTable(QTableWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("HoldingsTable")
+        self.setStyleSheet("""
+            #HoldingsTable {
+                background-color: white;
+                border: none;
+                gridline-color: #EAEAEA;
+            }
+            #HoldingsTable::item {
+                padding: 5px;
+            }
+            #HoldingsTable QHeaderView::section {
+                background-color: #F5F5F5;
+                border: none;
+                border-bottom: 1px solid #EAEAEA;
+                padding: 8px;
+                font-weight: bold;
+                color: #333;
+            }
+            QTableView {
+                alternate-background-color: #F9F9F9;
+                background-color: white;
+            }
+        """)
+        
+        self.setColumnCount(8)
+        self.setHorizontalHeaderLabels([
+            "ID", "Symbol", "Quantity", "Current Price", 
+            "Total Value", "Total Gain", "Gain %", "Actions"
+        ])
+        
+        header = self.horizontalHeader()
         for i in range(7):
             header.setSectionResizeMode(i, QHeaderView.Stretch)
         header.setSectionResizeMode(7, QHeaderView.Fixed)
-        self.holdings_table.setColumnWidth(7, 80)
+        self.setColumnWidth(7, 80)
         
-        # Reduce table height
-        self.holdings_table.setMinimumHeight(220)
+        self.setShowGrid(False)
+        self.setSelectionBehavior(QTableWidget.SelectRows)
+        self.setSelectionMode(QTableWidget.SingleSelection)
         
-        self.holdings_card_layout.addWidget(self.holdings_table)
-        self.scroll_layout.addWidget(self.holdings_card)
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 25))
+        shadow.setOffset(0, 4)
+        self.setGraphicsEffect(shadow)
+        self.setMinimumHeight(400)
         
-        # ─── REFRESH BUTTON ───────────────────────────────────────────────
-        self.refresh_button = PrimaryButton("Refresh Data")
-        self.refresh_button.clicked.connect(self.refresh_data_requested)
-        self.scroll_layout.addWidget(self.refresh_button, 0, Qt.AlignRight)
-        self.scroll_layout.addStretch()
-    
-    def create_metric_card(self, title, main_text, sub_text):
-        """Creates a simple metric card."""
-        card = ContentCard()
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(16, 16, 16, 16)
-        
-        title_label = StyledLabel(text=title)
-        title_label.setStyleSheet("font-size: 14px; font-weight: 500;")
-        main_label = StyledLabel(text=main_text)
-        main_label.setStyleSheet("font-size: 24px; font-weight: bold;")
-        sub_label = StyledLabel(text=sub_text)
-        sub_label.setStyleSheet("font-size: 13px;")
-        
-        layout.addWidget(title_label)
-        layout.addWidget(main_label)
-        layout.addWidget(sub_label)
-        
-        return card
-    
-    
-    def load_mock_data(self):
-        """Load mock data for performance and holdings."""
-        # Update portfolio summary with mock values
-        
-        # Create mock performance data for the chart (list of dicts with 't' and 'c')
-        import time
-        current_time_ms = int(time.time() * 1000)
-        mock_performance_data = []
-        # Generate 30 days of data
-        for i in range(30):
-            t = current_time_ms - (29 - i) * 86400000  # one day in ms
-            c = 140 + i * 0.5  # simple trend
-            mock_performance_data.append({'t': t, 'c': c})
-        
-        # Call update_chart with only the data parameter
-        try:
-            # self.portfolio_chart.update_chart(mock_performance_data)
-            pass
-        except Exception as e:
-            print("Error updating chart:", e)
-        
-        # Create mock holdings data
-        mock_holdings = [
-            {
-                'symbol': 'AAPL',
-                'name': 'Apple Inc.',
-                'shares': 50,
-                'purchase_price': 130.00,
-                'current_price': 145.00,
-                'market_value': 50 * 145.00
-            },
-            {
-                'symbol': 'GOOGL',
-                'name': 'Alphabet Inc.',
-                'shares': 10,
-                'purchase_price': 1500.00,
-                'current_price': 1550.00,
-                'market_value': 10 * 1550.00
-            },
-            {
-                'symbol': 'AMZN',
-                'name': 'Amazon.com Inc.',
-                'shares': 5,
-                'purchase_price': 3100.00,
-                'current_price': 3200.00,
-                'market_value': 5 * 3200.00
-            }
-        ]
-        self.update_holdings_table(mock_holdings)
-    
-    def show_error(self, message):
-        QMessageBox.critical(self, "Error", message)
-
-    def update_holdings_table(self, holdings):
-        self.holdings_table.setRowCount(0)
+    def load_data(self, holdings):
+        self.setRowCount(len(holdings))
         for row, holding in enumerate(holdings):
-            self.holdings_table.insertRow(row)
+            # ID
+            id_item = QTableWidgetItem(str(holding.Id))
+            id_item.setTextAlignment(Qt.AlignCenter)
+            self.setItem(row, 0, id_item)
             
-            symbol_item = QTableWidgetItem(holding['symbol'])
-            name_item = QTableWidgetItem(holding.get('name', '—'))
-            shares_item = QTableWidgetItem(f"{holding['shares']:,.2f}")
-            purchase_price_item = QTableWidgetItem(f"${holding['purchase_price']:,.2f}")
-            current_price_item = QTableWidgetItem(f"${holding['current_price']:,.2f}")
-            market_value_item = QTableWidgetItem(f"${holding['market_value']:,.2f}")
+            # Symbol
+            symbol_item = QTableWidgetItem(holding.Symbol)
+            symbol_item.setFont(QFont("Arial", 10, QFont.Bold))
+            self.setItem(row, 1, symbol_item)
             
-            gain = holding['market_value'] - (holding['purchase_price'] * holding['shares'])
-            gain_prefix = "+" if gain > 0 else ""
-            gain_item = QTableWidgetItem(f"{gain_prefix}${gain:,.2f}")
+            # Quantity
+            quantity_item = QTableWidgetItem(str(holding.Quantity))
+            quantity_item.setTextAlignment(Qt.AlignCenter)
+            self.setItem(row, 2, quantity_item)
             
-            if gain > 0:
+            # Current Price
+            price_item = QTableWidgetItem(f"${holding.CurrentPrice:.2f}")
+            price_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.setItem(row, 3, price_item)
+            
+            # Total Value
+            value_item = QTableWidgetItem(f"${holding.TotalValue:.2f}")
+            value_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.setItem(row, 4, value_item)
+            
+            # Total Gain
+            gain_item = QTableWidgetItem(f"${holding.TotalGain:.2f}")
+            gain_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            if holding.TotalGain > 0:
                 gain_item.setForeground(QColor("#4CAF50"))
-            elif gain < 0:
+            elif holding.TotalGain < 0:
                 gain_item.setForeground(QColor("#F44336"))
+            self.setItem(row, 5, gain_item)
+            
+            # Gain %
+            gain_pct_item = QTableWidgetItem(f"{holding.TotalGainPercentage:.2f}%")
+            gain_pct_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            if holding.TotalGainPercentage > 0:
+                gain_pct_item.setForeground(QColor("#4CAF50"))
+            elif holding.TotalGainPercentage < 0:
+                gain_pct_item.setForeground(QColor("#F44336"))
+            self.setItem(row, 6, gain_pct_item)
             
             # Sell button
-            sell_button = QPushButton("Sell")
-            sell_button.setFixedSize(60, 24)
-            sell_button.clicked.connect(lambda checked, s=holding['symbol']: self.remove_stock_requested.emit(s))
-            
-            self.holdings_table.setItem(row, 0, symbol_item)
-            self.holdings_table.setItem(row, 1, name_item)
-            self.holdings_table.setCellWidget(row, 7, sell_button)
+            sell_button = SellButton("Sell")
+            # We'll let the view handle the click and call the presenter
+            # so we store the symbol in the button's property:
+            sell_button.clicked.connect(lambda _, sym=holding.Symbol: self.parent().on_sell_clicked(sym))
+            self.setCellWidget(row, 7, sell_button)
+
+class Dashboard_view(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.presenter = None  # Will be set by set_presenter(...)
+        self.init_ui()
+        
+    def set_presenter(self, presenter):
+        """Assign the presenter so the view can call it on user actions."""
+        self.presenter = presenter
+
+    def init_ui(self):
+        self.setWindowTitle("Portfolio Dashboard")
+        self.setMinimumSize(1000, 700)
+        self.setStyleSheet("""
+            QWidget {
+                font-family: 'Arial', sans-serif;
+                background-color: #F7F8FA;
+            }
+            QLabel#PageTitle {
+                font-size: 24px;
+                font-weight: bold;
+                color: #333;
+            }
+            QLabel#SectionTitle {
+                font-size: 18px;
+                font-weight: bold;
+                color: #333;
+                margin-top: 20px;
+            }
+            QComboBox {
+                padding: 5px 10px;
+                border: 1px solid #EAEAEA;
+                border-radius: 4px;
+                background-color: white;
+            }
+        """)
+
+        main_layout = QVBoxLayout(self)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        main_layout.addWidget(self.scroll_area)
+
+        container = QWidget()
+        self.scroll_area.setWidget(container)
+        
+        self.container_layout = QVBoxLayout(container)
+        self.container_layout.setContentsMargins(20, 20, 20, 20)
+        self.container_layout.setSpacing(20)
+        
+        # Header
+        header_layout = QHBoxLayout()
+        title_label = QLabel("Portfolio Dashboard")
+        title_label.setObjectName("PageTitle")
+        header_layout.addWidget(title_label)
+        header_layout.addStretch()
+        
+        period_label = QLabel("Period:")
+        period_label.setStyleSheet("font-size: 14px; color: #666;")
+        self.period_selector = QComboBox()
+        self.period_selector.addItems(["Last 3 Months", "Last 6 Months", "Last Year", "All Time"])
+        # On change, we notify the presenter
+        self.period_selector.currentTextChanged.connect(self.on_period_changed)
+        
+        header_layout.addWidget(period_label)
+        header_layout.addWidget(self.period_selector)
+        self.container_layout.addLayout(header_layout)
+        
+        # Chart
+        self.chart = StockPerformanceChart()
+        self.container_layout.addWidget(self.chart)
+        
+        self.container_layout.addSpacing(30)
+        
+        # Stat cards
+        stats_layout = QHBoxLayout()
+        stats_layout.setSpacing(20)
+        
+        self.total_value_card = PortfolioValueCard("Total Portfolio Value", "$0", "+0%", color="#5851DB")
+        self.total_gain_card = StatCard("Total Gain", "$0", "+0%", color="#4CAF50")
+        self.total_gain_pct_card = StatCard("Gain Percentage", "0%", "+0%", color="#4CAF50")
+        
+        stats_layout.addWidget(self.total_value_card)
+        stats_layout.addWidget(self.total_gain_card)
+        stats_layout.addWidget(self.total_gain_pct_card)
+        
+        self.container_layout.addLayout(stats_layout)
+        
+        # Connect add/remove money signals
+        self.total_value_card.add_money_btn.clicked.connect(self.on_add_money_clicked)
+        self.total_value_card.remove_money_btn.clicked.connect(self.on_remove_money_clicked)
+        
+        # Holdings Table
+        holdings_label = QLabel("My Holdings")
+        holdings_label.setObjectName("SectionTitle")
+        self.container_layout.addWidget(holdings_label)
+        
+        self.holdings_table = HoldingsTable(self)
+        self.container_layout.addWidget(self.holdings_table)
+        
+        self.container_layout.addSpacing(40)
+
+    # View → Presenter: "Period changed"
+    def on_period_changed(self, text):
+        if self.presenter:
+            self.presenter.on_period_changed(text)
+
+    # View → Presenter: "Add money"
+    def on_add_money_clicked(self):
+        if self.presenter:
+            self.presenter.on_add_money()
+
+    # View → Presenter: "Remove money"
+    def on_remove_money_clicked(self):
+        if self.presenter:
+            self.presenter.on_remove_money()
+
+    # View → Presenter: "Sell"
+    def on_sell_clicked(self, symbol):
+        if self.presenter:
+            self.presenter.on_sell_stock(symbol)
+
+    # Presenter → View: set holdings data
+    def set_holdings_data(self, holdings):
+        self.holdings_table.load_data(holdings)
+
+    # Presenter → View: set chart data
+    def set_chart_data(self, data):
+        self.chart.load_data(data)
+
+    # Presenter → View: set stats
+    def set_portfolio_summary(self, total_value, total_gain, total_gain_pct):
+        self.total_value_card.value_label.setText(f"${total_value:,.2f}")
+        self.total_gain_card.value_label.setText(f"${total_gain:,.2f}")
+        self.total_gain_pct_card.value_label.setText(f"{total_gain_pct:.2f}%")
+
+# ---------------------------------------------------------------------
+# MAIN ENTRY POINT
+# ---------------------------------------------------------------------
+def main():
+    app = QApplication(sys.argv)
+    
+    # Instantiate Model & View
+    model = PortfolioModel()
+    view = Dashboard_view()
+    
+    # Instantiate Presenter
+    presenter = DashboardPresenter(model, view)
+    
+    # Show the UI
+    view.show()
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,9 @@
 from PySide6.QtWidgets import (
     QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout
+    , QHBoxLayout, 
 )
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Qt
 
 
 class PrimaryButton(QPushButton):
@@ -198,3 +201,63 @@ class SmallButton(QPushButton):
                 color: #888888;
             }
         """)
+
+
+class StatCard(QFrame):
+    def __init__(self, title, value, subtitle=None, icon=None, color="#5851DB", parent=None):
+        super().__init__(parent)
+        self.setObjectName("StatCard")
+        self.setStyleSheet("""
+            #StatCard {
+                background-color: white;
+                border-radius: 12px;
+                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+                border: 1px solid #EAEAEA;
+            }
+        """)
+        
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(24, 20, 24, 20)
+        
+        # Header with title and icon
+        header_layout = QHBoxLayout()
+        title_label = QLabel(title)
+        title_label.setStyleSheet("color: #666; font-size: 15px; font-weight: 500;")
+        header_layout.addWidget(title_label)
+        
+        if icon:
+            icon_label = QLabel()
+            pixmap = QPixmap(icon)
+            icon_label.setPixmap(pixmap.scaled(24, 24, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            header_layout.addWidget(icon_label)
+        else:
+            header_layout.addStretch()
+        
+        self.layout.addLayout(header_layout)
+        
+        # Value
+        value_label = QLabel(value)
+        value_label.setStyleSheet(f"color: #000; font-size: 28px; font-weight: bold;")
+        self.layout.addWidget(value_label)
+        
+        # Subtitle (optional)
+        if subtitle:
+            subtitle_layout = QHBoxLayout()
+            
+            # Create arrow icon based on positive/negative value
+            arrow_label = QLabel()
+            if "+" in subtitle:
+                arrow_label.setText("↗")
+                arrow_label.setStyleSheet(f"color: {color}; font-size: 18px;")
+            elif "-" in subtitle:
+                arrow_label.setText("↘")
+                arrow_label.setStyleSheet("color: #F44336; font-size: 18px;")
+            
+            subtitle_text = QLabel(subtitle)
+            subtitle_text.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: 500;")
+            
+            subtitle_layout.addWidget(arrow_label)
+            subtitle_layout.addWidget(subtitle_text)
+            subtitle_layout.addStretch()
+            
+            self.layout.addLayout(subtitle_layout)
