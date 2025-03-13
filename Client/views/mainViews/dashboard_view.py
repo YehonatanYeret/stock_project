@@ -13,129 +13,8 @@ from PySide6.QtCore import Qt, QMargins, QDateTime, QPointF
 from PySide6.QtCharts import (
     QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
 )
-
-
-# ---------------------------------------------------------------------
-# 1) MODEL
-# ---------------------------------------------------------------------
-class HoldingDto:
-    def __init__(self, Id, Symbol, Quantity, CurrentPrice, TotalValue, TotalGain, TotalGainPercentage):
-        self.Id = Id
-        self.Symbol = Symbol
-        self.Quantity = Quantity
-        self.CurrentPrice = CurrentPrice
-        self.TotalValue = TotalValue
-        self.TotalGain = TotalGain
-        self.TotalGainPercentage = TotalGainPercentage
-
-
-class PortfolioModel:
-    """Holds portfolio data and logic for chart generation, money additions/removals, etc."""
-
-    def __init__(self):
-        # Mock data for demonstration
-        self.holdings = [
-            HoldingDto(1, "AAPL", 10, 150.00, 1500.00, 200.00, 15.38),
-            HoldingDto(2, "GOOGL", 5, 2800.00, 14000.00, -500.00, -3.45),
-            HoldingDto(3, "TSLA", 8, 750.00, 6000.00, 800.00, 15.38),
-            HoldingDto(4, "MSFT", 12, 320.00, 3840.00, 100.00, 2.67),
-        ]
-        # Extra cash added/removed via "Add Money"/"Remove Money" buttons
-        self.cash = 0.0
-
-    def get_holdings(self):
-        """Return the current list of holdings."""
-        return self.holdings
-
-    def get_total_value(self):
-        """Sum of all holdings + extra cash."""
-        portfolio_value = sum(h.TotalValue for h in self.holdings)
-        return portfolio_value + self.cash
-
-    def get_total_gain(self):
-        """Sum of total gains for all holdings (does not include extra cash)."""
-        return sum(h.TotalGain for h in self.holdings)
-
-    def get_total_gain_pct(self):
-        """Compute a simplistic gain%: (total_gain / total_value_of_holdings)*100."""
-        holdings_value = sum(h.TotalValue for h in self.holdings)
-        if holdings_value == 0:
-            return 0.0
-        total_gain = sum(h.TotalGain for h in self.holdings)
-        return (total_gain / holdings_value) * 100.0
-
-    def add_money(self, amount):
-        """Add extra cash to the portfolio."""
-        self.cash += amount
-
-    def remove_money(self, amount):
-        """Remove cash from the portfolio (never going below 0)."""
-        self.cash = max(0, self.cash - amount)
-
-    def sell_stock(self, symbol):
-        """Remove a holding from the list (simple example)."""
-        self.holdings = [h for h in self.holdings if h.Symbol != symbol]
-
-    def get_chart_data(self, months):
-        """
-        Generate sample chart data for 'months' months back from now.
-        Returns a list of (datetime, value) for demonstration.
-        """
-        end_date = datetime.datetime.now()
-        data = []
-        base_value = 10000
-        for i in range(months):
-            month_date = end_date - datetime.timedelta(days=30 * (months - 1 - i))
-            fluctuation = (i / 10) * base_value * (0.95 + 0.1 * (i % 3))
-            value = base_value + fluctuation
-            data.append((month_date, value))
-        return data
-
-
-# ---------------------------------------------------------------------
-# 2) PRESENTER
-# ---------------------------------------------------------------------
-class DashboardPresenter:
-    """Coordinates interactions between the PortfolioModel and Dashboard_view."""
-
-    def __init__(self, model, view):
-        self.model = model
-        self.view = view
-        # Let the view know who its presenter is (so it can call back)
-        self.view.set_presenter(self)
-
-        # Initial load of data into the view
-        self.update_view()
-
-    def update_view(self, months=6):
-        """Refresh the entire UI with current model data."""
-        # Update holdings
-        holdings = self.model.get_holdings()
-        self.view.set_holdings_data(holdings)
-
-        # Update stats
-        total_value = self.model.get_total_value()
-        total_gain = self.model.get_total_gain()
-        total_gain_pct = self.model.get_total_gain_pct()
-        self.view.set_portfolio_summary(total_value, total_gain, total_gain_pct)
-
-        # Update chart
-        data = self.model.get_chart_data(months)
-        self.view.set_chart_data(data)
-
-    # Called when the user changes the "Period" combo box
-    def on_period_changed(self, period_label):
-        if period_label == "Last 3 Months":
-            months = 3
-        elif period_label == "Last 6 Months":
-            months = 6
-        elif period_label == "Last Year":
-            months = 12
-        elif period_label == "All Time":
-            months = 24
-        else:
-            months = 6
-        self.update_view(months)
+from models.mainModels.dashboard_model import DashboardModel
+from presenters.mainPresenters.dashboard_presenter import DashboardPresenter
 
     # Called when user clicks "Add Money"
     def on_add_money(self):
@@ -151,7 +30,6 @@ class DashboardPresenter:
     def on_sell_stock(self, symbol):
         self.model.sell_stock(symbol)
         self.update_view()
-
 
 # ---------------------------------------------------------------------
 # 3) VIEW
@@ -472,9 +350,8 @@ class HoldingsTable(QTableWidget):
 class Dashboard_view(QWidget):
     def __init__(self):
         super().__init__()
-        self.presenter = None  # Will be set by set_presenter(...)
         self.init_ui()
-
+        
     def set_presenter(self, presenter):
         """Assign the presenter so the view can call it on user actions."""
         self.presenter = presenter
@@ -604,24 +481,22 @@ class Dashboard_view(QWidget):
         self.total_gain_card.value_label.setText(f"${total_gain:,.2f}")
         self.total_gain_pct_card.value_label.setText(f"{total_gain_pct:.2f}%")
 
-
 # ---------------------------------------------------------------------
 # MAIN ENTRY POINT
 # ---------------------------------------------------------------------
 def main():
     app = QApplication(sys.argv)
-
+    
     # Instantiate Model & View
     model = PortfolioModel()
     view = Dashboard_view()
-
+    
     # Instantiate Presenter
     presenter = DashboardPresenter(model, view)
-
+    
     # Show the UI
     view.show()
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     main()
