@@ -5,7 +5,8 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 from views.mainViews.dashboard_view import Dashboard_view
-
+from presenters.mainPresenters.dashboard_presenter import DashboardPresenter
+from models.mainModels.dashboard_model import DashboardModel
 class SidebarButton(QPushButton):
     """Styled button for sidebar navigation with exclusive selection."""
     
@@ -174,6 +175,8 @@ class Main_view(QMainWindow):
 
         # Create placeholder content (replace later with actual UI)
         self.dashboard_widget = Dashboard_view()
+        self.dashboard_widget.presenter = DashboardPresenter(DashboardModel(), self.dashboard_widget)
+
         self.trade_widget = QWidget()
         self.history_widget = QWidget()
         self.chatbot_widget = QWidget()

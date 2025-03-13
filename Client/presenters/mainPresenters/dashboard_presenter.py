@@ -1,5 +1,64 @@
 from services.api_service import ApiService
 
+
+# ---------------------------------------------------------------------
+# 2) PRESENTER
+# ---------------------------------------------------------------------
+class DashboardPresenter:
+    """Coordinates interactions between the PortfolioModel and Dashboard_view."""
+    def __init__(self, model, view):
+        self.model = model
+        self.view = view
+        
+        # Initial load of data into the view
+        self.update_view()
+
+    def update_view(self, months=6):
+        """Refresh the entire UI with current model data."""
+        # Update holdings
+        holdings = self.model.get_holdings()
+        self.view.set_holdings_data(holdings)
+
+        # Update stats
+        total_value = self.model.get_total_value()
+        total_gain = self.model.get_total_gain()
+        total_gain_pct = self.model.get_total_gain_pct()
+        self.view.set_portfolio_summary(total_value, total_gain, total_gain_pct)
+
+        # Update chart
+        data = self.model.get_chart_data(months)
+        self.view.set_chart_data(data)
+
+    # Called when the user changes the "Period" combo box
+    def on_period_changed(self, period_label):
+        if period_label == "Last 3 Months":
+            months = 3
+        elif period_label == "Last 6 Months":
+            months = 6
+        elif period_label == "Last Year":
+            months = 12
+        elif period_label == "All Time":
+            months = 24
+        else:
+            months = 6
+        self.update_view(months)
+
+    # Called when user clicks "Add Money"
+    def on_add_money(self):
+        self.model.add_money(1000)
+        self.update_view()
+
+    # Called when user clicks "Remove Money"
+    def on_remove_money(self):
+        self.model.remove_money(1000)
+        self.update_view()
+
+    # Called when user clicks "Sell"
+    def on_sell_stock(self, symbol):
+        self.model.sell_stock(symbol)
+        self.update_view()
+
+
 class PortfolioPresenter:
     """
     Presenter for handling portfolio management logic
