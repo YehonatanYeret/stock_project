@@ -264,7 +264,7 @@ class Auth_view(QStackedWidget):
     Emits a `completed` signal when authentication (login or registration)
     is successfully validated.
     """
-    completed = Signal()
+    completed = Signal(int)
     login_attempted = Signal(str, str)
     register_attempted = Signal(str, str, str)
     

@@ -141,6 +141,7 @@ class Sidebar(QFrame):
         """Set the active button in the sidebar."""
         for name, button in self.buttons.items():
             button.set_active(name == button_name)
+
 class Main_view(QMainWindow):
     """Main application window"""
     
@@ -154,6 +155,9 @@ class Main_view(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Trading App")
+        
+        # User ID (Not set initially)
+        self.user_id = None  
 
         # Create central widget and main layout
         self.central_widget = QWidget()
@@ -173,15 +177,14 @@ class Main_view(QMainWindow):
         # Create content stack
         self.content_stack = QStackedWidget()
 
-        # Create placeholder content (replace later with actual UI)
+        # Create placeholders (Dashboard not yet initialized)
         self.dashboard_widget = Dashboard_view()
-        self.dashboard_widget.presenter = DashboardPresenter(DashboardModel(), self.dashboard_widget)
-
         self.trade_widget = QWidget()
         self.history_widget = QWidget()
         self.chatbot_widget = QWidget()
         self.settings_widget = QWidget()
 
+        # Add widgets to stack
         self.content_stack.addWidget(self.dashboard_widget)
         self.content_stack.addWidget(self.trade_widget)
         self.content_stack.addWidget(self.history_widget)
@@ -205,17 +208,24 @@ class Main_view(QMainWindow):
         # Add main stack to main layout
         self.main_layout.addWidget(self.main_stack)
 
-        # Set window size
         self.setStyleSheet("""
             QMainWindow {
                 background-color: #F8F9FA;
             }
         """)
 
-        self.show_dashboard()
+    def setUser(self, user_id):
+        """Initialize the dashboard only when user_id is available"""
+        self.user_id = user_id
+        self.dashboard_presenter = DashboardPresenter(DashboardModel(), self.dashboard_widget, self.user_id)
+        self.show_dashboard()  # Now that the user is set, show dashboard
 
     def show_dashboard(self):
         """Show the dashboard screen"""
+        if self.user_id is None:
+            print("User ID not set yet!")  # Debug message
+            return
+        
         self.content_stack.setCurrentWidget(self.dashboard_widget)
         self.sidebar.set_active_button("dashboard")
 

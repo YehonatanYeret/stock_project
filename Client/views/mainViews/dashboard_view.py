@@ -13,12 +13,7 @@ from PySide6.QtCore import Qt, QMargins, QDateTime, QPointF
 from PySide6.QtCharts import (
     QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
 )
-from models.mainModels.dashboard_model import DashboardModel
-from presenters.mainPresenters.dashboard_presenter import DashboardPresenter
 
-# ---------------------------------------------------------------------
-# 3) VIEW
-# ---------------------------------------------------------------------
 class SellButton(QPushButton):
     def __init__(self, text="Sell", parent=None):
         super().__init__(text, parent)
@@ -322,14 +317,13 @@ class HoldingsTable(QTableWidget):
             
             # Sell button
             sell_button = SellButton("Sell")
-            # We'll let the view handle the click and call the presenter
-            # so we store the symbol in the button's property:
             sell_button.clicked.connect(lambda _, sym=holding.Symbol: self.parent().on_sell_clicked(sym))
             self.setCellWidget(row, 7, sell_button)
 
 class Dashboard_view(QWidget):
     def __init__(self):
         super().__init__()
+        self.presenter = None  # Presenter will be set later
         self.init_ui()
 
     def init_ui(self):
@@ -382,7 +376,6 @@ class Dashboard_view(QWidget):
         period_label.setStyleSheet("font-size: 14px; color: #666;")
         self.period_selector = QComboBox()
         self.period_selector.addItems(["Last 3 Months", "Last 6 Months", "Last Year", "All Time"])
-        # On change, we notify the presenter
         self.period_selector.currentTextChanged.connect(self.on_period_changed)
         
         header_layout.addWidget(period_label)
@@ -409,7 +402,6 @@ class Dashboard_view(QWidget):
         
         self.container_layout.addLayout(stats_layout)
         
-        # Connect add/remove money signals
         self.total_value_card.add_money_btn.clicked.connect(self.on_add_money_clicked)
         self.total_value_card.remove_money_btn.clicked.connect(self.on_remove_money_clicked)
         
@@ -423,36 +415,35 @@ class Dashboard_view(QWidget):
         
         self.container_layout.addSpacing(40)
 
-    # View → Presenter: "Period changed"
     def on_period_changed(self, text):
         if self.presenter:
             self.presenter.on_period_changed(text)
 
-    # View → Presenter: "Add money"
     def on_add_money_clicked(self):
         if self.presenter:
             self.presenter.on_add_money()
 
-    # View → Presenter: "Remove money"
     def on_remove_money_clicked(self):
         if self.presenter:
             self.presenter.on_remove_money()
 
-    # View → Presenter: "Sell"
     def on_sell_clicked(self, symbol):
         if self.presenter:
             self.presenter.on_sell_stock(symbol)
 
-    # Presenter → View: set holdings data
     def set_holdings_data(self, holdings):
         self.holdings_table.load_data(holdings)
 
-    # Presenter → View: set chart data
     def set_chart_data(self, data):
         self.chart.load_data(data)
 
-    # Presenter → View: set stats
     def set_portfolio_summary(self, total_value, total_gain, total_gain_pct):
         self.total_value_card.value_label.setText(f"${total_value:,.2f}")
         self.total_gain_card.value_label.setText(f"${total_gain:,.2f}")
         self.total_gain_pct_card.value_label.setText(f"{total_gain_pct:.2f}%")
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    view = Dashboard_view()
+    view.show()
+    sys.exit(app.exec())

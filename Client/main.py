@@ -64,9 +64,12 @@ class MainWindow(QMainWindow):
         """Show the authentication screen"""
         self.main_stack.setCurrentWidget(self.auth_view)
     
-    def show_app(self):
+    def show_app(self, user_id):
         """Show the main application screen"""
+        print(f"User authenticated: {user_id}")
         self.main_stack.setCurrentWidget(self.app_widget)
+        self.app_widget.setUser(user_id)
+
 
 def main():
     # Create application

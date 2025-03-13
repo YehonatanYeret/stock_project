@@ -3,10 +3,9 @@ from PySide6.QtCore import Signal
 from PySide6.QtCore import QObject
 from services.api_service import ApiService
 
-api_url = 'http://localhost:5039/api/auth'
 
 class AuthModel(QObject):
-    completed = Signal()
+    completed = Signal(int)
     def __init__(self):
         super().__init__()
         self.api_service = ApiService()
@@ -14,7 +13,10 @@ class AuthModel(QObject):
     def authenticate(self, email, password):
         status, msg = self.api_service.login(email, password)
         if status:
-            self.completed.emit()
+            user = msg.get("user")
+            if user and "id" in user:
+                # Emit the user's ID
+                self.completed.emit(user["id"])
         else:
             return msg
 

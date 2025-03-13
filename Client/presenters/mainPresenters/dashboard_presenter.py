@@ -1,262 +1,70 @@
-from services.api_service import ApiService
+
+import datetime
 
 
-# ---------------------------------------------------------------------
-# 2) PRESENTER
-# ---------------------------------------------------------------------
 class DashboardPresenter:
-    """Coordinates interactions between the PortfolioModel and Dashboard_view."""
-    def __init__(self, model, view):
-        self.model = model
+    def __init__(self, model, view, user_id=None):
         self.view = view
-        
-        # Initial load of data into the view
-        self.update_view()
+        self.model = model
+        self.user_id = user_id
 
-    def update_view(self, months=6):
-        """Refresh the entire UI with current model data."""
-        # Update holdings
+        # If a valid user_id is provided at initialization, fetch initial data.
+        if self.user_id is not None:
+            self.model.fetch_holdings(self.user_id)
+            self.model.fetch_trades(self.user_id)
+            self.model_updated()
+
+    def set_user_id(self, user_id):
+        """Setter method to update the user_id later."""
+        self.user_id = user_id
+        self.model.fetch_holdings(self.user_id)
+        self.model.fetch_trades(self.user_id)
+        self.model_updated()
+
+    def model_updated(self):
+        """Update the View with new data from the Model"""
+        if self.user_id is None:
+            return
+
         holdings = self.model.get_holdings()
-        self.view.set_holdings_data(holdings)
+        transactions = self.model.get_transactions()
+        total_value, total_gain, total_gain_pct = self.calculate_portfolio_summary(holdings)
 
-        # Update stats
-        total_value = self.model.get_total_value()
-        total_gain = self.model.get_total_gain()
-        total_gain_pct = self.model.get_total_gain_pct()
+        self.view.set_holdings_data(holdings)
+        self.view.set_chart_data(self.get_chart_data(transactions))
         self.view.set_portfolio_summary(total_value, total_gain, total_gain_pct)
 
-        # Update chart
-        data = self.model.get_chart_data(months)
-        self.view.set_chart_data(data)
+    def calculate_portfolio_summary(self, holdings):
+        total_value = sum(h.TotalValue for h in holdings)
+        total_gain = sum(h.TotalGain for h in holdings)
+        total_gain_pct = (total_gain / total_value * 100) if total_value > 0 else 0
+        return total_value, total_gain, total_gain_pct
 
-    # Called when the user changes the "Period" combo box
-    def on_period_changed(self, period_label):
-        if period_label == "Last 3 Months":
-            months = 3
-        elif period_label == "Last 6 Months":
-            months = 6
-        elif period_label == "Last Year":
-            months = 12
-        elif period_label == "All Time":
-            months = 24
-        else:
-            months = 6
-        self.update_view(months)
+    def get_chart_data(self, transactions):
+        chart_data = []
+        for trade in transactions:
+            trade_date = datetime.datetime.fromisoformat(trade["TradeDate"])
+            portfolio_value = trade["PortfolioValue"]
+            chart_data.append((trade_date, portfolio_value))
+        print("Chart Data:", chart_data)
+        return chart_data
 
-    # Called when user clicks "Add Money"
-    def on_add_money(self):
-        self.model.add_money(1000)
-        self.update_view()
+    def on_period_changed(self, period_text):
+        print(f"Period changed to: {period_text}")  # Placeholder for filtering logic
 
-    # Called when user clicks "Remove Money"
-    def on_remove_money(self):
-        self.model.remove_money(1000)
-        self.update_view()
+    def on_buy_stock(self, symbol, quantity):
+        if self.user_id is not None:
+            self.model.buy_stock(self.user_id, symbol, quantity)
+            self.model_updated()
 
-    # Called when user clicks "Sell"
     def on_sell_stock(self, symbol):
-        self.model.sell_stock(symbol)
-        self.update_view()
+        holding = next((h for h in self.model.get_holdings() if h.Symbol == symbol), None)
+        if holding:
+            self.model.sell_stock(holding.Id, holding.Quantity)
+            self.model_updated()
 
+    def on_add_money(self):
+        print("Add money clicked - Not implemented yet")
 
-class PortfolioPresenter:
-    """
-    Presenter for handling portfolio management logic
-    """
-    def __init__(self, portfolio_view, user_model, portfolio_model, api_service=None):
-        """
-        Initialize the portfolio presenter
-        
-        Args:
-            portfolio_view: The portfolio view
-            user_model: The user model for authentication info
-            portfolio_model: The portfolio data model
-            api_service: Optional API service (will create one if not provided)
-        """
-        self.view = portfolio_view
-        self.user_model = user_model
-        self.model = portfolio_model
-        self.api_service = api_service if api_service else ApiService()
-        
-        # Connect signals from the view
-        self.connect_signals()
-    
-    def connect_signals(self):
-        """Connect signals from the portfolio view to handler methods"""
-        self.view.add_stock_requested.connect(self.handle_add_stock)
-        self.view.remove_stock_requested.connect(self.handle_remove_stock)
-        self.view.refresh_data_requested.connect(self.load_portfolio_data)
-    
-    def load_portfolio_data(self):
-        """Load the user's portfolio data from the server"""
-        if not self.user_model.is_authenticated:
-            self.view.show_error("User not authenticated")
-            return
-        
-        try:
-            # Prepare headers with authentication token
-            headers = {"Authorization": f"Bearer {self.user_model.token}"}
-            
-            # Make API call to get portfolio data
-            response = self.api_service.get("/portfolio", headers=headers)
-            
-            if response.status_code == 200:
-                portfolio_data = response.json()
-                
-                # Update the portfolio model
-                self.model.set_portfolio_data(portfolio_data)
-                
-                # Update the view with portfolio data
-                self.update_portfolio_view()
-            else:
-                error_message = response.json().get("message", "Failed to load portfolio data")
-                self.view.show_error(error_message)
-                
-        except Exception as e:
-            self.view.show_error(f"Connection error: {str(e)}")
-    
-    def update_portfolio_view(self):
-        """Update the portfolio view with current model data"""
-        # Get data from the model
-        portfolio_summary = self.model.get_summary()
-        holdings = self.model.get_holdings()
-        allocations = self.model.get_allocations()
-        performance_data = self.model.get_performance_data()
-        
-        # Update the view components
-        self.view.update_portfolio_summary(
-            portfolio_summary.get('total_value', 0),
-            portfolio_summary.get('total_gain', 0),
-            portfolio_summary.get('gain_percentage', 0)
-        )
-        self.view.update_allocation_chart(allocations)
-        self.view.update_holdings_table(holdings)
-        self.view.update_performance_chart(
-            performance_data.get('dates', []),
-            performance_data.get('values', [])
-        )
-    
-    def handle_add_stock(self, stock_id, quantity, price):
-        """
-        Handle adding a stock to the portfolio
-        
-        Args:
-            stock_id: ID of the stock to add
-            quantity: Number of shares to buy
-            price: Price per share
-        """
-        if not self.user_model.is_authenticated:
-            self.view.show_error("User not authenticated")
-            return False
-        
-        # Validate inputs
-        try:
-            quantity = int(quantity)
-            price = float(price)
-            
-            if quantity <= 0:
-                self.view.show_error("Quantity must be positive")
-                return False
-            
-            if price <= 0:
-                self.view.show_error("Price must be positive")
-                return False
-        except ValueError:
-            self.view.show_error("Invalid quantity or price")
-            return False
-        
-        # Prepare transaction data
-        transaction_data = {
-            "stockId": stock_id,
-            "quantity": quantity,
-            "price": price,
-            "type": "buy"
-        }
-        
-        try:
-            # Make API call to create transaction
-            headers = {"Authorization": f"Bearer {self.user_model.token}"}
-            response = self.api_service.post("/transactions", data=transaction_data, headers=headers)
-            
-            if response.status_code in (200, 201):
-                # Refresh portfolio data
-                self.load_portfolio_data()
-                return True
-            else:
-                error_message = response.json().get("message", "Failed to add stock")
-                self.view.show_error(error_message)
-                return False
-                
-        except Exception as e:
-            self.view.show_error(f"Connection error: {str(e)}")
-            return False
-    
-    def handle_remove_stock(self, stock_id):
-        """
-        Handle removing a stock from the portfolio (selling all shares)
-        
-        Args:
-            stock_id: ID of the stock to remove
-        """
-        if not self.user_model.is_authenticated:
-            self.view.show_error("User not authenticated")
-            return False
-        
-        # Get current holding for this stock
-        holding = self.model.get_holding_by_id(stock_id)
-        
-        if not holding:
-            self.view.show_error("Stock not found in portfolio")
-            return False
-        
-        quantity = holding.get('quantity', 0)
-        current_price = holding.get('current_price', 0)
-        
-        if quantity <= 0:
-            self.view.show_error("No shares to sell")
-            return False
-        
-        # Prepare transaction data
-        transaction_data = {
-            "stockId": stock_id,
-            "quantity": quantity,
-            "price": current_price,
-            "type": "sell"
-        }
-        
-        try:
-            # Make API call to create transaction
-            headers = {"Authorization": f"Bearer {self.user_model.token}"}
-            response = self.api_service.post("/transactions", data=transaction_data, headers=headers)
-            
-            if response.status_code in (200, 201):
-                # Refresh portfolio data
-                self.load_portfolio_data()
-                return True
-            else:
-                error_message = response.json().get("message", "Failed to remove stock")
-                self.view.show_error(error_message)
-                return False
-                
-        except Exception as e:
-            self.view.show_error(f"Connection error: {str(e)}")
-            return False
-    
-    def handle_period_change(self, period_index):
-        """
-        Handle when the user changes the time period for performance chart
-        
-        Args:
-            period_index: Index of the selected period (e.g., 0 for 1W, 1 for 1M, etc.)
-        """
-        # Map period index to actual period
-        periods = ["1W", "1M", "3M", "6M", "1Y", "All"]
-        selected_period = periods[period_index] if 0 <= period_index < len(periods) else "1M"
-        
-        # Update the performance chart with data for the selected period
-        performance_data = self.model.get_performance_data(selected_period)
-        
-        self.view.update_performance_chart(
-            performance_data.get('dates', []),
-            performance_data.get('values', [])
-        )
+    def on_remove_money(self):
+        print("Remove money clicked - Not implemented yet")
