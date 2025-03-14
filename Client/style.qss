@@ -1,0 +1,49 @@
+/* style.qss */
+
+/* General background and font */
+QWidget {
+    background-color: #ffffff;
+    color: #2f3640;
+    font-size: 14px;
+    font-family: "Segoe UI", sans-serif;
+}
+
+/* Labels */
+QLabel {
+    font-size: 14px;
+}
+
+/* Inputs */
+QLineEdit, QDateEdit {
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+}
+
+QPushButton:hover {
+    background-color: #45a049;
+}
+
+/* Radio buttons */
+QRadioButton {
+    spacing: 5px;
+    font-size: 14px;
+}
+
+/* Group boxes or frames */
+QGroupBox {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 10px;
+    padding: 10px;
+}

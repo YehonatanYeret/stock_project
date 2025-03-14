@@ -1,3 +1,6 @@
+import sys
+sys.path.append('..')
+
 from PySide6.QtCharts import (
     QChart, QChartView, QLineSeries, QAreaSeries,
     QDateTimeAxis, QValueAxis
@@ -8,7 +11,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 import pandas as pd
 
 # Import the styled ContentCard for consistent styling
-from views.components.styled_widgets import ContentCard
+from components.styled_widgets import ContentCard
 
 class StockChartWidget(QWidget):
     def __init__(self, parent=None):

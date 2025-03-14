@@ -31,6 +31,32 @@ class PrimaryButton(QPushButton):
             }
         """)
 
+class StyledButton(QPushButton):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #4C6FFF;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;  /* Slightly reduced padding */
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #3A5BCC;
+            }
+            QPushButton:pressed {
+                background-color: #2D49A3;
+            }
+            QPushButton:disabled {
+                background-color: #CCCCCC;
+                color: #888888;
+            }
+        """)
+
+
 
 class SecondaryButton(QPushButton):
     def __init__(self, text, parent=None):
@@ -116,7 +142,7 @@ class Card(QFrame):
 
 
 class ContentCard(QFrame):
-    def __init__(self, parent=None):
+    def __init__(self,content, parent = None):
         super().__init__(parent)
         self.setStyleSheet("""
             QFrame {
@@ -125,6 +151,12 @@ class ContentCard(QFrame):
                 border: 1px solid #EAEAEA;
             }
         """)
+        self.content_layout = QVBoxLayout(self)
+        self.content_layout.setContentsMargins(16, 16, 16, 16)
+        self.content_layout.setSpacing(16)
+        content_label = QLabel(content)
+        content_label.setWordWrap(True)
+        self.content_layout.addWidget(content_label)
 
 
 class PageHeader(QFrame):

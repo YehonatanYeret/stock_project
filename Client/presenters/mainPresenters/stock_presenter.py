@@ -1,4 +1,11 @@
+import sys
+sys.path.append('C:/Users/1/source/repos/stock_project/Client')
+
 from services.api_service import ApiService
+
+from models.mainModels.stock_model import StockModel
+from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QApplication
 
 class StockPresenter:
     """
@@ -253,3 +260,53 @@ class StockPresenter:
         except Exception as e:
             self.view.show_error(f"Connection error: {str(e)}")
             return False
+
+
+
+
+class SessionManager(QObject):
+    """Simple class to manage user session"""
+
+    def __init__(self):
+        super().__init__()
+        self.user_id = None
+        self.session_token = None
+
+    def get_session_info(self):
+        """Get session info from server or local storage
+
+        This is a simplified example. In a real app, you would retrieve
+        this from secure storage or a session cookie.
+        """
+        # In a real app, this would come from your authentication system
+        self.user_id = "user123"
+        self.session_token = "sample_token_12345"
+
+        return self.user_id, self.session_token
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+
+    # Set application style
+    app.setStyle("Fusion")
+
+    # Get session info
+    session_manager = SessionManager()
+    user_id, session_token = session_manager.get_session_info()
+
+    # Create model with API base URL and session token
+    api_base_url = "https://your-api-server.com"
+    model = StockModel(api_base_url, session_token)
+    model.set_user_id(user_id)
+
+    # Create view
+    view = StockTradingView()
+
+    # Create presenter with model and view
+    presenter = StockPresenter(model, view)
+
+    # Show the view
+    view.show()
+
+    sys.exit(app.exec())
