@@ -1,158 +1,82 @@
 import datetime
+from services.api_service import ApiService
 
-# ---------------------------------------------------------------------
-# Holding Data Transfer Object
-# ---------------------------------------------------------------------
-class HoldingDto:
-    def __init__(self, Id, Symbol, Quantity, CurrentPrice, TotalValue, TotalGain, TotalGainPercentage):
+class Holding:
+    def __init__(self, Id, Symbol, Quantity, CurrentPrice, total_gain, total_gain_percentage):
         self.Id = Id
         self.Symbol = Symbol
         self.Quantity = Quantity
         self.CurrentPrice = CurrentPrice
-        self.TotalValue = TotalValue
-        self.TotalGain = TotalGain
-        self.TotalGainPercentage = TotalGainPercentage
+        self.TotalValue = self.Quantity * self.CurrentPrice
+        self.TotalGain = total_gain
+        self.TotalGainPercentage = total_gain_percentage
 
-# ---------------------------------------------------------------------
-# Combined PortfolioModel with Observer Pattern + Mock Data
-# ---------------------------------------------------------------------
+
 class DashboardModel:
-    """
-    Holds portfolio data and logic for chart generation, money additions/removals, etc.
-    Also implements the observer pattern to notify any registered observers when data changes.
-    """
-
     def __init__(self):
-        # Observer pattern fields
-        self._observers = []
+        self.api_service = ApiService()
+        self.holdings = []
+        self.transactions = []
+        self.user_id = None  # Store user ID for easy reference
 
-        # Example fields from your original observer-based code
-        self._portfolio = None
-        self._performance_data = []
-        self._holdings = []
-        self._transactions = []
+    def fetch_holdings(self, user_id):
+        """Fetch holdings from backend"""
+        self.user_id = user_id  # Store user_id for future calls
+        print(f"Fetching holdings for user {user_id} from backend")
+        status, response = self.api_service.get_holdings(user_id)
+        print(response)
+        if status and isinstance(response, list):  # Assuming response is a list of holdings
+            self.holdings = [
+                Holding(h["id"], h["symbol"], h["quantity"], h["currentPrice"], h["totalGain"], h["totalGainPercentage"])
+                for h in response
+            ]
+        else:
+            print("Error fetching holdings:", response)
 
-        # Extra cash added/removed (for demonstration)
-        self._cash = 0.0
+    def fetch_trades(self, user_id):
+        """Fetch transactions from backend"""
+        self.user_id = user_id
+        print(f"Fetching trades for user {user_id} from backend")
+        status, response = self.api_service.get_transactions(user_id)
 
-        # Mock data for demonstration
-        self._holdings = [
-            HoldingDto(1, "AAPL", 10, 150.00, 1500.00, 200.00, 15.38),
-            HoldingDto(2, "GOOGL", 5, 2800.00, 14000.00, -500.00, -3.45),
-            HoldingDto(3, "TSLA", 8, 750.00, 6000.00, 800.00, 15.38),
-            HoldingDto(4, "MSFT", 12, 320.00, 3840.00, 100.00, 2.67),
-        ]
-
-    # ---------------------------------------------------------------------
-    # Observer Pattern Methods
-    # ---------------------------------------------------------------------
-    def register_observer(self, observer):
-        """Add an observer to be notified of model changes."""
-        if observer not in self._observers:
-            self._observers.append(observer)
-    
-    def remove_observer(self, observer):
-        """Remove an observer."""
-        if observer in self._observers:
-            self._observers.remove(observer)
-    
-    def notify_observers(self):
-        """Notify all observers of a change in the model."""
-        for observer in self._observers:
-            observer.model_updated()
-
-    # ---------------------------------------------------------------------
-    # "Setters" that also notify observers
-    # ---------------------------------------------------------------------
-    def set_portfolio(self, portfolio):
-        """Set the portfolio data (if you have an overall 'portfolio' object)."""
-        self._portfolio = portfolio
-        self.notify_observers()
-    
-    def set_performance_data(self, performance_data):
-        """Set the portfolio performance data."""
-        self._performance_data = performance_data
-        self.notify_observers()
-    
-    def set_holdings(self, holdings):
-        """Set the portfolio holdings (override the existing list)."""
-        self._holdings = holdings
-        self.notify_observers()
-    
-    def set_transactions(self, transactions):
-        """Set the portfolio transactions."""
-        self._transactions = transactions
-        self.notify_observers()
-
-    # ---------------------------------------------------------------------
-    # "Getters" and logic for holdings, chart data, etc.
-    # ---------------------------------------------------------------------
-    @property
-    def portfolio(self):
-        return self._portfolio
-
-    @property
-    def performance_data(self):
-        return self._performance_data
-    
-    @property
-    def holdings(self):
-        return self._holdings
-    
-    @property
-    def transactions(self):
-        return self._transactions
+        if status and isinstance(response, list):  # Assuming response is a list of trades
+            print(response)
+            self.transactions = [
+                {"TradeDate": t["date"], "PortfolioValue": t.get("quantity", 0)*t.get("price", 0)*(-2*t.get("type", 0)+1)}
+                for t in response
+            ]
+        else:
+            print("Error fetching transactions:", response)
 
     def get_holdings(self):
-        """Return the current list of holdings."""
-        return self._holdings
+        return self.holdings
 
-    def get_total_value(self):
-        """Sum of all holdings + extra cash."""
-        portfolio_value = sum(h.TotalValue for h in self._holdings)
-        return portfolio_value + self._cash
+    def get_transactions(self):
+        return self.transactions
 
-    def get_total_gain(self):
-        """Sum of total gains for all holdings (not counting extra cash)."""
-        return sum(h.TotalGain for h in self._holdings)
+    def buy_stock(self, user_id, symbol, quantity):
+        """Send buy stock request to backend"""
+        print(f"Buying {quantity} shares of {symbol} for user {user_id}")
+        payload = {"userId": user_id, "symbol": symbol, "quantity": quantity, "buyDate": datetime.datetime.utcnow().isoformat()}
+        status, response = self.api_service.post("/api/transaction/command/buy", payload)
 
-    def get_total_gain_pct(self):
-        """
-        Compute a simplistic gain percentage:
-        (total_gain / total_value_of_holdings) * 100.
-        """
-        holdings_value = sum(h.TotalValue for h in self._holdings)
-        if holdings_value == 0:
-            return 0.0
-        total_gain = sum(h.TotalGain for h in self._holdings)
-        return (total_gain / holdings_value) * 100.0
+        if status:
+            self.fetch_holdings(user_id)  # Refresh holdings after buying
+        else:
+            print("Error buying stock:", response)
 
-    def add_money(self, amount):
-        """Add extra cash to the portfolio."""
-        self._cash += amount
-        self.notify_observers()
+    def sell_stock(self, holding_id, quantity):
+        """Send sell stock request to backend"""
+        if not self.user_id:
+            print("Error: user_id is not set")
+            return
 
-    def remove_money(self, amount):
-        """Remove cash from the portfolio (never going below 0)."""
-        self._cash = max(0, self._cash - amount)
-        self.notify_observers()
+        print(f"Selling {quantity} shares of holding ID {holding_id}")
+        payload = {"holdingId": holding_id, "quantity": quantity, "sellDate": datetime.datetime.utcnow().isoformat()}
+        status, response = self.api_service.post("/api/transaction/command/sell", payload)
 
-    def sell_stock(self, symbol):
-        """Remove a holding from the list (simple example)."""
-        self._holdings = [h for h in self._holdings if h.Symbol != symbol]
-        self.notify_observers()
+        if status:
+            self.fetch_holdings(self.user_id)  # Refresh holdings after selling
+        else:
+            print("Error selling stock:", response)
 
-    def get_chart_data(self, months):
-        """
-        Generate sample chart data for 'months' months back from now.
-        Returns a list of (datetime, value) for demonstration.
-        """
-        end_date = datetime.datetime.now()
-        data = []
-        base_value = 10000
-        for i in range(months):
-            month_date = end_date - datetime.timedelta(days=30 * (months - 1 - i))
-            fluctuation = (i / 10) * base_value * (0.95 + 0.1 * (i % 3))
-            value = base_value + fluctuation
-            data.append((month_date, value))
-        return data

@@ -7,11 +7,12 @@ API_BASE_URL = "http://localhost:5039/api"  # Replace with your ASP.NET backend 
 ENDPOINTS = {
     "login": "/auth/query/signin",
     "register": "/auth/command/signup",
-    "user_profile": "/users/profile",
-    "portfolio": "/portfolio",
-    "stocks": "/stocks",
-    "stock_details": "/stocks/{stock_id}",
-    "transactions": "/transactions",
+
+    "holdings": "/trading/query/holdings/{user_id}",
+    "transactions": "/trading/query/trades/{user_id}",
+
+    "buy_stock": "/transaction/command/buy",
+    "sell_stock": "/transaction/command/sell",
 }
 
 # UI Configuration
