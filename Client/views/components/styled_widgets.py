@@ -1,109 +1,19 @@
 from PySide6.QtWidgets import (
-    QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout
-    , QHBoxLayout, 
+    QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout, QHBoxLayout,
+    QTableWidget, QTableWidgetItem, QComboBox, QGraphicsDropShadowEffect,
+    QHeaderView, QScrollArea, QSizePolicy, QDateEdit
 )
-from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Qt
+from PySide6.QtGui import (
+    QPixmap, QColor, QFont, QPainter, QPen, QBrush, QLinearGradient
+)
+from PySide6.QtCore import Qt, QMargins, QPointF, QDate
+from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
 
 
-class PrimaryButton(QPushButton):
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: #4C6FFF;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 16px;  /* Slightly reduced padding */
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #3A5BCC;
-            }
-            QPushButton:pressed {
-                background-color: #2D49A3;
-            }
-            QPushButton:disabled {
-                background-color: #CCCCCC;
-                color: #888888;
-            }
-        """)
-
-class StyledButton(QPushButton):
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: #4C6FFF;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 16px;  /* Slightly reduced padding */
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #3A5BCC;
-            }
-            QPushButton:pressed {
-                background-color: #2D49A3;
-            }
-            QPushButton:disabled {
-                background-color: #CCCCCC;
-                color: #888888;
-            }
-        """)
-
-
-
-class SecondaryButton(QPushButton):
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                color: #4C6FFF;
-                border: 1px solid #4C6FFF;
-                border-radius: 4px;
-                padding: 8px 16px;
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: rgba(76, 111, 255, 0.1);
-            }
-            QPushButton:pressed {
-                background-color: rgba(76, 111, 255, 0.2);
-            }
-            QPushButton:disabled {
-                color: #CCCCCC;
-                border-color: #CCCCCC;
-            }
-        """)
-
-
-class StyledLineEdit(QLineEdit):
-    def __init__(self, placeholder="", parent=None):
-        super().__init__(parent)
-        self.setPlaceholderText(placeholder)
-        self.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #EAEAEA;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 14px;
-                background-color: white;
-            }
-            QLineEdit:focus {
-                border: 1px solid #4C6FFF;
-            }
-        """)
-
+# ========== TEXT ELEMENTS ==========
 
 class StyledLabel(QLabel):
-    def __init__(self, text, is_title=False, size=None, color=None, parent=None):
+    def __init__(self, text, is_title=False, size=None, color=None, font_weight=None, margin_bottom=0, parent=None):
         super().__init__(text, parent)
 
         # Default values
@@ -113,8 +23,9 @@ class StyledLabel(QLabel):
 
         # Use provided values or defaults
         font_size = size or default_size
-        font_weight = default_weight
+        font_weight = font_weight or default_weight
         font_color = color or default_color
+        margin = f"margin-bottom: {margin_bottom}px;" if margin_bottom > 0 else ""
 
         self.setStyleSheet(f"""
             QLabel {{
@@ -124,25 +35,253 @@ class StyledLabel(QLabel):
                 background: none;
                 border: none;
                 padding: 0px;
-                margin: 0px;
+                {margin}
             }}
         """)
 
 
-class Card(QFrame):
+class PageTitleLabel(StyledLabel):
+    def __init__(self, text, parent=None):
+        super().__init__(text, True, 24, "#333", parent=parent)
+        self.setObjectName("PageTitle")
+
+
+class SectionTitleLabel(StyledLabel):
+    def __init__(self, text, parent=None):
+        super().__init__(text, True, 18, "#333", parent=parent)
+        self.setObjectName("SectionTitle")
+
+
+# ========== BUTTONS ==========
+
+class StyledButton(QPushButton):
+    def __init__(self, text, bg_color="#4C6FFF", hover_color="#3A5BCC",
+                 pressed_color="#2D49A3", text_color="white",
+                 border_radius=4, padding="8px 16px", font_size=14,
+                 object_name=None, parent=None):
+        super().__init__(text, parent)
+
+        if object_name:
+            self.setObjectName(object_name)
+            obj_selector = f"#{object_name}"
+        else:
+            obj_selector = "QPushButton"
+
+        self.setStyleSheet(f"""
+            {obj_selector} {{
+                background-color: {bg_color};
+                color: {text_color};
+                border: none;
+                border-radius: {border_radius}px;
+                padding: {padding};
+                font-size: {font_size}px;
+                font-weight: bold;
+            }}
+            {obj_selector}:hover {{
+                background-color: {hover_color};
+            }}
+            {obj_selector}:pressed {{
+                background-color: {pressed_color};
+            }}
+            {obj_selector}:disabled {{
+                background-color: #CCCCCC;
+                color: #888888;
+            }}
+        """)
+
+
+class PrimaryButton(StyledButton):
+    def __init__(self, text, object_name=None, parent=None):
+        super().__init__(
+            text=text,
+            bg_color="#3B82F6",
+            hover_color="#2563EB",
+            pressed_color="#1D4ED8",
+            border_radius=10,
+            padding="10px 25px",
+            font_size=15,
+            object_name=object_name,
+            parent=parent
+        )
+        self.setMinimumHeight(45)
+        self.setCursor(Qt.PointingHandCursor)
+
+
+class DangerButton(StyledButton):
+    def __init__(self, text, object_name=None, parent=None):
+        super().__init__(
+            text=text,
+            bg_color="#FF4D4D",
+            hover_color="#D43F3F",
+            pressed_color="#B53131",
+            object_name=object_name,
+            parent=parent
+        )
+
+
+class SuccessButton(StyledButton):
+    def __init__(self, text, object_name=None, parent=None):
+        super().__init__(
+            text=text,
+            bg_color="#10B981",
+            hover_color="#059669",
+            pressed_color="#047857",
+            object_name=object_name,
+            parent=parent
+        )
+
+
+class CompactButton(StyledButton):
+    def __init__(self, text="", color="#4C6FFF", hover_color="#3A5BCC", pressed_color="#2D49A3", parent=None):
+        super().__init__(
+            text=text,
+            bg_color=color,
+            hover_color=hover_color,
+            pressed_color=pressed_color,
+            padding="4px 10px",
+            font_size=12,
+            parent=parent
+        )
+        self.setFixedSize(60, 24)
+
+
+class SellButton(CompactButton):
+    def __init__(self, text="Sell", parent=None):
+        super().__init__(text, color="#FF4D4D", hover_color="#D43F3F", pressed_color="#B53131", parent=parent)
+
+
+class ToggleButton(QPushButton):
+    def __init__(self, text, object_name, is_checked=False, active_color="#4C6FFF", parent=None):
+        super().__init__(text, parent)
+        self.setObjectName(object_name)
+        self.setCheckable(True)
+        self.setChecked(is_checked)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setMinimumHeight(45)
+
+        self.setStyleSheet(f"""
+            #{object_name} {{
+                background-color: #F1F5F9;
+                border: 2px solid #E2E8F0;
+                border-radius: 10px;
+                padding: 10px;
+                font-weight: bold;
+                font-size: 15px;
+                color: #334155;
+            }}
+            #{object_name}:checked {{
+                background-color: {active_color};
+                color: white;
+                border: 2px solid {active_color};
+            }}
+            #{object_name}:hover:!checked {{
+                background-color: #E2E8F0;
+            }}
+        """)
+
+
+class BuyToggleButton(ToggleButton):
+    def __init__(self, text="Buy", object_name="buyButton", is_checked=False, parent=None):
+        super().__init__(text, object_name, is_checked, "#10B981", parent)
+
+
+class SellToggleButton(ToggleButton):
+    def __init__(self, text="Sell", object_name="sellButton", is_checked=False, parent=None):
+        super().__init__(text, object_name, is_checked, "#EF4444", parent)
+
+
+# ========== INPUT FIELDS ==========
+
+class StyledLineEdit(QLineEdit):
+    def __init__(self, placeholder="", parent=None):
+        super().__init__(parent)
+        self.setPlaceholderText(placeholder)
+        self.setMinimumHeight(45)
+        self.setStyleSheet("""
+            QLineEdit {
+                border: 2px solid #E2E8F0;
+                border-radius: 10px;
+                padding: 10px 15px;
+                background-color: #F8FAFC;
+                font-size: 15px;
+                color: #1E293B;
+            }
+            QLineEdit:focus {
+                border: 2px solid #3B82F6;
+                background-color: white;
+            }
+        """)
+
+
+class StyledDateEdit(QDateEdit):
+    def __init__(self, default_date=None, parent=None):
+        super().__init__(parent)
+        self.setMinimumHeight(45)
+        self.setCalendarPopup(True)
+        self.setDisplayFormat("dd/MM/yyyy")
+
+        if default_date:
+            self.setDate(default_date)
+        else:
+            self.setDate(QDate.currentDate())
+
+        self.setStyleSheet("""
+            QDateEdit {
+                border: 2px solid #E2E8F0;
+                border-radius: 10px;
+                padding: 10px 15px;
+                background-color: #F8FAFC;
+                font-size: 15px;
+                color: #1E293B;
+            }
+            QDateEdit:focus {
+                border: 2px solid #3B82F6;
+                background-color: white;
+            }
+            QDateEdit::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: center right;
+                width: 25px;
+                border: none;
+            }
+        """)
+
+
+class StyledComboBox(QComboBox):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setStyleSheet("""
-            QFrame {
+            QComboBox {
+                padding: 5px 10px;
+                border: 2px solid #E2E8F0;
+                border-radius: 10px;
+                background-color: #F8FAFC;
+                min-width: 150px;
+                min-height: 45px;
+                font-size: 15px;
+                color: #1E293B;
+            }
+            QComboBox:focus {
+                border: 2px solid #3B82F6;
                 background-color: white;
-                border-radius: 8px;
-                border: 1px solid #EAEAEA;
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: center right;
+                width: 25px;
+                border: none;
+            }
+            QComboBox QAbstractItemView {
+                border: 1px solid #E2E8F0;
+                selection-background-color: #F5F5F5;
             }
         """)
 
 
-class ContentCard(QFrame):
-    def __init__(self,content, parent = None):
+# ========== CONTAINERS ==========
+
+class Card(QFrame):
+    def __init__(self, parent=None, shadow_enabled=True):
         super().__init__(parent)
         self.setStyleSheet("""
             QFrame {
@@ -151,91 +290,46 @@ class ContentCard(QFrame):
                 border: 1px solid #EAEAEA;
             }
         """)
-        self.content_layout = QVBoxLayout(self)
-        self.content_layout.setContentsMargins(16, 16, 16, 16)
-        self.content_layout.setSpacing(16)
-        content_label = QLabel(content)
-        content_label.setWordWrap(True)
-        self.content_layout.addWidget(content_label)
+
+        # Apply shadow effect
+        if shadow_enabled:
+            self.apply_shadow()
+
+    def apply_shadow(self, blur_radius=15, offset=4, opacity=25):
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(blur_radius)
+        shadow.setColor(QColor(0, 0, 0, opacity))
+        shadow.setOffset(0, offset)
+        self.setGraphicsEffect(shadow)
 
 
-class PageHeader(QFrame):
-    def __init__(self, title, subtitle, parent=None):
-        super().__init__(parent)
-        self.setStyleSheet("""
-            QFrame {
+class RoundedCard(Card):
+    def __init__(self, parent=None, border_radius=16, shadow_enabled=True):
+        super().__init__(parent, shadow_enabled)
+        self.setObjectName("roundedCard")
+        self.setStyleSheet(f"""
+            #roundedCard {{
                 background-color: white;
-                border: none;
-            }
-        """)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-
-        title_label = QLabel(title)
-        title_label.setStyleSheet("""
-            QLabel {
-                font-size: 24px;
-                font-weight: bold;
-                color: #222222;
-                background: none;
-                border: none;
-            }
-        """)
-        layout.addWidget(title_label)
-
-        subtitle_label = QLabel(subtitle)
-        subtitle_label.setStyleSheet("""
-            QLabel {
-                font-size: 14px;
-                color: #666666;
-                background: none;
-                border: none;
-            }
-        """)
-        layout.addWidget(subtitle_label)
-
-
-class SectionTitle(QLabel):
-    def __init__(self, title, parent=None):
-        super().__init__(title, parent)
-        self.setStyleSheet("""
-            QLabel {
-                font-size: 18px;
-                font-weight: bold;
-                color: #333333;
-            }
+                border-radius: {border_radius}px;
+                border: 1px solid #EAEAEA;
+            }}
         """)
 
 
-class SmallButton(QPushButton):
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: #FF4D4D;  /* Red for selling stocks */
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 4px 10px;  /* Smaller button size */
-                font-size: 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #D43F3F;
-            }
-            QPushButton:pressed {
-                background-color: #B53131;
-            }
-            QPushButton:disabled {
-                background-color: #CCCCCC;
-                color: #888888;
-            }
+class GradientCard(Card):
+    def __init__(self, parent=None, start_color="#F0F9FF", end_color="#EFF6FF", border_color="#E0F2FE", shadow_enabled=True):
+        super().__init__(parent, shadow_enabled)
+        self.setObjectName("gradientCard")
+        self.setStyleSheet(f"""
+            #gradientCard {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {start_color}, stop:1 {end_color});
+                border-radius: 14px;
+                border: 1px solid {border_color};
+            }}
         """)
 
 
-class StatCard(QFrame):
+class StyledStatsCard(Card):
     def __init__(self, title, value, subtitle=None, icon=None, color="#5851DB", parent=None):
         super().__init__(parent)
         self.setObjectName("StatCard")
@@ -243,20 +337,20 @@ class StatCard(QFrame):
             #StatCard {
                 background-color: white;
                 border-radius: 12px;
-                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
                 border: 1px solid #EAEAEA;
             }
         """)
-        
+
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(24, 20, 24, 20)
-        
-        # Header with title and icon
+        self.layout.setSpacing(5)
+
+        # Header with title and optional icon
         header_layout = QHBoxLayout()
         title_label = QLabel(title)
         title_label.setStyleSheet("color: #666; font-size: 15px; font-weight: 500;")
         header_layout.addWidget(title_label)
-        
+
         if icon:
             icon_label = QLabel()
             pixmap = QPixmap(icon)
@@ -264,19 +358,17 @@ class StatCard(QFrame):
             header_layout.addWidget(icon_label)
         else:
             header_layout.addStretch()
-        
+
         self.layout.addLayout(header_layout)
-        
-        # Value
-        value_label = QLabel(value)
-        value_label.setStyleSheet(f"color: #000; font-size: 28px; font-weight: bold;")
-        self.layout.addWidget(value_label)
-        
-        # Subtitle (optional)
+
+        # Value display
+        self.value_label = QLabel(value)
+        self.value_label.setStyleSheet("color: #000; font-size: 28px; font-weight: bold;")
+        self.layout.addWidget(self.value_label)
+
+        # Optional subtitle with trend arrow
         if subtitle:
             subtitle_layout = QHBoxLayout()
-            
-            # Create arrow icon based on positive/negative value
             arrow_label = QLabel()
             if "+" in subtitle:
                 arrow_label.setText("↗")
@@ -284,12 +376,208 @@ class StatCard(QFrame):
             elif "-" in subtitle:
                 arrow_label.setText("↘")
                 arrow_label.setStyleSheet("color: #F44336; font-size: 18px;")
-            
+
             subtitle_text = QLabel(subtitle)
             subtitle_text.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: 500;")
-            
+
             subtitle_layout.addWidget(arrow_label)
             subtitle_layout.addWidget(subtitle_text)
             subtitle_layout.addStretch()
-            
             self.layout.addLayout(subtitle_layout)
+
+
+# ========== TABLES ==========
+
+class StyledTable(QTableWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("StyledTable")
+        self.setStyleSheet("""
+            #StyledTable {
+                background-color: white;
+                border: none;
+                gridline-color: #EAEAEA;
+            }
+            #StyledTable::item {
+                padding: 5px;
+            }
+            #StyledTable QHeaderView::section {
+                background-color: #F5F5F5;
+                border: none;
+                border-bottom: 1px solid #EAEAEA;
+                padding: 8px;
+                font-weight: bold;
+                color: #333;
+            }
+            QTableView {
+                alternate-background-color: #F9F9F9;
+                background-color: white;
+            }
+        """)
+
+        self.setShowGrid(False)
+        self.setSelectionBehavior(QTableWidget.SelectRows)
+        self.setSelectionMode(QTableWidget.SingleSelection)
+
+        # Apply shadow
+        self.apply_shadow()
+
+    def apply_shadow(self, blur_radius=15, offset=4, opacity=25):
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(blur_radius)
+        shadow.setColor(QColor(0, 0, 0, opacity))
+        shadow.setOffset(0, offset)
+        self.setGraphicsEffect(shadow)
+
+
+# ========== CHARTS ==========
+
+class StyledChartView(QChartView):
+    def __init__(self, title="Chart", parent=None):
+        super().__init__(parent)
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # Create and configure chart
+        self.chart = QChart()
+        self.chart.setTitle(title)
+        self.chart.setTitleFont(QFont("Arial", 14, QFont.Bold))
+        self.chart.setAnimationOptions(QChart.SeriesAnimations)
+        self.chart.legend().hide()
+        self.chart.setBackgroundVisible(False)
+        self.chart.setMargins(QMargins(10, 10, 10, 10))
+
+        # Set chart as the view's chart
+        self.setChart(self.chart)
+        self.chart.setBackgroundBrush(QColor("white"))
+
+        # Apply shadow
+        self.apply_shadow()
+
+    def apply_shadow(self, blur_radius=15, offset=4, opacity=25):
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(blur_radius)
+        shadow.setColor(QColor(0, 0, 0, opacity))
+        shadow.setOffset(0, offset)
+        self.setGraphicsEffect(shadow)
+
+
+class StyledLineSeriesChart(StyledChartView):
+    def __init__(self, title="Line Chart", color="#5851DB", parent=None):
+        super().__init__(title, parent)
+        self.setMinimumHeight(350)
+
+        # Create series
+        self.series = QLineSeries()
+        self.series.setName("Data Series")
+
+        # Apply styling to the series
+        pen = QPen(QColor(color))
+        pen.setWidth(3)
+        self.series.setPen(pen)
+
+        # Create gradient fill
+        gradient = QLinearGradient(QPointF(0, 0), QPointF(0, 300))
+        gradient.setColorAt(0.0, QColor(*(QColor(color).getRgb()[:3] + (100,))))
+        gradient.setColorAt(1.0, QColor(*(QColor(color).getRgb()[:3] + (0,))))
+        self.series.setBrush(QBrush(gradient))
+
+        # Create axes
+        self.axisX = QDateTimeAxis()
+        self.axisX.setFormat("MMM yyyy")
+        self.axisX.setTitleText("Date")
+        self.axisX.setLabelsAngle(-45)
+        self.axisX.setLabelsFont(QFont("Arial", 9))
+
+        self.axisY = QValueAxis()
+        self.axisY.setTitleText("Value")
+        self.axisY.setLabelFormat("%.2f")
+        self.axisY.setLabelsFont(QFont("Arial", 9))
+
+        # Add axes to chart
+        self.chart.addAxis(self.axisX, Qt.AlignBottom)
+        self.chart.addAxis(self.axisY, Qt.AlignLeft)
+
+        # Add series to chart and attach axes
+        self.chart.addSeries(self.series)
+        self.series.attachAxis(self.axisX)
+        self.series.attachAxis(self.axisY)
+
+    def set_y_label_format(self, format_str):
+        """Set the format for Y-axis labels (e.g., '$%.2f')"""
+        self.axisY.setLabelFormat(format_str)
+
+    def set_axis_titles(self, x_title="Date", y_title="Value"):
+        """Set the titles for both axes"""
+        self.axisX.setTitleText(x_title)
+        self.axisY.setTitleText(y_title)
+
+
+# ========== SCROLL AREA ==========
+
+class ScrollableContainer(QScrollArea):
+    def __init__(self, parent=None, margins=(20, 20, 20, 20), spacing=20, bg_color="#F7F8FA"):
+        super().__init__(parent)
+        self.setWidgetResizable(True)
+        self.setFrameShape(QFrame.NoFrame)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # Container widget
+        self.container = QWidget()
+        self.setWidget(self.container)
+
+        # Layout for the container
+        self.layout = QVBoxLayout(self.container)
+        self.layout.setContentsMargins(*margins)
+        self.layout.setSpacing(spacing)
+
+        # Style
+        self.setStyleSheet(f"""
+            QScrollArea {{
+                border: none;
+                background-color: {bg_color};
+            }}
+            QScrollBar:vertical {{
+                background: #E2E8F0;
+                width: 14px;
+                margin: 0px;
+                border-radius: 7px;
+            }}
+            QScrollBar::handle:vertical {{
+                background-color: #94A3B8;
+                min-height: 30px;
+                border-radius: 7px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background-color: #64748B;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+        """)
+
+
+# ========== LAYOUT HELPERS ==========
+
+def create_form_field(label_text, input_field, label_size=14, is_bold=True, color="#334155", margin_bottom=5):
+    """Create a form field with label and input"""
+    layout = QVBoxLayout()
+
+    label = StyledLabel(label_text, size=label_size, font_weight="bold" if is_bold else "normal",
+                        color=color, margin_bottom=margin_bottom)
+
+    layout.addWidget(label)
+    layout.addWidget(input_field)
+
+    return layout
+
+
+# ========== UTILITY FUNCTIONS ==========
+
+def apply_shadow_effect(widget, blur_radius=20, color=QColor(15, 23, 42, 40), offset=4):
+    """Apply a shadow effect to a widget"""
+    shadow_effect = QGraphicsDropShadowEffect()
+    shadow_effect.setBlurRadius(blur_radius)
+    shadow_effect.setColor(color)
+    shadow_effect.setOffset(0, offset)
+    widget.setGraphicsEffect(shadow_effect)

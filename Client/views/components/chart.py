@@ -1,122 +1,93 @@
-import sys
-sys.path.append('..')
-
-from PySide6.QtCharts import (
-    QChart, QChartView, QLineSeries, QAreaSeries,
-    QDateTimeAxis, QValueAxis
-)
-from PySide6.QtGui import QPainter, QLinearGradient, QColor, QPen
-from PySide6.QtCore import Qt, QDateTime
-from PySide6.QtWidgets import QWidget, QVBoxLayout
 import pandas as pd
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
+from lightweight_charts.widgets import QtChart  # Use QtChart for embedding
 
-# Import the styled ContentCard for consistent styling
-from components.styled_widgets import ContentCard
 
 class StockChartWidget(QWidget):
     def __init__(self, parent=None):
+        """
+        StockChartWidget initializes an empty chart and waits for data.
+        """
         super().__init__(parent)
-        
-        # Create a ContentCard to wrap the chart
-        self.card = ContentCard(self)
-        
-        # Initialize the chart with light mode options
-        self.chart = QChart()
-        self.chart.setTitle("Stock Baseline Chart")
-        self.chart.legend().hide()
-        self.chart.setBackgroundBrush(Qt.white)
-        self.chart.setPlotAreaBackgroundBrush(Qt.white)
-        self.chart.setPlotAreaBackgroundVisible(True)
-        
-        # Create the chart view with antialiasing for smooth lines
-        self.chart_view = QChartView(self.chart)
-        self.chart_view.setRenderHint(QPainter.Antialiasing)
-        
-        # Place the chart view inside the ContentCard layout
-        card_layout = QVBoxLayout(self.card)
-        card_layout.addWidget(self.chart_view)
-        card_layout.setContentsMargins(10, 10, 10, 10)
-        
-        # Main layout for the widget
-        main_layout = QVBoxLayout(self)
-        main_layout.addWidget(self.card)
-        self.setLayout(main_layout)
-    
-    def update_chart(self, data):
+        self.chart = None  # Placeholder for chart
+        self.data = None  # Placeholder for stock data
+        self.init_ui()
+
+    def init_ui(self):
+        """Initialize the UI with an empty chart"""
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)
+
+        # Create the embedded chart
+        self.chart = QtChart(self)
+
+        # Set size policy for auto resizing
+        self.chart.get_webview().setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.chart.get_webview().setMinimumSize(800, 400)
+
+        # Add the chart widget
+        layout.addWidget(self.chart.get_webview(), stretch=1)
+
+        self.setLayout(layout)
+
+    def process_data(self, data):
+        """Process raw stock data into a DataFrame"""
+        if isinstance(data, list) and data:
+            df = pd.DataFrame(data)
+
+            # Ensure required columns exist
+            required_columns = {'t', 'o', 'h', 'l', 'c', 'v'}
+            if not required_columns.issubset(df.columns):
+                print("⚠️ Error: Missing required columns in stock data!")
+                return None
+
+            df['date'] = pd.to_datetime(df['t'], unit='ms')  # Convert timestamp
+            df = df.rename(columns={'o': 'open', 'h': 'high', 'l': 'low', 'c': 'close', 'v': 'volume'})
+            return df[['date', 'open', 'high', 'low', 'close', 'volume']]
+        print("⚠️ Error: Invalid stock data format!", data)
+        return None
+
+    def calculate_sma(self, df, period=50):
+        """Calculate Simple Moving Average (SMA)"""
+        if df is not None and 'close' in df:
+            sma = df['close'].rolling(window=period).mean()
+            return pd.DataFrame({'time': df['date'], f'SMA {period}': sma}).dropna()
+        return None
+
+    def display_chart(self):
+        """Render the chart with existing stock data"""
+        if self.data is not None:
+            self.chart.set(self.data)  # Set new data
+
+            # Compute and display SMA line
+            sma_data = self.calculate_sma(self.data, period=50)
+            if sma_data is not None:
+                line = self.chart.create_line('SMA 50')
+                line.set(sma_data)
+
+            self.chart.get_webview().update()
+
+    def update_chart(self, ticker, start_date, end_date, data):
         """
-        Update the chart with new stock data.
-        
-        :param data: List of dictionaries with keys:
-                     't' - timestamp in ms,
-                     'c' - close price.
+        Update the chart dynamically with new stock data.
+
+        :param ticker: Stock symbol
+        :param start_date: Start date
+        :param end_date: End date
+        :param data: Stock data in list format
         """
-        df = pd.DataFrame(data)
-        required_columns = {'t', 'c'}
-        if not required_columns.issubset(df.columns):
-            print("Error: Missing required columns in data")
-            return
-        
-        # Convert timestamps and sort by datetime
-        df['datetime'] = pd.to_datetime(df['t'], unit='ms')
-        df = df.sort_values('datetime')
-        
-        # Create the stock price series
-        stock_series = QLineSeries()
-        for _, row in df.iterrows():
-            # Use the QDateTime (in ms) as x-value and the close price as y-value
-            timestamp = QDateTime(row['datetime']).toMSecsSinceEpoch()
-            stock_series.append(timestamp, row['c'])
-        
-        # Calculate a baseline value (e.g., the average close price)
-        baseline_value = df['c'].mean()
-        baseline_series = QLineSeries()
-        if not df.empty:
-            start_ts = QDateTime(df['datetime'].iloc[0]).toMSecsSinceEpoch()
-            end_ts = QDateTime(df['datetime'].iloc[-1]).toMSecsSinceEpoch()
-            baseline_series.append(start_ts, baseline_value)
-            baseline_series.append(end_ts, baseline_value)
-        
-        # Create an area series to fill between the stock price and the baseline
-        area_series = QAreaSeries(stock_series, baseline_series)
-        
-        # Set a gradient fill for the area series (mimicking baseline fills)
-        gradient = QLinearGradient()
-        gradient.setStart(0, 0)
-        gradient.setFinalStop(0, 1)
-        # Use a gradient similar to: topFillColor1 rgba(38,198,218,0.28) to topFillColor2 rgba(38,198,218,0.05)
-        gradient.setColorAt(0.0, QColor(38, 198, 218, int(0.28 * 255)))
-        gradient.setColorAt(1.0, QColor(38, 198, 218, int(0.05 * 255)))
-        area_series.setBrush(gradient)
-        
-        # Set pen (line) styling for the area series
-        pen = QPen(QColor(38, 198, 218))
-        pen.setWidth(2)
-        area_series.setPen(pen)
-        
-        # Clear any existing series from the chart and add the new ones
-        self.chart.removeAllSeries()
-        self.chart.addSeries(area_series)
-        self.chart.addSeries(baseline_series)
-        
-        # Create and attach a datetime axis for the x-axis
-        axis_x = QDateTimeAxis()
-        axis_x.setFormat("dd MMM")
-        axis_x.setTitleText("Date")
-        self.chart.addAxis(axis_x, Qt.AlignBottom)
-        area_series.attachAxis(axis_x)
-        baseline_series.attachAxis(axis_x)
-        
-        # Create and attach a value axis for the y-axis
-        axis_y = QValueAxis()
-        axis_y.setLabelFormat("%.2f")
-        axis_y.setTitleText("Price")
-        self.chart.addAxis(axis_y, Qt.AlignLeft)
-        area_series.attachAxis(axis_y)
-        baseline_series.attachAxis(axis_y)
-        
-        self.chart_view.repaint()
-    
+        print(f"📈 Updating chart for {ticker} from {start_date} to {end_date}")
+
+        self.data = self.process_data(data)  # Convert to DataFrame
+        if self.data is not None:
+            # self.auto_zoom_chart()
+            self.chart.set_visible_range(start_date, end_date)  # Set visible range
+            self.display_chart()  # Display updated chart
+        else:
+            print("❌ Error: Unable to process stock data.")
+
     def clear_chart(self):
-        """Clears all series from the chart."""
-        self.chart.removeAllSeries()
-        self.chart_view.repaint()
+        """Clears the chart for new data."""
+        self.chart.clear()
+        print("🧹 Chart cleared.")

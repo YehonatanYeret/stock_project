@@ -4,12 +4,17 @@
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
-from views.mainViews.dashboard_view import Dashboard_view
+from views.mainViews.dashboard_view import DashboardView
 from presenters.mainPresenters.dashboard_presenter import DashboardPresenter
 from models.mainModels.dashboard_model import DashboardModel
+from views.mainViews.stock_view import StockView
+from presenters.mainPresenters.stock_presenter import StockPresenter
+from models.mainModels.stock_model import StockModel
+
+
 class SidebarButton(QPushButton):
     """Styled button for sidebar navigation with exclusive selection."""
-    
+
     def __init__(self, text, icon_path=None, parent=None):
         super().__init__(text, parent)
         self.setCheckable(True)
@@ -63,16 +68,18 @@ class SidebarButton(QPushButton):
         else:
             self.set_default_style()
             self.setChecked(False)
+
+
 class Sidebar(QFrame):
     """Application sidebar for navigation with exclusive selection."""
-    
+
     dashboard_clicked = Signal()
     trade_clicked = Signal()
     history_clicked = Signal()
     chatbot_clicked = Signal()
     settings_clicked = Signal()
     logout_clicked = Signal()
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("sidebar")
@@ -109,7 +116,7 @@ class Sidebar(QFrame):
         self.settings_button = self.create_sidebar_button("Settings", "icons/settings.png", self.settings_clicked)
 
         self.layout.addStretch()
-        
+
         # Add spacer to push logout to bottom
         self.logout_button = self.create_sidebar_button("Logout", "icons/logout.png", self.logout_clicked, logout=True)
 
@@ -142,22 +149,14 @@ class Sidebar(QFrame):
         for name, button in self.buttons.items():
             button.set_active(name == button_name)
 
+
 class Main_view(QMainWindow):
-    """Main application window"""
-    
-    # Navigation signals
-    dashboard_requested = Signal()
-    trade_requested = Signal()
-    history_requested = Signal()
-    chatbot_requested = Signal()
-    settings_requested = Signal()
-    
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Trading App")
-        
+
         # User ID (Not set initially)
-        self.user_id = None  
+        self.user_id = None
 
         # Create central widget and main layout
         self.central_widget = QWidget()
@@ -169,7 +168,7 @@ class Main_view(QMainWindow):
         # Create sidebar
         self.sidebar = Sidebar()
         self.sidebar.dashboard_clicked.connect(self.show_dashboard)
-        self.sidebar.trade_clicked.connect(self.show_trade)
+        self.sidebar.trade_clicked.connect(self.show_trade)  # Ensure this connection
         self.sidebar.history_clicked.connect(self.show_history)
         self.sidebar.chatbot_clicked.connect(self.show_chatbot)
         self.sidebar.settings_clicked.connect(self.show_settings)
@@ -178,8 +177,8 @@ class Main_view(QMainWindow):
         self.content_stack = QStackedWidget()
 
         # Create placeholders (Dashboard not yet initialized)
-        self.dashboard_widget = Dashboard_view()
-        self.trade_widget = QWidget()
+        self.dashboard_widget = DashboardView()
+        self.trade_widget = StockView()
         self.history_widget = QWidget()
         self.chatbot_widget = QWidget()
         self.settings_widget = QWidget()
@@ -214,7 +213,7 @@ class Main_view(QMainWindow):
             }
         """)
 
-    def setUser(self, user_id):
+    def set_user(self, user_id):
         """Initialize the dashboard only when user_id is available"""
         self.user_id = user_id
         self.dashboard_presenter = DashboardPresenter(DashboardModel(), self.dashboard_widget, self.user_id)
@@ -225,12 +224,13 @@ class Main_view(QMainWindow):
         if self.user_id is None:
             print("User ID not set yet!")  # Debug message
             return
-        
+
         self.content_stack.setCurrentWidget(self.dashboard_widget)
         self.sidebar.set_active_button("dashboard")
 
     def show_trade(self):
         """Show the trade screen"""
+        self.stock_presenter = StockPresenter(StockModel(), self.trade_widget, self.user_id)
         self.content_stack.setCurrentWidget(self.trade_widget)
         self.sidebar.set_active_button("trade")
 

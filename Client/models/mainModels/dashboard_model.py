@@ -79,4 +79,3 @@ class DashboardModel:
             self.fetch_holdings(self.user_id)  # Refresh holdings after selling
         else:
             print("Error selling stock:", response)
-

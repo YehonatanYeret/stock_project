@@ -1,195 +1,119 @@
-from PySide6.QtCore import QObject, Signal
+import datetime
+
+from PySide6.QtCore import QDate
+from services.api_service import ApiService
+
 
 class StockModel:
-    def __init__(self):
-        self._stocks = []
-        self._current_stock = None
-        self._observers = []
-    
-    def register_observer(self, observer):
-        """Add an observer to be notified of model changes"""
-        if observer not in self._observers:
-            self._observers.append(observer)
-    
-    def remove_observer(self, observer):
-        """Remove an observer"""
-        if observer in self._observers:
-            self._observers.remove(observer)
-    
-    def notify_observers(self):
-        """Notify all observers of a change in the model"""
-        for observer in self._observers:
-            observer.model_updated()
-    
-    def set_stocks(self, stocks):
-        """Set the list of stocks"""
-        self._stocks = stocks
-        self.notify_observers()
-    
-    def set_current_stock(self, stock):
-        """Set the currently selected stock"""
-        self._current_stock = stock
-        self.notify_observers()
-    
-    def get_stocks(self):
-        """Get all stocks"""
-        return self._stocks
-    
-    def get_stock(self, stock_id):
-        """Get a specific stock by ID"""
-        for stock in self._stocks:
-            if stock['id'] == stock_id:
-                return stock
-        return None
+    """Model for stock data and trading operations"""
 
-class StockModel(QObject):
-    """Model class for handling stock data and API interactions"""
-
-    # Signals
-    stock_data_updated = Signal(dict)
-    transaction_completed = Signal(str, bool)
-    error_occurred = Signal(str)
-
-    def __init__(self, api_base_url, session_token=None):
-        super().__init__()
-        self.api_base_url = api_base_url
-        self.session_token = session_token
-        self.user_id = None
-        self._current_stock = None
-
-    def set_user_id(self, user_id):
-        """Set the current user ID from session"""
-        self.user_id = user_id
-
-    def get_stock_data(self, symbol, start_date, end_date):
-        """Get stock data from API
-
+    def __init__(self, api_service=None):
+        """Initialize the model with an API service
+        
         Args:
-            symbol (str): Stock symbol
-            start_date (QDate): Start date
-            end_date (QDate): End date
+            api_service: Service for API communication, creates a new one if not provided
         """
-        try:
-            # Convert QDate to standard date format
-            start_str = start_date.toString("yyyy-MM-dd")
-            end_str = end_date.toString("yyyy-MM-dd")
+        self.api_service = api_service or ApiService()
+        self.current_user_id = None
+        self.current_stock = None
 
-            # Construct API endpoint
-            endpoint = f"{self.api_base_url}/api/stocks/{symbol}"
-
-            # Create request parameters
-            params = {
-                "startDate": start_str,
-                "endDate": end_str
-            }
-
-            # Add authorization headers
-            headers = {"Authorization": f"Bearer {self.session_token}"}
-
-            # Make API request
-            response = requests.get(endpoint, params=params, headers=headers)
-
-            # Check if request was successful
-            if response.status_code == 200:
-                data = response.json()
-                self.current_stock = data
-                self.stock_data_updated.emit(data)
-                return data
-            else:
-                error_message = f"Error fetching stock data: {response.status_code}"
-                self.error_occurred.emit(error_message)
-                return None
-
-        except Exception as e:
-            error_message = f"Error fetching stock data: {str(e)}"
-            self.error_occurred.emit(error_message)
-            return None
-
-    def execute_transaction(self, transaction_type, symbol, quantity, price):
-        """Execute a buy or sell transaction
-
+    def set_user(self, user_id, token=None):
+        """Set the current user and authentication token
+        
         Args:
-            transaction_type (str): "buy" or "sell"
-            symbol (str): Stock symbol
-            quantity (int): Number of shares
-            price (float): Price per share
+            user_id: ID of the current user
+            token: Authentication token for API requests
         """
-        if not self.user_id:
-            self.error_occurred.emit("User not authenticated")
-            return False
+        self.current_user_id = user_id
+        if token:
+            self.api_service.set_token(token)
 
-        try:
-            # Construct API endpoint
-            endpoint = f"{self.api_base_url}/api/transactions"
+    def fetch_stock_data(self, symbol, start_date, end_date):
+        """Fetch stock data for a given symbol and date range
+        
+        Args:
+            symbol: Stock symbol (e.g., AAPL)
+            start_date: Start date for historical data
+            end_date: End date for historical data
+            
+        Returns:
+            (success, data): Tuple with success flag and stock data or error
+        """
 
-            # Create transaction data
-            transaction_data = {
-                "userId": self.user_id,
-                "symbol": symbol,
-                "quantity": quantity,
-                "price": price,
-                "type": transaction_type,
-                "timestamp": datetime.now().isoformat()
-            }
+        # Convert QDate to datetime.date if necessary
+        def convert_to_date(date_obj):
+            if isinstance(date_obj, QDate):
+                return date_obj.toPython()  # Converts QDate to Python's datetime.date
+            return date_obj
 
-            # Add authorization headers
-            headers = {
-                "Authorization": f"Bearer {self.session_token}",
-                "Content-Type": "application/json"
-            }
+        start_date = convert_to_date(start_date)
+        end_date = convert_to_date(end_date)
 
-            # Make API request
-            response = requests.post(endpoint, json=transaction_data, headers=headers)
+        start_str = start_date.strftime("%Y-%m-%d") if isinstance(start_date, datetime.date) else start_date
+        end_str = end_date.strftime("%Y-%m-%d") if isinstance(end_date, datetime.date) else end_date
 
-            # Check if request was successful
-            if response.status_code == 200 or response.status_code == 201:
-                result_data = response.json()
-                success_message = f"Successfully {transaction_type}ed {quantity} shares of {symbol}"
-                self.transaction_completed.emit(success_message, True)
-                return True
-            else:
-                error_message = f"Transaction failed: {response.status_code}"
-                self.error_occurred.emit(error_message)
-                return False
+        success, response = self.api_service.get("stock_details", params={
+            "ticker": symbol,
+            "startDate": start_str,
+            "endDate": end_str
+        })
 
-        except Exception as e:
-            error_message = f"Transaction error: {str(e)}"
-            self.error_occurred.emit(error_message)
-            return False
+        if success:
+            self.current_stock = response
 
-    def get_user_portfolio(self):
-        """Get the user's current portfolio"""
-        if not self.user_id:
-            self.error_occurred.emit("User not authenticated")
-            return None
+        return success, response
 
-        try:
-            # Construct API endpoint
-            endpoint = f"{self.api_base_url}/api/portfolio/{self.user_id}"
+    def execute_buy_order(self, symbol, quantity, price):
+        """Execute a buy order
+        
+        Args:
+            symbol: Stock symbol
+            quantity: Number of shares to buy
+            price: Price per share
+            
+        Returns:
+            (success, data): Tuple with success flag and transaction data or error
+        """
+        if not self.current_user_id:
+            return False, {"error": "No user is logged in"}
 
-            # Add authorization headers
-            headers = {"Authorization": f"Bearer {self.session_token}"}
+        order_data = {
+            "user_id": self.current_user_id,
+            "symbol": symbol,
+            "quantity": quantity,
+            "price": price,
+            "type": "buy",
+            "timestamp": datetime.datetime.now().isoformat()
+        }
 
-            # Make API request
-            response = requests.get(endpoint, headers=headers)
+        return self.api_service.post("orders", order_data)
 
-            # Check if request was successful
-            if response.status_code == 200:
-                return response.json()
-            else:
-                error_message = f"Error fetching portfolio: {response.status_code}"
-                self.error_occurred.emit(error_message)
-                return None
+    def execute_sell_order(self, symbol, quantity, price):
+        """Execute a sell order
+        
+        Args:
+            symbol: Stock symbol
+            quantity: Number of shares to sell
+            price: Price per share
+            
+        Returns:
+            (success, data): Tuple with success flag and transaction data or error
+        """
+        if not self.current_user_id:
+            return False, {"error": "No user is logged in"}
 
-        except Exception as e:
-            error_message = f"Error fetching portfolio: {str(e)}"
-            self.error_occurred.emit(error_message)
-            return None
-        for stock in self._stocks:
-            if stock['id'] == stock_id:
-                return stock
-        return None
-    
-    @property
-    def current_stock(self):
-        return self._current_stock
+        # Check if user has enough shares to sell
+        for holding in self.user_holdings:
+            if holding["symbol"] == symbol and holding["quantity"] >= quantity:
+                order_data = {
+                    "user_id": self.current_user_id,
+                    "symbol": symbol,
+                    "quantity": quantity,
+                    "price": price,
+                    "type": "sell",
+                    "timestamp": datetime.datetime.now().isoformat()
+                }
+
+                return self.api_service.post("orders", order_data)
+
+        return False, {"error": f"Insufficient shares of {symbol} to sell"}

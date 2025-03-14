@@ -12,10 +12,10 @@ class MainPresenter:
         """
         self.view = main_window
         self.user_model = user_model
-        
+
         # Register as observer to receive updates from user model
         self.user_model.register_observer(self)
-        
+
     def initialize_app(self):
         """Initialize the application based on authentication status"""
         if self.user_model.is_authenticated:
@@ -23,7 +23,7 @@ class MainPresenter:
             self.view.show_dashboard()
         else:
             self.view.show_auth()
-    
+
     def handle_login(self, email, username):
         """
         Handle successful login
@@ -34,10 +34,10 @@ class MainPresenter:
         """
         # Show main application screen
         self.view.show_app()
-        
+
         # Navigate to dashboard
         self.view.show_dashboard()
-    
+
     def handle_register(self, email, username, password):
         """
         Handle successful registration
@@ -49,15 +49,15 @@ class MainPresenter:
         """
         # Show main application screen
         self.view.show_app()
-        
+
         # Navigate to dashboard
         self.view.show_dashboard()
-    
+
     def handle_logout(self):
         """Handle logout action"""
         # Show authentication screen
         self.view.show_auth()
-    
+
     def handle_navigation(self, target):
         """
         Handle navigation between different screens
@@ -67,19 +67,19 @@ class MainPresenter:
         """
         if target == "dashboard":
             self.view.show_dashboard()
-        
+
         elif target == "portfolio":
             self.view.show_portfolio()
-        
+
         elif target == "stocks":
             self.view.show_stocks()
-        
+
         elif target == "transactions":
             self.view.show_transactions()
-        
+
         elif target == "settings":
             self.view.show_settings()
-    
+
     def model_updated(self):
         """
         Called when the user model is updated
