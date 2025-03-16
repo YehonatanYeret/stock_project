@@ -8,24 +8,26 @@ from PySide6.QtWidgets import (
     QGraphicsDropShadowEffect, QSizePolicy, QSpacerItem, QMainWindow
 )
 from views.components.chart import StockChartWidget
-from views.components.styled_widgets import StyledLabel, StyledButton, StyledLineEdit, StyledDateEdit
+from views.components.styled_widgets import (
+    StyledLabel, StyledButton, StyledLineEdit, StyledDateEdit,
+    PrimaryButton, Card, RoundedCard, GradientCard, ScrollableContainer,
+    BuyToggleButton, SellToggleButton, PageTitleLabel, SectionTitleLabel,
+    apply_shadow_effect, create_form_field, StyledChartView, StyledLineSeriesChart
+)
 
 
-class StockChart(QFrame):
+class StockChart(RoundedCard):
     """Widget for displaying the stock price chart"""
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__(parent=parent, border_radius=12, shadow_enabled=True)
         self.setMinimumHeight(350)
-        self.setObjectName("chartFrame")
-        self.setStyleSheet("#chartFrame {background-color: white; border: 1px solid #E4E7EC; border-radius: 12px;}")
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(20)
 
-        self.chart_container = QFrame(self)
-        self.chart_container.setStyleSheet("QFrame {background-color: #F8FAFC; border-radius: 10px;}")
+        self.chart_container = RoundedCard(parent=self, border_radius=10, shadow_enabled=False)
+        self.chart_container.setStyleSheet("QFrame {background-color: #F8FAFC;}")
         layout.addWidget(self.chart_container)
 
         # Embed StockChartWidget inside the container
@@ -55,23 +57,25 @@ class StockView(QWidget):
         self.init_ui()
         self.setup_connections()
 
+    # python
     def init_ui(self):
         """Initialize the UI components"""
         # Main layout
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(10, 10, 10, 10)
-        self.main_layout.setSpacing(10)
-
-        # Set window styles
-        self._set_global_styles()
+        self.setMinimumSize(1000, 700)
+        # self.main_layout.setSpacing(30)
 
         # Create scrollable content area
-        self._create_scroll_area()
+        self.scroll_area = ScrollableContainer(parent=self)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        # Create search section
+        self.content_widget = self.scroll_area.widget()
+        self.content_layout = self.scroll_area.layout  # Access the layout attribute directly
+
+        # Create a search section
         self._create_search_section()
 
-        # Create stock info section
+        # Create a stock info section
         self._create_stock_info_section()
 
         # Add the main scroll area to the main layout
@@ -79,101 +83,48 @@ class StockView(QWidget):
 
     def _create_scroll_area(self):
         """Create scrollable content area"""
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFrameShape(QFrame.NoFrame)
-        self.scroll_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Set size policy to expanding
-        self.scroll_area.setStyleSheet("""
-            QScrollArea {
-                background-color: transparent;
-                border: none;
-            }
-            QScrollBar:vertical {
-                background: #E2E8F0;
-                width: 14px;
-                margin: 0px;
-                border-radius: 7px;
-            }
-            QScrollBar::handle:vertical {
-                background-color: #94A3B8;
-                min-height: 30px;
-                border-radius: 7px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background-color: #64748B;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-        """)
-
-        # Create content widget for scroll area
-        self.content_widget = QWidget()
-        self.content_layout = QVBoxLayout(self.content_widget)
-        self.content_layout.setContentsMargins(25, 25, 25, 25)
-        self.content_layout.setSpacing(5)
-
-        self.scroll_area.setWidget(self.content_widget)
-
-    def _set_global_styles(self):
-        """Set global stylesheet for the application"""
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: #FF4D4D;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 4px 10px;
-                font-size: 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #D43F3F;
-            }
-            QPushButton:pressed {
-                background-color: #B53131;
-            }
-            QPushButton:disabled {
-                background-color: #CCCCCC;
-                color: #888888;
-            }
-        """)
+        self.scroll_area = ScrollableContainer(self)
+        self.content_widget = self.scroll_area.widget()
+        self.content_layout = self.scroll_area.layout()
 
     def _create_search_section(self):
         """Create the search card section"""
-        self.search_section = QFrame()
-        self.search_section.setObjectName("searchCard")
-        self._apply_shadow_effect(self.search_section)
-        self.search_section.setStyleSheet("#searchCard {background-color: white; border-radius: 16px; border: none;}")
+        self.search_section = RoundedCard(parent=None, border_radius=16, shadow_enabled=True)
 
         search_layout = QVBoxLayout(self.search_section)
         search_layout.setContentsMargins(15, 15, 15, 15)
         search_layout.setSpacing(10)
 
         # Search title
-        search_title = self._create_styled_label("Search Stocks", font_size=20, is_bold=True, color="#0F172A")
+        search_title = SectionTitleLabel("Search Stocks", parent=self.search_section)
 
         # Search form
         search_form = QHBoxLayout()
         search_form.setSpacing(10)
 
-        # Stock Symbol
-        symbol_layout = self._create_form_field("Stock Symbol", "symbol_input", placeholder="Enter symbol")
+        # Stock Symbol input with StyledLineEdit
+        symbol_input = StyledLineEdit(placeholder="Enter symbol", parent=self.search_section)
+        self.symbol_input = symbol_input
+        symbol_layout = create_form_field("Stock Symbol", symbol_input)
 
-        # Start Date
-        start_date_layout = self._create_date_field("Start Date", "start_date", QDate(2024, 1, 1))
+        # Start Date with StyledDateEdit
+        start_date = StyledDateEdit(default_date=QDate(2024, 1, 1), parent=self.search_section)
+        self.start_date = start_date
+        start_date_layout = create_form_field("Start Date", start_date)
 
-        # End Date
-        end_date_layout = self._create_date_field("End Date", "end_date", QDate(2024, 1, 31))
+        # End Date with StyledDateEdit
+        end_date = StyledDateEdit(default_date=QDate(2024, 1, 31), parent=self.search_section)
+        self.end_date = end_date
+        end_date_layout = create_form_field("End Date", end_date)
 
-        # Add layouts to search form
+        # Add layouts to a search form
         search_form.addLayout(symbol_layout, 2)
         search_form.addLayout(start_date_layout, 2)
         search_form.addLayout(end_date_layout, 2)
 
         # Button layout
         button_layout = QHBoxLayout()
-        self.search_button = self._create_primary_button("Search", "searchButton")
+        self.search_button = PrimaryButton("Search", object_name="searchButton", parent=self.search_section)
         button_layout.addWidget(self.search_button)
         button_layout.addStretch(1)
 
@@ -186,11 +137,7 @@ class StockView(QWidget):
 
     def _create_stock_info_section(self):
         """Create the stock information section"""
-        self.stock_info_section = QFrame()
-        self.stock_info_section.setObjectName("stockInfoCard")
-        self._apply_shadow_effect(self.stock_info_section)
-        self.stock_info_section.setStyleSheet(
-            "#stockInfoCard {background-color: white; border-radius: 16px; border: none;}")
+        self.stock_info_section = RoundedCard(parent=None, border_radius=16, shadow_enabled=True)
 
         stock_info_layout = QVBoxLayout(self.stock_info_section)
         stock_info_layout.setContentsMargins(15, 15, 15, 15)
@@ -223,15 +170,13 @@ class StockView(QWidget):
 
     def _create_stock_header_card(self):
         """Create the stock header card with price information"""
-        stock_header_card = QFrame()
-        stock_header_card.setObjectName("stockHeaderCard")
-        stock_header_card.setStyleSheet("""
-            #stockHeaderCard {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #F0F9FF, stop:1 #EFF6FF);
-                border-radius: 14px;
-                border: 1px solid #E0F2FE;
-            }
-        """)
+        stock_header_card = GradientCard(
+            parent=self.stock_info_section,
+            start_color="#F0F9FF",
+            end_color="#EFF6FF",
+            border_color="#E0F2FE",
+            shadow_enabled=False
+        )
 
         stock_header_layout = QVBoxLayout(stock_header_card)
         stock_header_layout.setContentsMargins(20, 20, 20, 20)
@@ -240,10 +185,10 @@ class StockView(QWidget):
         # Stock name and price
         stock_info = QVBoxLayout()
 
-        self.stock_name = self._create_styled_label("", font_size=26, is_bold=True, color="#0F172A")
+        self.stock_name = StyledLabel("", size=26, font_weight="bold", color="#0F172A", parent=stock_header_card)
 
         price_layout = QHBoxLayout()
-        self.stock_price = self._create_styled_label("", font_size=36, is_bold=True, color="#0F172A")
+        self.stock_price = StyledLabel("", size=36, font_weight="bold", color="#0F172A", parent=stock_header_card)
 
         self.stock_change = QLabel("")
         self.stock_change.setStyleSheet("""
@@ -294,64 +239,55 @@ class StockView(QWidget):
 
     def _create_order_panel(self):
         """Create the order panel for buying/selling stocks"""
-        order_panel = QFrame()
-        order_panel.setObjectName("orderPanel")
-        order_panel.setMinimumWidth(360)
+        order_panel = RoundedCard(parent=None, border_radius=16, shadow_enabled=True)
+        # order_panel.setMinimumWidth(360)
         order_panel.setMaximumWidth(420)
-        self._apply_shadow_effect(order_panel)
-        order_panel.setStyleSheet("#orderPanel {background-color: white; border-radius: 16px; border: none;}")
 
         order_layout = QVBoxLayout(order_panel)
         order_layout.setContentsMargins(25, 25, 25, 25)
         order_layout.setSpacing(20)
 
         # Order header
-        order_header = self._create_styled_label("Place Order", font_size=22, is_bold=True, color="#0F172A")
+        order_header = SectionTitleLabel("Place Order", parent=order_panel)
 
         # Order type
-        order_type_label = self._create_styled_label("Order Type", font_size=15, is_bold=True, color="#334155")
+        order_type_label = StyledLabel("Order Type", size=15, font_weight="bold", color="#334155", parent=order_panel)
 
-        # Buy/Sell buttons
+        # Buy/Sell buttons using BuyToggleButton and SellToggleButton
         order_type_buttons = QHBoxLayout()
         order_type_buttons.setSpacing(15)
 
-        self.buy_button = self._create_toggle_button("Buy", "buyButton", True, is_buy=True)
-        self.sell_button = self._create_toggle_button("Sell", "sellButton", False, is_buy=False)
+        self.buy_button = BuyToggleButton(text="Buy", object_name="buyButton", is_checked=True, parent=order_panel)
+        self.sell_button = SellToggleButton(text="Sell", object_name="sellButton", is_checked=False, parent=order_panel)
 
         order_type_buttons.addWidget(self.buy_button)
         order_type_buttons.addWidget(self.sell_button)
 
         # Quantity
-        quantity_label = self._create_styled_label("Quantity", font_size=15, is_bold=True, color="#334155")
+        quantity_label = StyledLabel("Quantity", size=15, font_weight="bold", color="#334155", parent=order_panel)
 
-        self.quantity_input = QLineEdit()
+        # Use StyledLineEdit instead
+        self.quantity_input = StyledLineEdit(placeholder="Enter quantity", parent=order_panel)
         self.quantity_input.setText("1")
         self.quantity_input.setValidator(QIntValidator(1, 10000))
-        self.quantity_input.setMinimumHeight(45)
-        self.quantity_input.setStyleSheet("""
-            QLineEdit {
-                border: 2px solid #E2E8F0;
-                border-radius: 10px;
-                padding: 10px 15px;
-                background-color: #F8FAFC;
-                font-size: 15px;
-                color: #1E293B;
-            }
-            QLineEdit:focus {
-                border: 2px solid #3B82F6;
-                background-color: white;
-            }
-        """)
 
         # Price info card
         price_info_card = self._create_price_info_card()
 
         # Buy/Sell action button
-        self.action_button = QPushButton("")
-        self.action_button.setObjectName("actionButton")
+        self.action_button = StyledButton(
+            text="Buy",
+            bg_color="#10B981",
+            hover_color="#059669",
+            pressed_color="#047857",
+            text_color="white",
+            border_radius=12,
+            padding="12px",
+            font_size=16,
+            object_name="actionButton",
+            parent=order_panel
+        )
         self.action_button.setMinimumHeight(54)
-        self.action_button.setCursor(Qt.PointingHandCursor)
-        self._update_action_button(is_buy=True)
 
         # Add widgets to order layout
         order_layout.addWidget(order_header)
@@ -367,15 +303,8 @@ class StockView(QWidget):
 
     def _create_price_info_card(self):
         """Create the price information card"""
-        price_info_card = QFrame()
-        price_info_card.setObjectName("priceInfoCard")
-        price_info_card.setStyleSheet("""
-            #priceInfoCard {
-                background-color: #F8FAFC;
-                border-radius: 10px;
-                border: 1px solid #E2E8F0;
-            }
-        """)
+        price_info_card = RoundedCard(parent=None, border_radius=10, shadow_enabled=False)
+        price_info_card.setStyleSheet("QFrame {background-color: #F8FAFC; border: 1px solid #E2E8F0;}")
 
         price_info_layout = QVBoxLayout(price_info_card)
         price_info_layout.setContentsMargins(15, 15, 15, 15)
@@ -385,19 +314,15 @@ class StockView(QWidget):
         price_grid.setHorizontalSpacing(10)
         price_grid.setVerticalSpacing(12)
 
-        price_label = QLabel("Market Price:")
-        price_label.setStyleSheet("color: #64748B; font-size: 15px;")
+        price_label = StyledLabel("Market Price:", size=15, color="#64748B", parent=price_info_card)
 
-        self.price_value = QLabel("$0.00")
+        self.price_value = StyledLabel("$0.00", size=15, font_weight="bold", color="#0F172A", parent=price_info_card)
         self.price_value.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.price_value.setStyleSheet("font-weight: bold; color: #0F172A; font-size: 15px;")
 
-        total_label = QLabel("Total Value:")
-        total_label.setStyleSheet("color: #64748B; font-size: 15px;")
+        total_label = StyledLabel("Total Value:", size=15, color="#64748B", parent=price_info_card)
 
-        self.total_value = QLabel("$0.00")
+        self.total_value = StyledLabel("$0.00", size=15, font_weight="bold", color="#0F172A", parent=price_info_card)
         self.total_value.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.total_value.setStyleSheet("font-weight: bold; color: #0F172A; font-size: 15px;")
 
         price_grid.addWidget(price_label, 0, 0)
         price_grid.addWidget(self.price_value, 0, 1)
@@ -408,183 +333,48 @@ class StockView(QWidget):
 
         return price_info_card
 
-    def _create_styled_label(self, text, font_size=14, is_bold=False, color="#334155", margin_bottom=0):
-        """Create a styled label with consistent formatting"""
-        label = QLabel(text)
-
-        bold_text = "font-weight: bold;" if is_bold else ""
-        margin = f"margin-bottom: {margin_bottom}px;" if margin_bottom > 0 else ""
-
-        label.setStyleSheet(f"""
-            font-size: {font_size}px;
-            {bold_text}
-            color: {color};
-            {margin}
-        """)
-
-        return label
-
-    def _create_form_field(self, label_text, input_name, placeholder=""):
-        """Create a form field with label and input"""
-        layout = QVBoxLayout()
-
-        label = self._create_styled_label(label_text, is_bold=True, font_size=14, margin_bottom=5)
-
-        input_field = QLineEdit()
-        setattr(self, input_name, input_field)
-        input_field.setPlaceholderText(placeholder)
-        input_field.setMinimumHeight(45)
-        input_field.setStyleSheet("""
-            QLineEdit {
-                border: 2px solid #E2E8F0;
-                border-radius: 10px;
-                padding: 10px 15px;
-                background-color: #F8FAFC;
-                font-size: 15px;
-                color: #1E293B;
-            }
-            QLineEdit:focus {
-                border: 2px solid #3B82F6;
-                background-color: white;
-            }
-        """)
-
-        layout.addWidget(label)
-        layout.addWidget(input_field)
-
-        return layout
-
-    def _create_date_field(self, label_text, date_name, default_date):
-        """Create a date field with label and date input"""
-        layout = QVBoxLayout()
-
-        label = self._create_styled_label(label_text, is_bold=True, font_size=14, margin_bottom=5)
-
-        date_field = QDateEdit()
-        setattr(self, date_name, date_field)
-        date_field.setMinimumHeight(45)
-        date_field.setCalendarPopup(True)
-        date_field.setDisplayFormat("dd/MM/yyyy")
-        date_field.setDate(default_date)
-        date_field.setStyleSheet("""
-            QDateEdit {
-                border: 2px solid #E2E8F0;
-                border-radius: 10px;
-                padding: 10px 15px;
-                background-color: #F8FAFC;
-                font-size: 15px;
-                color: #1E293B;
-            }
-            QDateEdit:focus {
-                border: 2px solid #3B82F6;
-                background-color: white;
-            }
-            QDateEdit::drop-down {
-                subcontrol-origin: padding;
-                subcontrol-position: center right;
-                width: 25px;
-                border: none;
-            }
-        """)
-
-        layout.addWidget(label)
-        layout.addWidget(date_field)
-
-        return layout
-
-    def _create_primary_button(self, text, object_name):
-        """Create a primary styled button"""
-        button = QPushButton(text)
-        button.setObjectName(object_name)
-        button.setMinimumHeight(45)
-        button.setCursor(Qt.PointingHandCursor)
-        button.setStyleSheet(f"""
-            #{object_name} {{
-                background-color: #3B82F6;
-                color: white;
-                border-radius: 10px;
-                font-weight: bold;
-                padding: 10px 25px;
-                font-size: 15px;
-                border: none;
-            }}
-            #{object_name}:hover {{
-                background-color: #2563EB;
-            }}
-            #{object_name}:pressed {{
-                background-color: #1D4ED8;
-            }}
-        """)
-
-        return button
-
-    def _create_toggle_button(self, text, object_name, is_checked=False, is_buy=True):
-        """Create a toggle button for buy/sell options"""
-        button = QPushButton(text)
-        button.setObjectName(object_name)
-        button.setCheckable(True)
-        button.setChecked(is_checked)
-        button.setCursor(Qt.PointingHandCursor)
-        button.setMinimumHeight(45)
-
-        active_color = "#10B981" if is_buy else "#EF4444"
-
-        button.setStyleSheet(f"""
-            #{object_name} {{
-                background-color: #F1F5F9;
-                border: 2px solid #E2E8F0;
-                border-radius: 10px;
-                padding: 10px;
-                font-weight: bold;
-                font-size: 15px;
-                color: #334155;
-            }}
-            #{object_name}:checked {{
-                background-color: {active_color};
-                color: white;
-                border: 2px solid {active_color};
-            }}
-            #{object_name}:hover:!checked {{
-                background-color: #E2E8F0;
-            }}
-        """)
-
-        return button
-
-    def _apply_shadow_effect(self, widget):
-        """Apply a shadow effect to a widget"""
-        shadow_effect = QGraphicsDropShadowEffect()
-        shadow_effect.setBlurRadius(20)
-        shadow_effect.setColor(QColor(15, 23, 42, 40))
-        shadow_effect.setOffset(0, 4)
-        widget.setGraphicsEffect(shadow_effect)
-
     def _update_action_button(self, is_buy=True, symbol=""):
         """Update the action button style and text based on buy/sell status"""
         action_text = f"{'Buy' if is_buy else 'Sell'} {symbol}" if symbol else f"{'Buy' if is_buy else 'Sell'}"
         self.action_button.setText(action_text)
 
-        button_color = "#10B981" if is_buy else "#EF4444"
-        hover_color = "#059669" if is_buy else "#DC2626"
-        pressed_color = "#047857" if is_buy else "#B91C1C"
-
-        self.action_button.setStyleSheet(f"""
-            #actionButton {{
-                background-color: {button_color};
-                color: white;
-                border-radius: 12px;
-                font-weight: bold;
-                padding: 12px;
-                font-size: 16px;
-                border: none;
-            }}
-            #actionButton:hover {{
-                background-color: {hover_color};
-            }}
-            #actionButton:pressed {{
-                background-color: {pressed_color};
-            }}
-        """)
+        # Update button colors based on buy/sell status
+        if is_buy:
+            self.action_button.setStyleSheet(f"""
+                #actionButton {{
+                    background-color: #10B981;
+                    color: white;
+                    border-radius: 12px;
+                    font-weight: bold;
+                    padding: 12px;
+                    font-size: 16px;
+                    border: none;
+                }}
+                #actionButton:hover {{
+                    background-color: #059669;
+                }}
+                #actionButton:pressed {{
+                    background-color: #047857;
+                }}
+            """)
+        else:
+            self.action_button.setStyleSheet(f"""
+                #actionButton {{
+                    background-color: #EF4444;
+                    color: white;
+                    border-radius: 12px;
+                    font-weight: bold;
+                    padding: 12px;
+                    font-size: 16px;
+                    border: none;
+                }}
+                #actionButton:hover {{
+                    background-color: #DC2626;
+                }}
+                #actionButton:pressed {{
+                    background-color: #B91C1C;
+                }}
+            """)
 
     def setup_connections(self):
         """Connect signals and slots"""
@@ -653,8 +443,8 @@ class StockView(QWidget):
 
         Args:
             :param stock_data:  - name: Company name
-                                - symbol: Stock symbol
-                                - volume: Trading volume
+                               - symbol: Stock symbol
+                               - volume: Trading volume
             :param end_date: end date
             :param symbol: stock symbol
             :param start_date: start date
@@ -676,7 +466,6 @@ class StockView(QWidget):
 
     def show_message(self, message, is_error=False):
         """Display a message to the user"""
-        # This could be implemented with a popup dialog, status bar, or in-app notification
         from PySide6.QtWidgets import QMessageBox
 
         message_box = QMessageBox()

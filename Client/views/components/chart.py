@@ -1,7 +1,7 @@
 import pandas as pd
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
-from lightweight_charts.widgets import QtChart  # Use QtChart for embedding
+from lightweight_charts.widgets import QtChart
 
 
 class StockChartWidget(QWidget):

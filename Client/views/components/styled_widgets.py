@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout, QHBoxLayout,
     QTableWidget, QTableWidgetItem, QComboBox, QGraphicsDropShadowEffect,
-    QHeaderView, QScrollArea, QSizePolicy, QDateEdit
+    QHeaderView, QScrollArea, QSizePolicy, QDateEdit, QWidget
 )
 from PySide6.QtGui import (
     QPixmap, QColor, QFont, QPainter, QPen, QBrush, QLinearGradient
@@ -114,9 +114,14 @@ class DangerButton(StyledButton):
             bg_color="#FF4D4D",
             hover_color="#D43F3F",
             pressed_color="#B53131",
+            border_radius=10,
+            padding="10px 25px",
+            font_size=15,
             object_name=object_name,
             parent=parent
         )
+        self.setMinimumHeight(45)
+        self.setCursor(Qt.PointingHandCursor)
 
 
 class SuccessButton(StyledButton):
@@ -581,3 +586,89 @@ def apply_shadow_effect(widget, blur_radius=20, color=QColor(15, 23, 42, 40), of
     shadow_effect.setColor(color)
     shadow_effect.setOffset(0, offset)
     widget.setGraphicsEffect(shadow_effect)
+
+'''
+# UI Framework Components and Functions
+
+## Charts
+### StyledChartView(QChartView)
+- `__init__(self, title="Chart", parent=None)`
+- `apply_shadow(self, blur_radius=15, offset=4, opacity=25)`
+
+### StyledLineSeriesChart(StyledChartView)
+- `__init__(self, title="Line Chart", color="#58510B", parent=None)`
+- `set_y_label_format(self, format_str)`
+- `set_axis_titles(self, x_title="Date", y_title="Value")`
+
+## Containers
+### ScrollableContainer(QScrollArea)
+- `__init__(self, parent=None, margins=(20, 20, 20, 20), spacing=20, bg_color="#F7F8FA")`
+
+### Card(QFrame)
+- `__init__(self, parent=None, shadow_enabled=True)`
+- `apply_shadow(self, blur_radius=15, offset=4, opacity=25)`
+
+### RoundedCard(Card)
+- `__init__(self, parent=None, border_radius=16, shadow_enabled=True)`
+
+### GradientCard(Card)
+- `__init__(self, parent=None, start_color="#F0F9FF", end_color="#EFF6FF", border_color="#E0F2FE", shadow_enabled=True)`
+
+### StyledStatsCard(Card)
+- `__init__(self, title, value, subtitle=None, icon=None, color="#58510B", parent=None)`
+
+## Tables
+### StyledTable(QTableWidget)
+- `__init__(self, parent=None)`
+- `apply_shadow(self, blur_radius=15, offset=4, opacity=25)`
+
+## Text Elements
+### StyledLabel(QLabel)
+- `__init__(self, text, is_title=False, size=None, color=None, font_weight=None, margin_bottom=0, parent=None)`
+
+### PageTitleLabel(StyledLabel)
+- `__init__(self, text, parent=None)`
+
+### SectionTitleLabel(StyledLabel)
+- `__init__(self, text, parent=None)`
+
+## Buttons
+### StyledButton(QPushButton)
+- `__init__(self, text, bg_color="#4C6FFF", hover_color="#3A5BCC", pressed_color="#2D49A3", text_color="white", border_radius=4, padding="8px 16px", font_size=14, object_name=None, parent=None)`
+
+### PrimaryButton(StyledButton)
+- `__init__(self, text, object_name=None, parent=None)`
+
+### DangerButton(StyledButton)
+- `__init__(self, text, object_name=None, parent=None)`
+
+### CompactButton(StyledButton)
+- `__init__(self, text="", color="#4C6FFF", hover_color="#3A5BCC", pressed_color="#2D49A3", parent=None)`
+
+### SellButton(CompactButton)
+- `__init__(self, text="Sell", parent=None)`
+  - [Calls `super().__init__(text, color="#FF4D4D", hover_color="#D43F3F", pressed_color="#B53131", parent=parent)`]
+
+### ToggleButton(QPushButton)
+- `__init__(self, text, object_name, is_checked=False, active_color="#4C6FFF", parent=None)`
+
+### BuyToggleButton(ToggleButton)
+- `__init__(self, text="Buy", object_name="buyButton", is_checked=False, parent=None)`
+  - [Calls `super().__init__(text, object_name, is_checked, active_color="#10B981", parent)`]
+
+### SellToggleButton(ToggleButton)
+- `__init__(self, text="Sell", object_name="sellButton", is_checked=False, parent=None)`
+  - [Calls `super().__init__(text, object_name, is_checked, active_color="#EF4444", parent)`]
+
+## Input Fields
+### StyledLineEdit(QLineEdit)
+- `__init__(self, placeholder="", parent=None)`
+
+### StyledDateEdit(QDateEdit)
+- `__init__(self, default_date=None, parent=None)`
+
+## Utility Functions
+### create_form_field(label_text, input_field, label_size=14, is_bold=True, color="#334155", margin_bottom=5)
+
+### apply_shadow_effect(widget, blur_radius=20, color=QColor(15, 23, 42, 40), offset=4)
+'''
