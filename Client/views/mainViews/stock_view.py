@@ -12,7 +12,7 @@ from views.components.styled_widgets import (
     StyledLabel, StyledButton, StyledLineEdit, StyledDateEdit,
     PrimaryButton, Card, RoundedCard, GradientCard, ScrollableContainer,
     BuyToggleButton, SellToggleButton, PageTitleLabel, SectionTitleLabel,
-    apply_shadow_effect, create_form_field, StyledChartView, StyledLineSeriesChart
+    apply_shadow_effect, create_form_field, StyledChartView, StyledLineSeriesChart, DescriptionLabel
 )
 
 
@@ -113,7 +113,7 @@ class StockView(QWidget):
         start_date_layout = create_form_field("Start Date", start_date)
 
         # End Date with StyledDateEdit
-        end_date = StyledDateEdit(default_date=QDate(2024, 1, 31), parent=self.search_section)
+        end_date = StyledDateEdit(default_date=QDate(2024, 12, 30), parent=self.search_section)
         self.end_date = end_date
         end_date_layout = create_form_field("End Date", end_date)
 
@@ -201,6 +201,8 @@ class StockView(QWidget):
 
         price_layout.addWidget(self.stock_price)
         price_layout.addWidget(self.stock_change)
+
+        self.description = DescriptionLabel("", parent=stock_header_card)
         price_layout.addStretch(1)
 
         # Volume and Market Cap
@@ -225,13 +227,14 @@ class StockView(QWidget):
             margin-left: 10px;
         """)
 
-        meta_layout.addWidget(self.volume_label)
-        meta_layout.addWidget(self.market_cap_label)
-        meta_layout.addStretch(1)
+        # meta_layout.addWidget(self.volume_label)
+        # meta_layout.addWidget(self.market_cap_label)
+        # meta_layout.addStretch(1)
 
         stock_info.addWidget(self.stock_name)
+        stock_info.addWidget(self.description)
         stock_info.addLayout(price_layout)
-        stock_info.addLayout(meta_layout)
+        # stock_info.addLayout(meta_layout)
 
         stock_header_layout.addLayout(stock_info)
 
@@ -445,6 +448,7 @@ class StockView(QWidget):
             :param stock_data:  - name: Company name
                                - symbol: Stock symbol
                                - volume: Trading volume
+                                 - description: Company description
             :param end_date: end date
             :param symbol: stock symbol
             :param start_date: start date
@@ -463,6 +467,9 @@ class StockView(QWidget):
         # Update chart with provided stock data
         if 'chart_data' in stock_data:
             self.chart.update_chart(symbol, start_date, end_date, stock_data['chart_data'])
+
+        # Update description
+        self.description.setText(stock_data['description'])
 
     def show_message(self, message, is_error=False):
         """Display a message to the user"""

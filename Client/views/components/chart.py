@@ -2,6 +2,7 @@ import pandas as pd
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
 from lightweight_charts.widgets import QtChart
+from PySide6.QtCore import QDate
 
 
 class StockChartWidget(QWidget):
@@ -73,19 +74,25 @@ class StockChartWidget(QWidget):
         Update the chart dynamically with new stock data.
 
         :param ticker: Stock symbol
-        :param start_date: Start date
-        :param end_date: End date
+        :param start_date: Start date as a string in "yyyy-MM-dd" format
+        :param end_date: End date as a string in "yyyy-MM-dd" format
         :param data: Stock data in list format
         """
-        print(f"📈 Updating chart for {ticker} from {start_date} to {end_date}")
-
         self.data = self.process_data(data)  # Convert to DataFrame
         if self.data is not None:
-            # self.auto_zoom_chart()
-            self.chart.set_visible_range(start_date, end_date)  # Set visible range
+            # Convert string dates to QDate objects
+            start_date_qdate = QDate.fromString(start_date, "yyyy-MM-dd")
+            end_date_qdate = QDate.fromString(end_date, "yyyy-MM-dd")
+
+            # Convert QDate objects to timestamps (milliseconds)
+            start_dt = pd.to_datetime(start_date_qdate.toString("yyyy-MM-dd"))
+            end_dt = pd.to_datetime(end_date_qdate.toString("yyyy-MM-dd"))
+            start_ts = int(start_dt.timestamp() * 1000)
+            end_ts = int(end_dt.timestamp() * 1000)
+
+            # Set visible range using the converted timestamps
+            self.chart.set_visible_range(start_ts, end_ts)
             self.display_chart()  # Display updated chart
-        else:
-            print("❌ Error: Unable to process stock data.")
 
     def clear_chart(self):
         """Clears the chart for new data."""

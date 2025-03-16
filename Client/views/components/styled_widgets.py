@@ -52,6 +52,25 @@ class SectionTitleLabel(StyledLabel):
         self.setObjectName("SectionTitle")
 
 
+class DescriptionLabel(QLabel):
+    def __init__(self, text, size=14, color="#555555", margin_bottom=0, parent=None):
+        super().__init__(text, parent)
+        # Enable word wrap for long text
+        self.setWordWrap(True)
+        # Apply optional margin bottom if provided
+        margin = f"margin-bottom: {margin_bottom}px;" if margin_bottom > 0 else ""
+        self.setStyleSheet(f"""
+            QLabel {{
+                font-size: {size}px;
+                color: {color};
+                background: none;
+                border: none;
+                padding: 0px;
+                {margin}
+            }}
+        """)
+
+
 # ========== BUTTONS ==========
 
 class StyledButton(QPushButton):
