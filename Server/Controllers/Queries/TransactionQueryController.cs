@@ -25,31 +25,38 @@ namespace Server.Controllers.Queries
         [HttpGet("getDetails")]
         public async Task<ActionResult> GetAggregateData(string ticker, string startDate, string endDate)
         {
-            if (string.IsNullOrEmpty(ticker) || string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
+            try
             {
-                return BadRequest("Ticker, startDate, and endDate are required.");
+                if (string.IsNullOrEmpty(ticker) || string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
+                {
+                    return BadRequest("Ticker, startDate, and endDate are required.");
+                }
+
+                var aggregateDataTask = _polygonGateway.GetAggregateDataAsync(ticker, startDate, endDate);
+                var metadataTask = _polygonGateway.GetTickerMetadataAsync(ticker);
+                var imageBase64Task = _polygonGateway.GetTickerImageBase64Async(ticker); // Fetch actual image bytes as Base64
+
+                await Task.WhenAll(aggregateDataTask, metadataTask, imageBase64Task);
+
+                var aggregateData = await aggregateDataTask;
+                var metadata = await metadataTask;
+                var imageBase64 = await imageBase64Task;
+
+                var response = new
+                {
+                    Ticker = metadata.Ticker,
+                    Name = metadata.Name,
+                    Description = metadata.Description,
+                    LogoBase64 = imageBase64, // Embed image in Base64 format
+                    AggregateData = aggregateData
+                };
+
+                return Ok(response);
             }
-
-            var aggregateDataTask = _polygonGateway.GetAggregateDataAsync(ticker, startDate, endDate);
-            var metadataTask = _polygonGateway.GetTickerMetadataAsync(ticker);
-            var imageBase64Task = _polygonGateway.GetTickerImageBase64Async(ticker); // Fetch actual image bytes as Base64
-
-            await Task.WhenAll(aggregateDataTask, metadataTask, imageBase64Task);
-
-            var aggregateData = await aggregateDataTask;
-            var metadata = await metadataTask;
-            var imageBase64 = await imageBase64Task;
-
-            var response = new
+            catch
             {
-                Ticker = metadata.Ticker,
-                Name = metadata.Name,
-                Description = metadata.Description,
-                LogoBase64 = imageBase64, // Embed image in Base64 format
-                AggregateData = aggregateData
-            };
-
-            return Ok(response);
+                return BadRequest("Failed to fetch data.");
+            }
         }
     }
 }

@@ -1,8 +1,10 @@
-import json
 import datetime
+import json
 
 from PySide6.QtCore import QDate
 from PySide6.QtCore import QObject, Slot, QDate
+
+DEFAULT_ICON = "iVBORw0KGgoAAAANSUhEUgAAARMAAAC3CAMAAAAGjUrGAAAAclBMVEX///8AAAB1dXXi4uImJibFxcVgYGDo6OgcHBz29vaysrKWlpbQ0NBoaGgZGRkICAjb29uFhYW3t7c7OzvIyMhPT0++vr6NjY0jIyNISEiioqJUVFTx8fHNzc3d3d1JSUmenp55eXkxMTFkZGQ/Pz8TExMsgbRjAAAEp0lEQVR4nO2d63bqIBBGQ423qvWurdpWbX3/VzxtgFxgSKKnCcp8+5cLqAv2ashAmBhFAAAAAAAAAAAAAAAAAAAAAFTyPl8PSnndjz58d7JVurGow7rju6PtMa9l5JeF7662xVNtJUI8++5sOzxfoUQIFpfP8Col4tN3f9tgp0c77U3c7FMpM98dboE3NdZjebOhnnW2bXTKM7Unzyc2F09fjvStRlPZ8tx4l7yjnOxqNO0lLePGu+Sdft1LR188cJKHq5POZGmyHao6pk7GVJg2VVKYOjmTsetcVvJ0ciCViG/ZlKeTiHayl5VMnZxIJ2rXhKmTaE8o0Sscrk6i2cKkr6vYOikBTmzgxAZObODEBk5s2DpZPZukm9JMnQz1jnWek2rK1MmEUJJWMnVCKhFrWcnTieOZIO+9giXpRC0CmTr5oJRoC0ydRP352mB/1E25OilD3pSmjXfJO1c4ma3ef2m8S965wgkb4MQGTmzgxAZObCgnw2vx1fmGIJx06FWPm4G33jfDXzgJLbSFExs4seHthM6p4O2ETr9xO3kaVXJcPrqT9BBWHreTVY3v/Hp8J0S86nbSrfGdj36MWI50aeRVwEkyTxRC8Q6cJBzzxc9wIgeRnz+HczhJ6PVzNZ3PMicb+6FP+tdBOTHytRb5gK7ohE6hPMjKEJxMFclnV7Jw0QmpREc6ATjRGx0q1eCNzrYvOHEcN1d5YQE4eVEf0/SLE7VFVuf/ZCIrQ3RCJr0VndCJ+yryC9OJOI/NhsZ9h0rd36i6QJ0I8XUoNjTjk+HMIJuGgnUixKjQkFfM5nIiXvICeDm5jCVEHJbbcOLlpJR0wwlOcqhFD5zkkUs7OKl0MtzNTXR4wtVJn2rYU98ZgJPLSrLLRvcylkUjl5Nv0p6aegJwQsQneqncdThxHK1WKcdhO9nASW0nEZW9wuTacToJfY69xQl1L05DF65OygjAibEfm3fiuu+UE4ATEb8mDHJTQ76IpZMK4ARO4ITgZieH2bhIUHvU0ydJL9MwPcmivdMJ9SxDP1YNwIm+8c6y0emilcsJw2delTEbfZUF/Wy0ygm/Z+g3/5+Ec9biFiehn8m5aQ24WaZHeTRfAZ3dwhrQ4Kfz060kF3JcRrJowtVJFXACJ3BCACc2cGIjbrwXv+/N8GRw0ifgAnByw7NRGcxZqHO1YTtxxrEX0ok6rc/TCdbFyUfsn6gipxP6F9DUW5XCduK+7/RMHyI7pR+Ck4+EziIb3UtfFu2cTqLOyiTN5gjASRUcYzY4MYATGzixgRObn85fNpJjpuHSTUq6W65ObopPygjbCdvzbHBiACc2cGIDJzai+kyO3GZVp8nrvGT5cd8xddj14jhOei95zZzookH2WdUO4mqmhe+I497uQd4Ret2PwP8vD/Em2m2rSsyk9ruk27KSei+780vcupO7/3Vw8hcwGoZ6r+Q90e4EK7n3aXZXPYQ/p84PzvtkUT2EP2dT3S2vkCmODXOo7pZfPltXsvY95Erav/Hc+20nch0gaY4662nvzM4tGjnPqjt0F4xHKnOpYU4j62VvAAAAAAAAAAAAAAAAAAAAgB//AK+LUnlfZShzAAAAAElFTkSuQmCC"
 
 
 class StockPresenter(QObject):
@@ -165,13 +167,13 @@ class StockPresenter(QObject):
         try:
             aggregate_data = json.loads(api_data.get("aggregateData", "{}"))
             print(api_data)
-            print(aggregate_data)
             return {
                 "name": api_data.get("name", "Unknown Company"),
                 "symbol": symbol,
                 "description": api_data.get("description", "No description available"),
                 "volume": api_data.get("volume", 0),
-                "chart_data": aggregate_data.get("results", {})
+                "chart_data": aggregate_data.get("results", {}),
+                "img": api_data.get("logoBase64", DEFAULT_ICON)
             }
         except Exception as e:
             print(f"Error formatting stock data: {str(e)}")

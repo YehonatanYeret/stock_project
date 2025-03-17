@@ -12,7 +12,8 @@ from views.components.styled_widgets import (
     StyledLabel, StyledButton, StyledLineEdit, StyledDateEdit,
     PrimaryButton, Card, RoundedCard, GradientCard, ScrollableContainer,
     BuyToggleButton, SellToggleButton, PageTitleLabel, SectionTitleLabel,
-    apply_shadow_effect, create_form_field, StyledChartView, StyledLineSeriesChart, DescriptionLabel
+    apply_shadow_effect, create_form_field, StyledChartView, StyledLineSeriesChart,
+    DescriptionLabel, CompanyIconView
 )
 
 
@@ -182,61 +183,21 @@ class StockView(QWidget):
         stock_header_layout.setContentsMargins(20, 20, 20, 20)
         stock_header_layout.setSpacing(15)
 
-        # Stock name and price
-        stock_info = QVBoxLayout()
+        # Stock name and icon
+        stock_info_layout = QHBoxLayout()
 
         self.stock_name = StyledLabel("", size=26, font_weight="bold", color="#0F172A", parent=stock_header_card)
+        self.company_icon = CompanyIconView(size=48)
 
-        price_layout = QHBoxLayout()
-        self.stock_price = StyledLabel("", size=36, font_weight="bold", color="#0F172A", parent=stock_header_card)
+        stock_info_layout.addWidget(self.company_icon)
+        stock_info_layout.addWidget(self.stock_name)
+        stock_info_layout.addStretch(1)
 
-        self.stock_change = QLabel("")
-        self.stock_change.setStyleSheet("""
-            font-weight: bold;
-            font-size: 18px;
-            border-radius: 8px;
-            padding: 5px 10px;
-            margin-left: 10px;
-        """)
-
-        price_layout.addWidget(self.stock_price)
-        price_layout.addWidget(self.stock_change)
-
+        # Description
         self.description = DescriptionLabel("", parent=stock_header_card)
-        price_layout.addStretch(1)
 
-        # Volume and Market Cap
-        meta_layout = QHBoxLayout()
-
-        self.volume_label = QLabel("")
-        self.volume_label.setStyleSheet("""
-            color: #64748B;
-            font-size: 15px;
-            background-color: #F1F5F9;
-            border-radius: 8px;
-            padding: 5px 15px;
-        """)
-
-        self.market_cap_label = QLabel("")
-        self.market_cap_label.setStyleSheet("""
-            color: #64748B;
-            font-size: 15px;
-            background-color: #F1F5F9;
-            border-radius: 8px;
-            padding: 5px 15px;
-            margin-left: 10px;
-        """)
-
-        # meta_layout.addWidget(self.volume_label)
-        # meta_layout.addWidget(self.market_cap_label)
-        # meta_layout.addStretch(1)
-
-        stock_info.addWidget(self.stock_name)
-        stock_info.addWidget(self.description)
-        stock_info.addLayout(price_layout)
-        # stock_info.addLayout(meta_layout)
-
-        stock_header_layout.addLayout(stock_info)
+        stock_header_layout.addLayout(stock_info_layout)
+        stock_header_layout.addWidget(self.description)
 
         return stock_header_card
 
@@ -446,9 +407,10 @@ class StockView(QWidget):
 
         Args:
             :param stock_data:  - name: Company name
-                               - symbol: Stock symbol
-                               - volume: Trading volume
-                                 - description: Company description
+                                - symbol: Stock symbol
+                                - volume: Trading volume
+                                - description: Company description
+                                - img: Company logo
             :param end_date: end date
             :param symbol: stock symbol
             :param start_date: start date
@@ -456,9 +418,9 @@ class StockView(QWidget):
         # Update stock header
         self.stock_name.setText(f"{stock_data['name']} ({stock_data['symbol']})")
 
-        # Format volume with commas
-        formatted_volume = f"{stock_data['volume']:,}"
-        self.volume_label.setText(f"Volume: {formatted_volume}")
+        # # Format volume with commas
+        # formatted_volume = f"{stock_data['volume']:,}"
+        # self.volume_label.setText(f"Volume: {formatted_volume}")
 
         # Update action button text
         is_buy = self.buy_button.isChecked()
@@ -467,9 +429,14 @@ class StockView(QWidget):
         # Update chart with provided stock data
         if 'chart_data' in stock_data:
             self.chart.update_chart(symbol, start_date, end_date, stock_data['chart_data'])
+        
 
         # Update description
         self.description.setText(stock_data['description'])
+
+        # Update company icon
+        if stock_data['img'] != "":
+            self.company_icon.set_icon_from_base64(stock_data['img'])
 
     def show_message(self, message, is_error=False):
         """Display a message to the user"""

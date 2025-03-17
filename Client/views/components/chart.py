@@ -1,8 +1,8 @@
 import pandas as pd
+from PySide6.QtCore import QDate
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
 from lightweight_charts.widgets import QtChart
-from PySide6.QtCore import QDate
 
 
 class StockChartWidget(QWidget):
@@ -78,6 +78,7 @@ class StockChartWidget(QWidget):
         :param end_date: End date as a string in "yyyy-MM-dd" format
         :param data: Stock data in list format
         """
+        self.clear_chart()  # Clear the chart before updating
         self.data = self.process_data(data)  # Convert to DataFrame
         if self.data is not None:
             # Convert string dates to QDate objects
@@ -94,7 +95,11 @@ class StockChartWidget(QWidget):
             self.chart.set_visible_range(start_ts, end_ts)
             self.display_chart()  # Display updated chart
 
+        else:
+            print("❌ Error: Unable to process stock data.")
+
     def clear_chart(self):
         """Clears the chart for new data."""
-        self.chart.clear()
+        self.chart.set(pd.DataFrame())  # Set an empty list to clear the chart data
+        self.chart.get_webview().update()  # Update the webview to reflect changes
         print("🧹 Chart cleared.")

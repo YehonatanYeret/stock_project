@@ -44,6 +44,10 @@ namespace Server.Gateways.Implementations
         {
             var endpoint = $"/v3/reference/tickers/{ticker}?apiKey={_polygonApiKey}";
             var response = await SendRequestAsync(endpoint);
+
+            if (response == "")
+                throw new InvalidOperationException("No results found in API response.");
+
             var json = JObject.Parse(response);
 
             if (json["results"] is not null)
@@ -77,14 +81,16 @@ namespace Server.Gateways.Implementations
                     var imageBytes = await FetchImageBytesAsync(imageUrl);
                     return Convert.ToBase64String(imageBytes); // Convert image to Base64
                 }
+
+                var defaultImageBytes = await FetchImageBytesAsync(GetDefaultLogoUrl());
+
+                return Convert.ToBase64String(defaultImageBytes);
             }
             catch (Exception)
             {
                 // If any error occurs, return the default placeholder image
             }
-
-            var defaultImageBytes = await FetchImageBytesAsync(GetDefaultLogoUrl());
-            return Convert.ToBase64String(defaultImageBytes);
+            return "";
         }
 
         /// <summary>
@@ -114,7 +120,12 @@ namespace Server.Gateways.Implementations
         {
             var url = $"{BaseUrl}{endpoint}";
             var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+            // If the status code is not successful, just return an empty string 
+            if (!response.IsSuccessStatusCode)
+            {
+                return string.Empty;
+            }
+
             return await response.Content.ReadAsStringAsync();
         }
     }

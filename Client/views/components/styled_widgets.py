@@ -1,14 +1,17 @@
+import base64
+import os
+
+from PySide6.QtCore import Qt, QByteArray, QSize
+from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
+from PySide6.QtCore import Qt, QMargins, QPointF, QDate
+from PySide6.QtGui import (
+    QPixmap, QColor, QFont, QPainter, QPen, QBrush, QLinearGradient
+)
 from PySide6.QtWidgets import (
     QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout, QHBoxLayout,
     QTableWidget, QTableWidgetItem, QComboBox, QGraphicsDropShadowEffect,
     QHeaderView, QScrollArea, QSizePolicy, QDateEdit, QWidget
 )
-from PySide6.QtGui import (
-    QPixmap, QColor, QFont, QPainter, QPen, QBrush, QLinearGradient
-)
-from PySide6.QtCore import Qt, QMargins, QPointF, QDate
-from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
-
 
 # ========== TEXT ELEMENTS ==========
 
@@ -341,7 +344,8 @@ class RoundedCard(Card):
 
 
 class GradientCard(Card):
-    def __init__(self, parent=None, start_color="#F0F9FF", end_color="#EFF6FF", border_color="#E0F2FE", shadow_enabled=True):
+    def __init__(self, parent=None, start_color="#F0F9FF", end_color="#EFF6FF", border_color="#E0F2FE",
+                 shadow_enabled=True):
         super().__init__(parent, shadow_enabled)
         self.setObjectName("gradientCard")
         self.setStyleSheet(f"""
@@ -606,6 +610,119 @@ def apply_shadow_effect(widget, blur_radius=20, color=QColor(15, 23, 42, 40), of
     shadow_effect.setOffset(0, offset)
     widget.setGraphicsEffect(shadow_effect)
 
+
+# ========= IMG =========
+
+class CompanyIconView(QFrame):
+    """
+    A component that renders company icons from base64 strings.
+
+    Features:
+    - Fixed size display with proper scaling
+    - Default placeholder image
+    - Clean design with optional shadow
+    - Simple API for updating the image
+    """
+
+    def __init__(self,
+                 parent=None,
+                 size=48,
+                 shadow_enabled=True):
+        """
+        Initialize the company icon view.
+
+        Args:
+            parent: Parent widget
+            size: Size of the icon (width and height)
+            shadow_enabled: Whether to apply a shadow effect
+        """
+        super().__init__(parent)
+
+        # Set fixed size
+        self.setFixedSize(size, size)
+
+        # Create image label
+        self.image_label = QLabel(self)
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.image_label.setFixedSize(size, size)
+
+        # Style
+        self.setStyleSheet("""
+            CompanyIconView {
+                background: transparent;
+            }
+        """)
+
+        # Apply shadow if needed
+        if shadow_enabled:
+            self.apply_shadow()
+
+        # Set default placeholder
+        # self._set_placeholder()
+
+    def _set_placeholder(self):
+        """Set a default placeholder image"""
+        # This creates a simple colored square as placeholder
+        # Could be replaced with a proper placeholder image path
+        placeholder = QPixmap(self.image_label.size())
+        placeholder.fill(Qt.lightGray)
+        self.image_label.setPixmap(placeholder)
+
+    def set_icon_from_base64(self, base64_string):
+        """
+        Update the icon from a base64 encoded string.
+
+        Args:
+            base64_string: Base64 encoded image string
+        """
+        try:
+            # Remove data URL prefix if present
+            if isinstance(base64_string, str) and "base64," in base64_string:
+                base64_string = base64_string.split("base64,")[1]
+
+            # Convert base64 to bytes
+            image_data = QByteArray.fromBase64(
+                base64_string.encode() if isinstance(base64_string, str) else base64_string)
+
+            # Create pixmap from the byte data
+            pixmap = QPixmap()
+            success = pixmap.loadFromData(image_data)
+
+            if not success:
+                self._set_placeholder()
+                return
+
+            # Scale the pixmap
+            pixmap = pixmap.scaled(
+                self.image_label.width(),
+                self.image_label.height(),
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+
+            # Set the pixmap to the label
+            self.image_label.setPixmap(pixmap)
+        except Exception:
+            # In case of any error, show placeholder
+            self._set_placeholder()
+
+    def apply_shadow(self, blur_radius=10, offset=2, opacity=20):
+        """
+        Apply a shadow effect to the icon.
+
+        Args:
+            blur_radius: Radius of the shadow blur
+            offset: Shadow offset in pixels
+            opacity: Shadow opacity percentage
+        """
+
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(blur_radius)
+        shadow.setOffset(offset)
+        shadow.setColor(QColor(0, 0, 0, opacity * 255 // 100))
+        self.setGraphicsEffect(shadow)
+
+
 '''
 # UI Framework Components and Functions
 
@@ -690,4 +807,11 @@ def apply_shadow_effect(widget, blur_radius=20, color=QColor(15, 23, 42, 40), of
 ### create_form_field(label_text, input_field, label_size=14, is_bold=True, color="#334155", margin_bottom=5)
 
 ### apply_shadow_effect(widget, blur_radius=20, color=QColor(15, 23, 42, 40), offset=4)
+
+## IMG 
+### CompanyIconView(QFrame)
+- `__init__(self, parent=None, size=48, shadow_enabled=True)`
+- `_set_placeholder(self)`
+- `set_icon_from_base64(self, base64_string)`
+
 '''
