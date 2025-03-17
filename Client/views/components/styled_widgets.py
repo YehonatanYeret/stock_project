@@ -639,7 +639,12 @@ class CompanyIconView(QFrame):
         super().__init__(parent)
 
         # Set fixed size
-        self.setFixedSize(size, size)
+        # self.setFixedSize(size, size)
+        # Set fixed high
+        self.setFixedHeight(size)
+
+        # Self minimum length
+        self.setMinimumWidth(size)
 
         # Create image label
         self.image_label = QLabel(self)

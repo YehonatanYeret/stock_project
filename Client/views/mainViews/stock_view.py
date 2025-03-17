@@ -426,10 +426,12 @@ class StockView(QWidget):
         is_buy = self.buy_button.isChecked()
         self._update_action_button(is_buy=is_buy, symbol=stock_data['symbol'])
 
-        # Update chart with provided stock data
+        # Regenerate the chart
         if 'chart_data' in stock_data:
+            # self.chart.update_chart(symbol, start_date, end_date, stock_data['chart_data'])
+            # self.chart = StockChart()
             self.chart.update_chart(symbol, start_date, end_date, stock_data['chart_data'])
-        
+
 
         # Update description
         self.description.setText(stock_data['description'])
