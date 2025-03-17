@@ -118,15 +118,22 @@ namespace Server.Gateways.Implementations
 
         private async Task<string> SendRequestAsync(string endpoint)
         {
-            var url = $"{BaseUrl}{endpoint}";
-            var response = await _httpClient.GetAsync(url);
-            // If the status code is not successful, just return an empty string 
-            if (!response.IsSuccessStatusCode)
+            try
+            {
+                var url = $"{BaseUrl}{endpoint}";
+                var response = await _httpClient.GetAsync(url);
+                // If the status code is not successful, just return an empty string 
+                if (!response.IsSuccessStatusCode)
+                {
+                    return string.Empty;
+                }
+
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch
             {
                 return string.Empty;
             }
-
-            return await response.Content.ReadAsStringAsync();
         }
     }
 }
