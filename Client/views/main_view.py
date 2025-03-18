@@ -11,9 +11,9 @@ from models.mainModels.dashboard_model import DashboardModel
 from views.mainViews.stock_view import StockView
 from presenters.mainPresenters.stock_presenter import StockPresenter
 from models.mainModels.stock_model import StockModel
-from views.mainViews.history_view import HistoryView
-from presenters.mainPresenters.history_presenter import HistoryPresenter
-from models.mainModels.history_model import HistoryModel
+# from views.mainViews.history_view import HistoryView
+# from presenters.mainPresenters.history_presenter import HistoryPresenter
+# from models.mainModels.history_model import HistoryModel
 
 
 
@@ -187,7 +187,7 @@ class Main_view(QMainWindow):
         # Create placeholders (Dashboard not yet initialized)
         self.dashboard_widget = DashboardView()
         self.stock_widget = StockView()
-        self.history_widget = HistoryView()
+        self.history_widget = QWidget()
         self.chatbot_widget = QWidget()
         self.settings_widget = QWidget()
 
@@ -244,7 +244,7 @@ class Main_view(QMainWindow):
 
     def show_history(self):
         """Show the history screen"""
-        self.history_presenter = HistoryPresenter(HistoryModel(), self.history_widget, self.user_id)
+        # self.history_presenter = HistoryPresenter(HistoryModel(), self.history_widget, self.user_id)
         self.content_stack.setCurrentWidget(self.history_widget)
         self.sidebar.set_active_button("history")
 

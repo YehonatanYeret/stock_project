@@ -81,7 +81,7 @@ public class TransactionCommandController : Controller
 
             // The profit/loss is added to the user's profit and the portfolio value is updated by the amount of the sale
             user.Profit += profitLoss;
-            user.PortfolioValue = PortfolioValueUtils.CalculatePortfolioValue(user.PortfolioValue, currentPrice * model.Quantity);
+            user.CashBalance = PortfolioValueUtils.CalculatePortfolioValue(user.CashBalance, currentPrice * model.Quantity);
 
             await _context.SaveChangesAsync();
 
@@ -116,7 +116,7 @@ public class TransactionCommandController : Controller
 
             // Check if the user has enough funds to buy and update the portfolio value
             decimal cost = model.Quantity * currentPrice;
-            user.PortfolioValue = PortfolioValueUtils.CalculatePortfolioValue(user.PortfolioValue, -cost);
+            user.CashBalance = PortfolioValueUtils.CalculatePortfolioValue(user.CashBalance, -cost);
 
 
             // Find existing holding for the user and stock

@@ -111,3 +111,14 @@ class ApiService:
                     return errors[0]  # Return first validation error message
         
         return default_message  # Fallback error message
+
+    def get_cash_balance(self, user_id):
+        """Fetch cash balance for a user"""
+        success, response = self.get("cash_balance", user_id=user_id)  # Match 'userId' case
+        
+        if success:
+            return float(response)  # Should be a number like 5000.00
+        
+        # Handle API failure gracefully
+        print(f"Failed to fetch cash balance: {response}")
+        return 0.00  # Default to 0 instead of None
