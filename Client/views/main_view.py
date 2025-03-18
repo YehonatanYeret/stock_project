@@ -5,6 +5,7 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtCore import QObject
 from PySide6.QtGui import QIcon
+from views.mainViews.history_view import HistoryView
 from views.mainViews.dashboard_view import DashboardView
 from presenters.mainPresenters.dashboard_presenter import DashboardPresenter
 from models.mainModels.dashboard_model import DashboardModel
@@ -187,7 +188,7 @@ class Main_view(QMainWindow):
         # Create placeholders (Dashboard not yet initialized)
         self.dashboard_widget = DashboardView()
         self.stock_widget = StockView()
-        self.history_widget = QWidget()
+        self.history_widget = HistoryView()
         self.chatbot_widget = QWidget()
         self.settings_widget = QWidget()
 

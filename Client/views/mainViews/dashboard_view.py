@@ -21,7 +21,7 @@ from views.components.styled_widgets import (
 )
 
 
-class PortfolioValueCard(StyledStatsCard):
+class CashBalanceCard(StyledStatsCard):
     def __init__(self, title, value, subtitle=None, icon=None, color="#5851DB", parent=None):
         super().__init__(title, value, subtitle, icon, color, parent)
         button_layout = QHBoxLayout()
@@ -214,18 +214,18 @@ class DashboardView(QWidget):
         stats_layout = QHBoxLayout()
         stats_layout.setSpacing(20)
 
-        self.total_value_card = PortfolioValueCard("Total Portfolio Value", "$0", "+0%", color="#5851DB")
-        self.total_gain_card = StyledStatsCard("Total Gain", "$0", "+5%", color="#4CAF50")
-        self.total_gain_pct_card = StyledStatsCard("Gain Percentage", "0%", "-3%", color="#4CAF50")
+        self.cash_balance_card = CashBalanceCard("Cash Balance", "$0", "+0%", color="#5851DB")
+        self.total_gain_card = StyledStatsCard("Total Gain", "0%", "-3%", color="#4CAF50")
+        self.portfolio_value_card = StyledStatsCard("Portfolio Value", "$0", "+5%", color="#4CAF50")
 
-        stats_layout.addWidget(self.total_value_card)
+        stats_layout.addWidget(self.cash_balance_card)
         stats_layout.addWidget(self.total_gain_card)
-        stats_layout.addWidget(self.total_gain_pct_card)
+        stats_layout.addWidget(self.portfolio_value_card)
 
         self.container_layout.addLayout(stats_layout)
 
-        self.total_value_card.add_money_btn.clicked.connect(self.on_add_money_clicked)
-        self.total_value_card.remove_money_btn.clicked.connect(self.on_remove_money_clicked)
+        self.cash_balance_card.add_money_btn.clicked.connect(self.on_add_money_clicked)
+        self.cash_balance_card.remove_money_btn.clicked.connect(self.on_remove_money_clicked)
 
         # Holdings Table
         holdings_label = SectionTitleLabel("My Holdings")
@@ -258,7 +258,7 @@ class DashboardView(QWidget):
     def set_chart_data(self, data):
         self.chart.load_data(data)
 
-    def set_portfolio_summary(self, cash_balance, total_gain, total_gain_pct):
-        self.total_value_card.value_label.setText(f"${cash_balance:,.2f}")
+    def set_portfolio_summary(self, cash_balance, total_value, total_gain):
+        self.cash_balance_card.value_label.setText(f"${cash_balance:,.2f}")
         self.total_gain_card.value_label.setText(f"${total_gain:,.2f}")
-        self.total_gain_pct_card.value_label.setText(f"{total_gain_pct:.2f}%")
+        self.portfolio_value_card.value_label.setText(f"{total_value:.2f}")

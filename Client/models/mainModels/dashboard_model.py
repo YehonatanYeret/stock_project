@@ -55,30 +55,8 @@ class DashboardModel:
 
     def buy_stock(self, user_id, symbol, quantity):
         pass
-        # """Send buy stock request to backend"""
-        # print(f"Buying {quantity} shares of {symbol} for user {user_id}")
-        # payload = {"userId": user_id, "symbol": symbol, "quantity": quantity, "buyDate": datetime.datetime.utcnow().isoformat()}
-        # status, response = self.api_service.post("/api/transaction/command/buy", payload)
-
-        # if status:
-        #     self.fetch_holdings(user_id)  # Refresh holdings after buying
-        # else:
-        #     print("Error buying stock:", response)
 
     def sell_stock(self, holding_id, quantity):
-        # """Send sell stock request to backend"""
-        # if not self.user_id:
-        #     print("Error: user_id is not set")
-        #     return
-
-        # print(f"Selling {quantity} shares of holding ID {holding_id}")
-        # payload = {"holdingId": holding_id, "quantity": quantity, "sellDate": datetime.datetime.utcnow().isoformat()}
-        # status, response = self.api_service.post("/api/transaction/command/sell", payload)
-
-        # if status:
-        #     self.fetch_holdings(self.user_id)  # Refresh holdings after selling
-        # else:
-        #     print("Error selling stock:", response)
         pass
 
     def get_cash_balance(self):

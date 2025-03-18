@@ -29,7 +29,7 @@ class DashboardPresenter:
     def calculate_portfolio_summary(self, holdings):
         cash_balance = self.model.get_cash_balance()
         total_value = sum(h.TotalValue for h in holdings)
-        total_gain = sum(h.TotalGain for h in holdings)
+        total_gain = sum(h.TotalGain for h in holdings)#need to change
         return cash_balance, total_value, total_gain
 
     def get_chart_data(self, transactions):

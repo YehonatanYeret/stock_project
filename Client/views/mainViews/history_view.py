@@ -1,3 +1,4 @@
+
 import sys
 sys.path.append('..')
 
@@ -11,19 +12,19 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLab
 from PySide6.QtGui import QFont
 
 
-# class HistoryView(QWidget):
-#     """
-#     View for transaction history page.
+class HistoryView(QWidget):
+    """
+    View for transaction history page.
 
-#     Displays transaction data and provides UI for filtering.
-#     """
-#     # Define signals for user interactions
-#     filter_applied = Signal(str, str, str, str)  # from_date, to_date, type, search
+    Displays transaction data and provides UI for filtering.
+    """
+    # Define signals for user interactions
+    filter_applied = Signal(str, str, str, str)  # from_date, to_date, type, search
 
-#     def __init__(self, parent=None):
-#         """Initialize the transaction history view."""
-#         super().__init__(parent)
-#         self._setup_ui()
+    def __init__(self, parent=None):
+        """Initialize the transaction history view."""
+        super().__init__(parent)
+        self._setup_ui()
 
     def _setup_ui(self):
         """Setup the page layout and components"""
@@ -31,75 +32,75 @@ from PySide6.QtGui import QFont
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
 
-#         # Page title
-#         title = PageTitleLabel("Transaction History")
-#         main_layout.addWidget(title)
+        # Page title
+        title = PageTitleLabel("Transaction History")
+        main_layout.addWidget(title)
 
-#         # Filters section
-#         filter_card = Card(self)
-#         filter_layout = QVBoxLayout(filter_card)
+        # Filters section
+        filter_card = Card(self)
+        filter_layout = QVBoxLayout(filter_card)
 
-#         # Date range filters
-#         date_filter_layout = QHBoxLayout()
-#         date_filter_layout.setSpacing(10)
+        # Date range filters
+        date_filter_layout = QHBoxLayout()
+        date_filter_layout.setSpacing(10)
 
-#         from_date_label = StyledLabel("From:", color="#334155")
-#         self.from_date_edit = StyledDateEdit()
-#         self.from_date_edit.setDate(QDateTime.currentDateTime().addMonths(-1).date())
+        from_date_label = StyledLabel("From:", color="#334155")
+        self.from_date_edit = StyledDateEdit()
+        self.from_date_edit.setDate(QDateTime.currentDateTime().addMonths(-1).date())
 
-#         to_date_label = StyledLabel("To:", color="#334155")
-#         self.to_date_edit = StyledDateEdit()
-#         self.to_date_edit.setDate(QDateTime.currentDateTime().date())
+        to_date_label = StyledLabel("To:", color="#334155")
+        self.to_date_edit = StyledDateEdit()
+        self.to_date_edit.setDate(QDateTime.currentDateTime().date())
 
-#         date_filter_layout.addWidget(from_date_label)
-#         date_filter_layout.addWidget(self.from_date_edit)
-#         date_filter_layout.addWidget(to_date_label)
-#         date_filter_layout.addWidget(self.to_date_edit)
-#         date_filter_layout.addStretch()
+        date_filter_layout.addWidget(from_date_label)
+        date_filter_layout.addWidget(self.from_date_edit)
+        date_filter_layout.addWidget(to_date_label)
+        date_filter_layout.addWidget(self.to_date_edit)
+        date_filter_layout.addStretch()
 
-#         # Transaction type filter
-#         type_filter_layout = QHBoxLayout()
-#         type_filter_layout.setSpacing(10)
+        # Transaction type filter
+        type_filter_layout = QHBoxLayout()
+        type_filter_layout.setSpacing(10)
 
-#         type_label = StyledLabel("Type:", color="#334155")
-#         self.type_combo = QComboBox()
-#         self.type_combo.setFixedHeight(38)
-#         self.type_combo.setStyleSheet("""
-#             QComboBox {
-#                 border: 1px solid #D1D5DB;
-#                 border-radius: 4px;
-#                 padding: 8px;
-#                 background-color: white;
-#             }
-#             QComboBox::drop-down {
-#                 border: none;
-#                 width: 24px;
-#             }
-#         """)
-#         self.type_combo.addItem("All")
-#         self.type_combo.addItem("Buy")
-#         self.type_combo.addItem("Sell")
+        type_label = StyledLabel("Type:", color="#334155")
+        self.type_combo = QComboBox()
+        self.type_combo.setFixedHeight(38)
+        self.type_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #D1D5DB;
+                border-radius: 4px;
+                padding: 8px;
+                background-color: white;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 24px;
+            }
+        """)
+        self.type_combo.addItem("All")
+        self.type_combo.addItem("Buy")
+        self.type_combo.addItem("Sell")
 
-#         search_label = StyledLabel("Search:", color="#334155")
-#         self.search_input = StyledLineEdit(placeholder="Symbol")
+        search_label = StyledLabel("Search:", color="#334155")
+        self.search_input = StyledLineEdit(placeholder="Symbol")
 
-#         type_filter_layout.addWidget(type_label)
-#         type_filter_layout.addWidget(self.type_combo)
-#         type_filter_layout.addWidget(search_label)
-#         type_filter_layout.addWidget(self.search_input)
+        type_filter_layout.addWidget(type_label)
+        type_filter_layout.addWidget(self.type_combo)
+        type_filter_layout.addWidget(search_label)
+        type_filter_layout.addWidget(self.search_input)
 
-#         # Apply filters button
-#         self.apply_button = PrimaryButton("Apply Filters")
-#         apply_button_layout = QHBoxLayout()
-#         apply_button_layout.addStretch()
-#         apply_button_layout.addWidget(self.apply_button)
+        # Apply filters button
+        self.apply_button = PrimaryButton("Apply Filters")
+        apply_button_layout = QHBoxLayout()
+        apply_button_layout.addStretch()
+        apply_button_layout.addWidget(self.apply_button)
 
-#         # Add all filter layouts
-#         filter_layout.addLayout(date_filter_layout)
-#         filter_layout.addLayout(type_filter_layout)
-#         filter_layout.addLayout(apply_button_layout)
+        # Add all filter layouts
+        filter_layout.addLayout(date_filter_layout)
+        filter_layout.addLayout(type_filter_layout)
+        filter_layout.addLayout(apply_button_layout)
 
-#         main_layout.addWidget(filter_card)
+        main_layout.addWidget(filter_card)
 
         # Transactions table
         self.transactions_table = StyledTable()
@@ -119,33 +120,33 @@ from PySide6.QtGui import QFont
         table_container = ScrollableContainer(self)
         table_container.layout.addWidget(self.transactions_table)
 
-#         main_layout.addWidget(table_container)
+        main_layout.addWidget(table_container)
 
-#         # Connect signals
-#         self.apply_button.clicked.connect(self._on_apply_filters)
+        # Connect signals
+        self.apply_button.clicked.connect(self._on_apply_filters)
 
-#     def _on_apply_filters(self):
-#         """Handle filter application"""
-#         from_date = self.from_date_edit.date().toString("yyyy-MM-dd")
-#         to_date = self.to_date_edit.date().toString("yyyy-MM-dd")
-#         type_filter = self.type_combo.currentText()
-#         search_text = self.search_input.text()
+    def _on_apply_filters(self):
+        """Handle filter application"""
+        from_date = self.from_date_edit.date().toString("yyyy-MM-dd")
+        to_date = self.to_date_edit.date().toString("yyyy-MM-dd")
+        type_filter = self.type_combo.currentText()
+        search_text = self.search_input.text()
 
-#         self.filter_applied.emit(from_date, to_date, type_filter, search_text)
+        self.filter_applied.emit(from_date, to_date, type_filter, search_text)
 
-#     def display_transactions(self, transactions):
-#         """
-#         Display transactions in the table.
+    def display_transactions(self, transactions):
+        """
+        Display transactions in the table.
 
         Args:
             transactions: List of transaction dictionaries
         """
         print("history view data:", transactions)
 
-#         self.transactions_table.setRowCount(0)  # Clear table
+        self.transactions_table.setRowCount(0)  # Clear table
 
-#         for i, tx in enumerate(transactions):
-#             self.transactions_table.insertRow(i)
+        for i, tx in enumerate(transactions):
+            self.transactions_table.insertRow(i)
 
             date_str = tx["date"]
             if "T" in date_str:
@@ -163,21 +164,21 @@ from PySide6.QtGui import QFont
             self.transactions_table.setItem(i, 1, CustomTableItem(tx["symbol"]))
             self.transactions_table.item(i, 1).setFont(QFont("Arial", 10, QFont.Bold))
 
-#             # Create custom widget for transaction type (with color)
-#             type_widget = QWidget()
-#             type_layout = QHBoxLayout(type_widget)
-#             type_layout.setContentsMargins(5, 2, 5, 2)
+            # Create custom widget for transaction type (with color)
+            type_widget = QWidget()
+            type_layout = QHBoxLayout(type_widget)
+            type_layout.setContentsMargins(5, 2, 5, 2)
 
-#             type_label = QLabel("Buy" if tx["type"] == 0 else "Sell")
-#             type_label.setAlignment(Qt.AlignCenter)
-#             type_label.setStyleSheet(f"""
-#                 background-color: {'#DCFCE7' if tx["type"] == 0 else '#FEE2E2'};
-#                 color: {'#166534' if tx["type"] == 0 else '#991B1B'};
-#                 border-radius: 4px;
-#                 padding: 4px 8px;
-#                 font-weight: bold;
-#             """)
-#             type_layout.addWidget(type_label)
+            type_label = QLabel("Buy" if tx["type"] == 0 else "Sell")
+            type_label.setAlignment(Qt.AlignCenter)
+            type_label.setStyleSheet(f"""
+                background-color: {'#DCFCE7' if tx["type"] == 0 else '#FEE2E2'};
+                color: {'#166534' if tx["type"] == 0 else '#991B1B'};
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-weight: bold;
+            """)
+            type_layout.addWidget(type_label)
 
             self.transactions_table.setCellWidget(i, 2, type_widget)
             self.transactions_table.setItem(i, 3, CustomTableItem(str(tx["quantity"])))
@@ -188,22 +189,22 @@ from PySide6.QtGui import QFont
 
         # self.transactions_table.resizeColumnsToContents()
 
-#     def show_error(self, message):
-#         """Display error message to user."""
-#         # You could implement a proper error dialog here
-#         print(f"Error: {message}")
+    def show_error(self, message):
+        """Display error message to user."""
+        # You could implement a proper error dialog here
+        print(f"Error: {message}")
 
 
-# class CustomTableItem(QTableWidgetItem):
-#     """Custom QTableWidgetItem with text alignment"""
+class CustomTableItem(QTableWidgetItem):
+    """Custom QTableWidgetItem with text alignment"""
 
-#     def __init__(self, text):
-#         super().__init__(text)
-#         self.setTextAlignment(Qt.AlignCenter)
+    def __init__(self, text):
+        super().__init__(text)
+        self.setTextAlignment(Qt.AlignCenter)
 
 
-# if __name__ == "__main__":
-#     from PySide6.QtWidgets import QApplication
+if __name__ == "__main__":
+    from PySide6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     view = HistoryView()
