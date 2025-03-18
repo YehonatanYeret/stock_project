@@ -18,7 +18,7 @@ public class User
     public required string Name { get; set; }
 
     [Column(TypeName = "decimal(18,2)")]  // Ensures proper precision in the database
-    public decimal PortfolioValue { get; set; } = 0;
+    public decimal CashBalance { get; set; } = 0;
 
     [Column(TypeName = "decimal(18,2)")]  // Ensures proper precision in the database
     public decimal Profit { get; set; } = 0;

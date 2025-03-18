@@ -13,13 +13,6 @@ class DashboardPresenter:
             self.model.fetch_trades(self.user_id)
             self.model_updated()
 
-    def set_user_id(self, user_id):
-        """Setter method to update the user_id later."""
-        self.user_id = user_id
-        self.model.fetch_holdings(self.user_id)
-        self.model.fetch_trades(self.user_id)
-        self.model_updated()
-
     def model_updated(self):
         """Update the View with new data from the Model"""
         if self.user_id is None:
@@ -27,17 +20,17 @@ class DashboardPresenter:
 
         holdings = self.model.get_holdings()
         transactions = self.model.get_transactions()
-        total_value, total_gain, total_gain_pct = self.calculate_portfolio_summary(holdings)
+        cash_balance, total_gain, total_gain_pct = self.calculate_portfolio_summary(holdings)
 
         self.view.set_holdings_data(holdings)
         self.view.set_chart_data(self.get_chart_data(transactions))
-        self.view.set_portfolio_summary(total_value, total_gain, total_gain_pct)
+        self.view.set_portfolio_summary(cash_balance, total_gain, total_gain_pct)
 
     def calculate_portfolio_summary(self, holdings):
+        cash_balance = self.model.get_cash_balance()
         total_value = sum(h.TotalValue for h in holdings)
-        total_gain = sum(h.TotalGain for h in holdings)
-        total_gain_pct = (total_gain / total_value * 100) if total_value > 0 else 0
-        return total_value, total_gain, total_gain_pct
+        total_gain = sum(h.TotalGain for h in holdings)#need to change
+        return cash_balance, total_value, total_gain
 
     def get_chart_data(self, transactions):
         chart_data = []
@@ -45,7 +38,6 @@ class DashboardPresenter:
             trade_date = datetime.datetime.fromisoformat(trade["TradeDate"])
             portfolio_value = trade["PortfolioValue"]
             chart_data.append((trade_date, portfolio_value))
-        print("Chart Data:", chart_data)
         return chart_data
 
     def on_period_changed(self, period_text):

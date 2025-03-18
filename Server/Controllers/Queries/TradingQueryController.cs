@@ -46,22 +46,6 @@ public class TradingQueryController : ControllerBase
     }
 
     /// <summary>
-    /// Get a single holding by ID.
-    /// </summary>
-    [HttpGet("holding/{holdingId}")]
-    public async Task<ActionResult<HoldingDto>> GetHoldingById(int holdingId)
-    {
-        var holding = await _context.Holdings.FirstOrDefaultAsync(h => h.Id == holdingId);
-
-        if (holding == null)
-        {
-            return NotFound(new { message = "Holding not found." });
-        }
-
-        return Ok(await CalculateHoldingDto(holding));
-    }
-
-    /// <summary>
     /// Get all trade history for a specific user.
     /// </summary>
     [HttpGet("trades/{userId}")]
@@ -88,32 +72,6 @@ public class TradingQueryController : ControllerBase
     }
 
     /// <summary>
-    /// Get a single trade by ID.
-    /// </summary>
-    [HttpGet("trade/{tradeId}")]
-    public async Task<ActionResult<TradingDto>> GetTradeById(int tradeId)
-    {
-        var trade = await _context.Trades
-            .Where(t => t.Id == tradeId)
-            .Select(t => new TradingDto
-            {
-                Symbol = t.Symbol,
-                Date = t.Date,
-                Type = t.Type,
-                Quantity = t.Quantity,
-                Price = t.Price
-            })
-            .FirstOrDefaultAsync();
-
-        if (trade == null)
-        {
-            return NotFound(new { message = "Trade not found." });
-        }
-
-        return Ok(trade);
-    }
-
-    /// <summary>
     /// Helper method to calculate HoldingDto from Holding entity.
     /// </summary>
     private async Task<HoldingDto> CalculateHoldingDto(Holding holding)
@@ -133,5 +91,21 @@ public class TradingQueryController : ControllerBase
             TotalGain = totalGain,
             TotalGainPercentage = totalGainPercentage
         };
+    }
+
+    /// <summary>
+    /// return the amount of cashbalace for a specific user
+    /// </summary>
+    [HttpGet("cashbalance/{userId}")]
+    public async Task<ActionResult<decimal>> GetCashBalance(int userId)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+        Console.WriteLine(user.CashBalance);
+        return Ok(user.CashBalance);
     }
 }

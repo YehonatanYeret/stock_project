@@ -2,7 +2,6 @@ import sys
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QStackedWidget
 )
-from PySide6.QtCore import Signal
 
 from views.auth_view import Auth_view
 from presenters.auth_presenter import AuthPresenter
@@ -10,8 +9,6 @@ from models.auth_model import AuthModel
 from views.main_view import Main_view
 
 from services.api_service import ApiService
-
-from presenters.main_presenter import MainPresenter
 
 
 class MainWindow(QMainWindow):
