@@ -74,6 +74,5 @@ class HistoryPresenter(QObject):
         filtered_transactions = self.model.get_filtered_transactions(
             from_date, to_date, type_filter, search_text
         )
-
         # Update view
         self.view.display_transactions(filtered_transactions)

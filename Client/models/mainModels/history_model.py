@@ -45,6 +45,7 @@ class HistoryModel:
         """
         filtered = []
         search_text = search_text.lower() if search_text else ""
+        print(type_filter)
 
         # Convert filter dates to QDate
         filter_from_date = QDateTime.fromString(from_date, "yyyy-MM-dd").date() if from_date else None
@@ -76,7 +77,6 @@ class HistoryModel:
 
         print(filtered)
         return filtered
-
 
     def set_user(self, user_id):
         """Set the current user ID."""

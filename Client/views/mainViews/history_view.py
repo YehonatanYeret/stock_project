@@ -1,14 +1,16 @@
-
 import sys
+
 sys.path.append('..')
 
 from Client.views.components.styled_widgets import (
     PageTitleLabel, StyledTable, ScrollableContainer,
     StyledLineEdit, StyledLabel, StyledDateEdit,
-    PrimaryButton, Card, SectionTitleLabel, create_form_field, RoundedCard
+    PrimaryButton, Card, SectionTitleLabel, create_form_field,
+    RoundedCard, FilterComboBox
 )
 from PySide6.QtCore import Qt, QDateTime, Signal, QDate
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QTableWidgetItem, QSizePolicy, QScrollArea
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QTableWidgetItem, QSizePolicy, \
+    QScrollArea
 from PySide6.QtGui import QFont
 
 
@@ -36,47 +38,44 @@ class HistoryView(QWidget):
         title = PageTitleLabel("Transaction History")
         main_layout.addWidget(title)
 
-        # Filters section
+        # Create the filter section in one horizontal row
         self.filter_section = RoundedCard(parent=None, border_radius=16, shadow_enabled=True)
-        filter_layout = QVBoxLayout(self.filter_section)
+        filter_layout = QHBoxLayout(self.filter_section)
         filter_layout.setContentsMargins(15, 15, 15, 15)
         filter_layout.setSpacing(10)
 
-        filter_title = SectionTitleLabel("Filter Transactions", parent=self.filter_section)
-
-        filter_form = QHBoxLayout()
-        filter_form.setSpacing(10)
-
+        # Symbol input field
         symbol_input = StyledLineEdit(placeholder="Enter symbol", parent=self.filter_section)
         self.symbol_input = symbol_input
-        symbol_layout = create_form_field("Symbol", symbol_input)
+        symbol_field = create_form_field("Symbol", symbol_input)
 
-        # Start Date input
-        start_date = StyledDateEdit(default_date=QDate(2024, 1, 1), parent=self.filter_section)
+        # Start Date input field
+        start_date = StyledDateEdit(default_date=QDate.currentDate().addYears(-3), parent=self.filter_section)
         self.start_date = start_date
-        start_date_layout = create_form_field("Start Date", start_date)
+        start_date_field = create_form_field("Start Date", start_date)
 
-        # End Date input
-        end_date = StyledDateEdit(default_date=QDate(2024, 12, 30), parent=self.filter_section)
+        # End Date input field
+        end_date = StyledDateEdit(default_date=QDate.currentDate(), parent=self.filter_section)
         self.end_date = end_date
-        end_date_layout = create_form_field("End Date", end_date)
+        end_date_field = create_form_field("End Date", end_date)
 
-        filter_form.addLayout(symbol_layout, 2)
-        filter_form.addLayout(start_date_layout, 2)
-        filter_form.addLayout(end_date_layout, 2)
+        # Type combo (All/Buy/Sell)
+        self.type_combo = FilterComboBox(parent=self.filter_section, placeholder="All", items=["All", "Buy", "Sell"])
+        type_field = create_form_field("Type", self.type_combo)
 
-        # Button layout – Apply Filters
-        button_layout = QHBoxLayout()
-        self.apply_button = PrimaryButton("Apply Filters", object_name="applyFiltersButton", parent=self.filter_section)
-        button_layout.addWidget(self.apply_button)
-        button_layout.addStretch(1)
+        # Apply Filters button
+        apply_button = PrimaryButton("Apply Filters", object_name="applyFiltersButton", parent=self.filter_section)
+        self.apply_button = apply_button
 
-        # Add title, form and button layouts to the card layout
-        filter_layout.addWidget(filter_title)
-        filter_layout.addLayout(filter_form)
-        filter_layout.addLayout(button_layout)
+        # Add all fields and the button to the horizontal layout
+        filter_layout.addLayout(symbol_field, 2)
+        filter_layout.addLayout(start_date_field, 2)
+        filter_layout.addLayout(end_date_field, 2)
+        filter_layout.addLayout(type_field, 2)
+        filter_layout.addWidget(apply_button, 1, Qt.AlignBottom)
 
         main_layout.addWidget(self.filter_section)
+
         # Transactions table
         self.transactions_table = StyledTable()
         self.transactions_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -105,7 +104,7 @@ class HistoryView(QWidget):
         from_date = self.start_date.date().toString("yyyy-MM-dd")
         to_date = self.end_date.date().toString("yyyy-MM-dd")
         type_filter = self.type_combo.currentText()
-        search_text = self.search_input.text()
+        search_text = self.symbol_input.text()
 
         self.filter_applied.emit(from_date, to_date, type_filter, search_text)
 

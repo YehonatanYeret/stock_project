@@ -123,15 +123,12 @@ class StockView(QWidget):
         search_form.addLayout(start_date_layout, 2)
         search_form.addLayout(end_date_layout, 2)
 
-        # Button layout
-        button_layout = QHBoxLayout()
+        # Search button that catch only half of the form (from the bottom)
         self.search_button = PrimaryButton("Search", object_name="searchButton", parent=self.search_section)
-        button_layout.addWidget(self.search_button)
-        button_layout.addStretch(1)
+        search_form.addWidget(self.search_button, 1, Qt.AlignBottom)
 
         search_layout.addWidget(search_title)
         search_layout.addLayout(search_form)
-        search_layout.addLayout(button_layout)
 
         # Add search section to content layout
         self.content_layout.addWidget(self.search_section)
@@ -431,7 +428,6 @@ class StockView(QWidget):
             # self.chart.update_chart(symbol, start_date, end_date, stock_data['chart_data'])
             # self.chart = StockChart()
             self.chart.update_chart(symbol, start_date, end_date, stock_data['chart_data'])
-
 
         # Update description
         self.description.setText(stock_data['description'])
