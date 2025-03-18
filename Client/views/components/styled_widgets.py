@@ -377,7 +377,7 @@ class StyledStatsCard(Card):
         # Header with title and optional icon
         header_layout = QHBoxLayout()
         title_label = QLabel(title)
-        title_label.setStyleSheet("color: #666; font-size: 15px; font-weight: 500;")
+        title_label.setStyleSheet("color: #666; font-size: 15px; font-weight: 500; background: none; border: none;")
         header_layout.addWidget(title_label)
 
         if icon:
@@ -392,7 +392,8 @@ class StyledStatsCard(Card):
 
         # Value display
         self.value_label = QLabel(value)
-        self.value_label.setStyleSheet("color: #000; font-size: 28px; font-weight: bold;")
+        self.value_label.setStyleSheet(
+            "color: #000; font-size: 28px; font-weight: bold; background: none; border: none;")
         self.layout.addWidget(self.value_label)
 
         # Optional subtitle with trend arrow
@@ -401,13 +402,14 @@ class StyledStatsCard(Card):
             arrow_label = QLabel()
             if "+" in subtitle:
                 arrow_label.setText("↗")
-                arrow_label.setStyleSheet(f"color: {color}; font-size: 18px;")
+                arrow_label.setStyleSheet(f"color: {color}; font-size: 18px; background: none; border: none;")
             elif "-" in subtitle:
                 arrow_label.setText("↘")
-                arrow_label.setStyleSheet("color: #F44336; font-size: 18px;")
+                arrow_label.setStyleSheet("color: #F44336; font-size: 18px; background: none; border: none;")
 
             subtitle_text = QLabel(subtitle)
-            subtitle_text.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: 500;")
+            subtitle_text.setStyleSheet(
+                f"color: {color}; font-size: 14px; font-weight: 500; background: none; border: none;")
 
             subtitle_layout.addWidget(arrow_label)
             subtitle_layout.addWidget(subtitle_text)
@@ -429,6 +431,9 @@ class StyledTable(QTableWidget):
         self.setSelectionBehavior(QTableWidget.SelectRows)
         self.setSelectionMode(QTableWidget.SingleSelection)
         self.verticalHeader().setVisible(False)
+
+        # Add this line to disable editing for the entire table
+        self.setEditTriggers(QTableWidget.NoEditTriggers)
 
         self.setStyleSheet("""
             #StyledTable {
@@ -597,7 +602,7 @@ class StyledLineSeriesChart(StyledChartView):
 # ========== SCROLL AREA ==========
 
 class ScrollableContainer(QScrollArea):
-    def __init__(self, parent=None, margins=(20, 20, 20, 20), spacing=20, bg_color="#F7F8FA"):
+    def __init__(self, parent=None, margins=(20, 20, 20, 20), spacing=20, bg_color="#F7F8FA", shadow_enabled=False, border_radius=0):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.NoFrame)
@@ -636,6 +641,27 @@ class ScrollableContainer(QScrollArea):
                 height: 0px;
             }}
         """)
+
+        # Apply shadow effect
+        if shadow_enabled:
+            self.apply_shadow()
+
+        # Apply border radius
+        if border_radius > 0:
+            self.container.setStyleSheet(f"""
+                QWidget {{
+                    border-radius: {border_radius}px;
+                }}
+            """)
+
+    def apply_shadow(self, blur_radius=20, color=QColor(15, 23, 42, 40), offset=4):
+        """Apply a shadow effect to the scroll area"""
+        shadow_effect = QGraphicsDropShadowEffect()
+        shadow_effect.setBlurRadius(blur_radius)
+        shadow_effect.setColor(color)
+        shadow_effect.setOffset(0, offset)
+        self.setGraphicsEffect(shadow_effect)
+
 
 
 # ========== LAYOUT HELPERS ==========
