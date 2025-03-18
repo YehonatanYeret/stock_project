@@ -1,6 +1,8 @@
 import datetime
 import sys
 from PySide6.QtCore import Signal
+from PySide6.QtCharts import QAreaSeries
+from PySide6.QtGui import QBrush, QColor, QPen
 
 sys.path.append('..')
 
@@ -16,7 +18,7 @@ from PySide6.QtCore import Qt, QDateTime
 from PySide6.QtCharts import QLineSeries, QDateTimeAxis, QValueAxis
 
 from views.components.styled_widgets import (
-    ScrollableContainer, StyledLineSeriesChart, StyledStatsCard, StyledTable,
+    FilterComboBox, ScrollableContainer, StyledLineSeriesChart, StyledStatsCard, StyledTable,
     PageTitleLabel, SectionTitleLabel, StyledLabel, PrimaryButton, DangerButton,
     SellButton
 )
@@ -35,7 +37,12 @@ class CashBalanceCard(StyledStatsCard):
         self.layout.addLayout(button_layout)
 
 
+# Ensure SellButton and StyledTable are imported or defined elsewhere
+
 class HoldingsTable(StyledTable):
+    # Create a custom signal that emits an integer (the holding ID)
+    sellClicked = Signal(int)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -45,14 +52,14 @@ class HoldingsTable(StyledTable):
             "Total Value", "Total Gain", "Gain %", "Actions"
         ])
 
-        self.setColumnWidth(0, 30)  # ID
+        self.setColumnWidth(0, 30)   # ID
         self.setColumnWidth(1, 150)  # Symbol
         self.setColumnWidth(2, 100)  # Quantity
         self.setColumnWidth(3, 140)  # Current Price
         self.setColumnWidth(4, 140)  # Total Value
         self.setColumnWidth(5, 140)  # Total Gain
         self.setColumnWidth(6, 120)  # Gain %
-        self.setColumnWidth(7, 80)  # Actions
+        self.setColumnWidth(7, 80)   # Actions
 
         header = self.horizontalHeader()
         for i in range(7):
@@ -108,9 +115,9 @@ class HoldingsTable(StyledTable):
                 gain_pct_item.setForeground(QColor("#F44336"))
             self.setItem(row, 6, gain_pct_item)
 
-            # Sell button
+            # Sell button - connect using a lambda that captures the current holding's ID.
             sell_button = SellButton("Sell")
-            sell_button.clicked.connect(lambda _, sym=holding.Symbol: self.parent().on_sell_clicked(sym))
+            sell_button.clicked.connect(lambda _, hold_id=holding.Id: self.sellClicked.emit(hold_id))
             self.setCellWidget(row, 7, sell_button)
 
 
@@ -119,69 +126,90 @@ class PortfolioChart(StyledLineSeriesChart):
         super().__init__("Portfolio Performance", color="#5851DB", parent=parent)
         self.setMinimumHeight(350)
 
-        # Configure axes - first remove any existing axes
+        # Remove existing axes
         for axis in self.chart.axes():
             self.chart.removeAxis(axis)
 
-        # Then add new axes
+        # Configure X-Axis (Date)
         self.axisX = QDateTimeAxis()
         self.axisX.setFormat("MMM yyyy")
         self.axisX.setTitleText("Date")
         self.axisX.setLabelsAngle(-45)
         self.axisX.setLabelsFont(QFont("Arial", 9))
+        self.chart.addAxis(self.axisX, Qt.AlignBottom)
 
+        # Configure Y-Axis (Portfolio Value)
         self.axisY = QValueAxis()
         self.axisY.setTitleText("Portfolio Value ($)")
         self.axisY.setLabelFormat("$%.0f")
         self.axisY.setLabelsFont(QFont("Arial", 9))
-
-        self.chart.addAxis(self.axisX, Qt.AlignBottom)
         self.chart.addAxis(self.axisY, Qt.AlignLeft)
+
+        # Attach axes
         self.series.attachAxis(self.axisX)
         self.series.attachAxis(self.axisY)
-        
+
+        # Add shaded area under the line
+        self.area_series = QAreaSeries(self.series)
+        self.area_series.setBrush(QBrush(QColor("#5851DB")))  # Primary color
+        self.area_series.setOpacity(0.3)  # Make it slightly transparent
+        self.chart.addSeries(self.area_series)
+        self.area_series.attachAxis(self.axisX)
+        self.area_series.attachAxis(self.axisY)
+
+        # Add a baseline (zero line)
+        self.baseline_series = QLineSeries()
+        self.baseline_series.setColor(QColor("#BBBBBB"))  # Light gray baseline
+        self.baseline_series.setPen(QPen(QColor("#AAAAAA"), 1, Qt.DashLine))  # Dashed line
+        self.chart.addSeries(self.baseline_series)
+
     def load_data(self, data):
         print(data)
         self.series.clear()
+        self.baseline_series.clear()
+
         if not data or len(data) < 2:
             return
 
         min_value = float('inf')
         max_value = float('-inf')
 
-        previous_value = data[0][1]  # Initial portfolio value
-        self.series.append(data[0][0].timestamp()*1000, data[0][1])
-
-        for i in range(1, len(data)):
-            current_date, current_value = data[i]
-            delta = (current_value + previous_value)  # Calculate change (delta)
-            timestamp = int(current_date.timestamp() * 1000)
-            
-            self.series.append(timestamp, delta)
-
-            min_value = min(min_value, delta)
-            max_value = max(max_value, delta)
-
-            previous_value = current_value  # Update for next iteration
-
-        self.series.append(datetime.datetime.now(), previous_value)
         first_date = data[0][0]
-        self.axisX.setRange(first_date, datetime.datetime.now())
+        last_value = data[-1][1]
+        timestamp_now = datetime.datetime.now().timestamp() * 1000
 
+        # Populate the series with data points
+        for current_date, current_value in data:
+            timestamp = int(current_date.timestamp() * 1000)
+            self.series.append(timestamp, current_value)
+
+            min_value = min(min_value, current_value)
+            max_value = max(max_value, current_value)
+
+        # Extend the line to the current date
+        self.series.append(timestamp_now, last_value)
+
+        # Draw baseline at the starting value
+        start_value = data[0][1]
+        self.baseline_series.append(first_date.timestamp() * 1000, start_value)
+        self.baseline_series.append(timestamp_now, start_value)
+
+        # Set axis ranges with padding
         padding = (max_value - min_value) * 0.1
+        self.axisX.setRange(first_date, datetime.datetime.now())
         self.axisY.setRange(min_value - padding, max_value + padding)
-
 
 class DashboardView(QWidget):
     add_money_clicked = Signal()
     remove_money_clicked = Signal()
     on_period_changed = Signal(str)
-    on_sell_clicked = Signal(str)
+    on_sell_clicked = Signal(int)
 
     def __init__(self):
         super().__init__()
         self.presenter = None  # Presenter will be set later
         self.init_ui()
+        self.holdings_table.sellClicked.connect(self.on_sell_clicked)
 
     def init_ui(self):
         self.setWindowTitle("Portfolio Dashboard")
@@ -212,9 +240,8 @@ class DashboardView(QWidget):
         header_layout.addStretch()
 
         period_label = StyledLabel("Period:", size=14, color="#666")
-        self.period_selector = QComboBox()
-        self.period_selector.addItems(["All Time", "Last 3 Months", "Last 6 Months", "Last Year"])
-        self.period_selector.currentTextChanged.connect(self.on_period_changed)
+        self.period_selector = FilterComboBox(items=["All Time", "Last 3 Months", "Last 6 Months", "Last Year"])
+        self.period_selector.onTextChanged.connect(self.on_period_changed)
 
         header_layout.addWidget(period_label)
         header_layout.addWidget(self.period_selector)

@@ -1,5 +1,6 @@
 import base64
 import os
+from PySide6.QtCore import Signal
 
 from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
 from PySide6.QtCore import Qt, QByteArray, QSize
@@ -784,6 +785,7 @@ class CompanyIconView(QFrame):
 # ========== COMBO BOXES ==========
 
 class FilterComboBox(QComboBox):
+    onTextChanged = Signal(str)
     def __init__(self,
                  parent=None,
                  placeholder="Filter by...",
@@ -799,6 +801,8 @@ class FilterComboBox(QComboBox):
 
         # Make it expandable horizontally
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        self.currentTextChanged.connect(self.onTextChanged.emit)
 
         # Style the combobox to match existing components
         self.setStyleSheet("""

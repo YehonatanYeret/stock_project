@@ -85,7 +85,7 @@ public class TransactionCommandController : Controller
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Sell trade completed successfully.", profitLoss });
+            return Ok(trade);
         }
         catch (Exception ex)
         {
@@ -158,7 +158,7 @@ public class TransactionCommandController : Controller
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Buy trade completed successfully.", holdingId = holding.Id });
+            return Ok(new { message = "Buy trade completed successfully.", holding, trade });
         }
         catch (Exception ex)
         {

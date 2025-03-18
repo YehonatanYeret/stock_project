@@ -67,7 +67,7 @@ class DashboardPresenter:
         if days is not None:
             # Filter transactions within the selected time range
             now = datetime.datetime.now()
-            filtered_transactions = [(date, value, type) for date, value, type in chart_data if (now - date).days <= days]
+            filtered_transactions = [(date, value) for date, value in chart_data if (now - date).days <= days]
             print(filtered_transactions)
             self.view.set_chart_data(filtered_transactions)
         else:
@@ -80,12 +80,12 @@ class DashboardPresenter:
             self.model.buy_stock(self.user_id, symbol, quantity)
             self.model_updated()
 
-    def on_sell_stock(self, symbol):
-        # holding = next((h for h in self.model.get_holdings() if h.Symbol == symbol), None)
-        # if holding:
-        #     self.model.sell_stock(holding.Id, holding.Quantity)
-        #     self.model_updated()
-        pass
+    def on_sell_stock(self, holding_id):
+        holding = next((h for h in self.model.get_holdings() if h.Id == holding_id), None)
+        if holding:
+            self.model.sell_stock(holding.Id, holding.Quantity)
+            self.model_updated()
+
 
     def on_add_money(self):
         new_cash_balance = self.model.add_money(self.user_id, 500.0)

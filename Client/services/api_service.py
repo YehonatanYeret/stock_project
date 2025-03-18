@@ -96,6 +96,14 @@ class ApiService:
         if success:
             return float(response)
 
+    def sell_stock(self, holding_id, quantity):
+        """Sell a stock holding"""
+        success, response = self.post("sell_stock", {"holdingId": holding_id, "quantity": quantity})
+        if success:
+            return True, response
+        else:
+            return False
+
     def get(self, endpoint, params=None, **kwargs):
         """Generic GET request handler"""
         url = self.get_url(endpoint, **kwargs)
