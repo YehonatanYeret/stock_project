@@ -1,14 +1,14 @@
 import sys
-
 sys.path.append('..')
-from PySide6.QtCore import Qt, QDateTime, Signal
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QTableWidgetItem
 
 from Client.views.components.styled_widgets import (
     PageTitleLabel, StyledTable, ScrollableContainer,
     StyledLineEdit, StyledLabel, StyledDateEdit,
     PrimaryButton, Card
 )
+from PySide6.QtCore import Qt, QDateTime, Signal
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QTableWidgetItem, QSizePolicy, QScrollArea
+from PySide6.QtGui import QFont
 
 
 class HistoryView(QWidget):
@@ -27,7 +27,6 @@ class HistoryView(QWidget):
 
     def _setup_ui(self):
         """Setup the page layout and components"""
-
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
@@ -104,22 +103,21 @@ class HistoryView(QWidget):
 
         # Transactions table
         self.transactions_table = StyledTable()
-        self.transactions_table.setColumnCount(6)  # Date, Symbol Type, Quantity, Price, Total
+        self.transactions_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.transactions_table.setColumnCount(6)  # Date, Symbol, Type, Quantity, Price, Total
         self.transactions_table.setHorizontalHeaderLabels(
             ["Date", "Symbol", "Type", "Quantity", "Price", "Total"])
 
         # Set column widths
-        self.transactions_table.setColumnWidth(0, 150)  # Date
-        self.transactions_table.setColumnWidth(1, 80)  # Symbol
+        self.transactions_table.setColumnWidth(0, 100)  # Date
+        self.transactions_table.setColumnWidth(1, 100)  # Symbol
         self.transactions_table.setColumnWidth(2, 50)  # Type
         self.transactions_table.setColumnWidth(3, 80)  # Quantity
         self.transactions_table.setColumnWidth(4, 80)  # Price
         self.transactions_table.setColumnWidth(5, 100)  # Total
 
-        # Create a scrollable container for the table
-        table_container = ScrollableContainer()
-        table_container_layout = QVBoxLayout(table_container.widget())
-        table_container_layout.addWidget(self.transactions_table)
+        table_container = ScrollableContainer(self)
+        table_container.layout.addWidget(self.transactions_table)
 
         main_layout.addWidget(table_container)
 
@@ -142,19 +140,28 @@ class HistoryView(QWidget):
         Args:
             transactions: List of transaction dictionaries
         """
+        print("history view data:", transactions)
 
         self.transactions_table.setRowCount(0)  # Clear table
 
         for i, tx in enumerate(transactions):
             self.transactions_table.insertRow(i)
 
-            # Format transaction date
             date_str = tx["date"]
-            tx_date = QDateTime.fromString(date_str, "yyyy-MM-ddTHH:mm:ss.zzz").toString("yyyy-MM-dd HH:mm:ss")
+            if "T" in date_str:
+                parts = date_str.split("T")
+                date_part = parts[0]
+                # time_part = parts[1].split(".")[0] if "." in parts[1] else parts[1]
+                # tx_date_str = f"{date_part} {time_part}"
+                tx_date_str = date_part
+            else:
+                tx_date_str = date_str
 
-            # Set cell values
-            self.transactions_table.setItem(i, 0, CustomTableItem(tx_date))
+            self.transactions_table.setItem(i, 0, CustomTableItem(tx_date_str))
+
+            # Symbol in bold
             self.transactions_table.setItem(i, 1, CustomTableItem(tx["symbol"]))
+            self.transactions_table.item(i, 1).setFont(QFont("Arial", 10, QFont.Bold))
 
             # Create custom widget for transaction type (with color)
             type_widget = QWidget()
@@ -173,10 +180,13 @@ class HistoryView(QWidget):
             type_layout.addWidget(type_label)
 
             self.transactions_table.setCellWidget(i, 2, type_widget)
-
             self.transactions_table.setItem(i, 3, CustomTableItem(str(tx["quantity"])))
             self.transactions_table.setItem(i, 4, CustomTableItem(f"${tx['price']:.2f}"))
-            self.transactions_table.setItem(i, 5, CustomTableItem(f"${(tx["quantity"] * tx['price']):.2f}"))
+            self.transactions_table.setItem(i, 5, CustomTableItem(f"${(tx['quantity'] * tx['price']):.2f}"))
+
+            print("history view", tx)
+
+        # self.transactions_table.resizeColumnsToContents()
 
     def show_error(self, message):
         """Display error message to user."""
@@ -198,4 +208,13 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     view = HistoryView()
     view.show()
+
+    # For testing, call display_transactions with sample data
+    sample_transactions = [
+        {'symbol': 'AAPL', 'date': '2025-03-13T14:16:00.71644', 'type': 0, 'quantity': 10, 'price': 100.0},
+        {'symbol': 'GOOGL', 'date': '2025-03-13T14:16:00.7210188', 'type': 0, 'quantity': 5, 'price': 200.0},
+        {'symbol': 'TSLA', 'date': '2025-03-13T14:16:00.7210245', 'type': 1, 'quantity': 20, 'price': 300.0}
+    ]
+    view.display_transactions(sample_transactions)
+
     sys.exit(app.exec_())

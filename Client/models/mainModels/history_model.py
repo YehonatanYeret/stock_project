@@ -35,40 +35,48 @@ class HistoryModel:
         Filter transactions based on criteria.
 
         Args:
-            from_date: Start date string in ISO format
-            to_date: End date string in ISO format
+            from_date: Start date string in ISO format (yyyy-MM-dd)
+            to_date: End date string in ISO format (yyyy-MM-dd)
             type_filter: Transaction type filter ("All", "Buy", or "Sell")
             search_text: Text to search in symbol or name
 
         Returns:
             list: Filtered transactions
         """
-
         filtered = []
-        search_text = search_text.lower()
+        search_text = search_text.lower() if search_text else ""
+
+        # Convert filter dates to QDate
+        filter_from_date = QDateTime.fromString(from_date, "yyyy-MM-dd").date() if from_date else None
+        filter_to_date = QDateTime.fromString(to_date, "yyyy-MM-dd").date()
 
         for tx in self.transactions:
-            # Parse transaction date
+            # Parse transaction date (taking only the date part)
             tx_date = QDateTime.fromString(tx["date"].split("T")[0], "yyyy-MM-dd").date()
-            filter_from_date = QDateTime.fromString(from_date, "yyyy-MM-dd").date() if from_date else None
-            filter_to_date = QDateTime.fromString(to_date, "yyyy-MM-dd").date()
 
             # Check date range
-            if (tx_date < filter_from_date and filter_from_date) or tx_date > filter_to_date:
+            if filter_from_date and tx_date < filter_from_date:
+                continue
+            if tx_date > filter_to_date:
                 continue
 
             # Check transaction type
-            if type_filter != "All" and tx["type"].lower() != type_filter.lower():
-                continue
+            if type_filter != "All":
+                # Assuming: 0 represents "Buy" and 1 represents "Sell"
+                if type_filter.lower() == "buy" and tx["type"] != 0:
+                    continue
+                elif type_filter.lower() == "sell" and tx["type"] != 1:
+                    continue
 
-            # Check search text
-            if search_text and not (search_text in tx["symbol"].lower() or search_text in tx["name"].lower()):
+            # Check search text in symbol
+            if search_text and search_text not in tx["symbol"].lower():
                 continue
 
             filtered.append(tx)
 
         print(filtered)
         return filtered
+
 
     def set_user(self, user_id):
         """Set the current user ID."""

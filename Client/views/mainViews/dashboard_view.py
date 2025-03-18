@@ -44,17 +44,21 @@ class HoldingsTable(StyledTable):
             "Total Value", "Total Gain", "Gain %", "Actions"
         ])
 
+        self.setColumnWidth(0, 30)  # ID
+        self.setColumnWidth(1, 150)  # Symbol
+        self.setColumnWidth(2, 100)  # Quantity
+        self.setColumnWidth(3, 140)  # Current Price
+        self.setColumnWidth(4, 140)  # Total Value
+        self.setColumnWidth(5, 140)  # Total Gain
+        self.setColumnWidth(6, 120)  # Gain %
+        self.setColumnWidth(7, 80)  # Actions
+
         header = self.horizontalHeader()
         for i in range(7):
             header.setSectionResizeMode(i, QHeaderView.Stretch)
         header.setSectionResizeMode(7, QHeaderView.Fixed)
-        self.setColumnWidth(7, 80)
 
-        self.setShowGrid(False)
-        self.setSelectionBehavior(QTableWidget.SelectRows)
-        self.setSelectionMode(QTableWidget.SingleSelection)
         self.setMinimumHeight(400)
-        self.apply_shadow()
 
     def load_data(self, holdings):
         self.setRowCount(len(holdings))
@@ -67,6 +71,7 @@ class HoldingsTable(StyledTable):
             # Symbol
             symbol_item = QTableWidgetItem(holding.Symbol)
             symbol_item.setFont(QFont("Arial", 10, QFont.Bold))
+            symbol_item.setTextAlignment(Qt.AlignCenter)
             self.setItem(row, 1, symbol_item)
 
             # Quantity
@@ -76,17 +81,17 @@ class HoldingsTable(StyledTable):
 
             # Current Price
             price_item = QTableWidgetItem(f"${holding.CurrentPrice:.2f}")
-            price_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            price_item.setTextAlignment(Qt.AlignCenter)
             self.setItem(row, 3, price_item)
 
             # Total Value
             value_item = QTableWidgetItem(f"${holding.TotalValue:.2f}")
-            value_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            value_item.setTextAlignment(Qt.AlignCenter)
             self.setItem(row, 4, value_item)
 
             # Total Gain
             gain_item = QTableWidgetItem(f"${holding.TotalGain:.2f}")
-            gain_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            gain_item.setTextAlignment(Qt.AlignCenter)
             if holding.TotalGain > 0:
                 gain_item.setForeground(QColor("#4CAF50"))
             elif holding.TotalGain < 0:
@@ -95,7 +100,7 @@ class HoldingsTable(StyledTable):
 
             # Gain %
             gain_pct_item = QTableWidgetItem(f"{holding.TotalGainPercentage:.2f}%")
-            gain_pct_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            gain_pct_item.setTextAlignment(Qt.AlignCenter)
             if holding.TotalGainPercentage > 0:
                 gain_pct_item.setForeground(QColor("#4CAF50"))
             elif holding.TotalGainPercentage < 0:

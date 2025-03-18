@@ -1,8 +1,8 @@
 import base64
 import os
 
-from PySide6.QtCore import Qt, QByteArray, QSize
 from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
+from PySide6.QtCore import Qt, QByteArray, QSize
 from PySide6.QtCore import Qt, QMargins, QPointF, QDate
 from PySide6.QtGui import (
     QPixmap, QColor, QFont, QPainter, QPen, QBrush, QLinearGradient
@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QComboBox, QGraphicsDropShadowEffect,
     QHeaderView, QScrollArea, QSizePolicy, QDateEdit, QWidget
 )
+
 
 # ========== TEXT ELEMENTS ==========
 
@@ -416,46 +417,98 @@ class StyledStatsCard(Card):
 
 # ========== TABLES ==========
 
+
 class StyledTable(QTableWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("StyledTable")
-        self.setStyleSheet("""
-            #StyledTable {
-                background-color: white;
-                border: none;
-                gridline-color: #EAEAEA;
-            }
-            #StyledTable::item {
-                padding: 5px;
-            }
-            #StyledTable QHeaderView::section {
-                background-color: #F5F5F5;
-                border: none;
-                border-bottom: 1px solid #EAEAEA;
-                padding: 8px;
-                font-weight: bold;
-                color: #333;
-            }
-            QTableView {
-                alternate-background-color: #F9F9F9;
-                background-color: white;
-            }
-        """)
 
+        # At the high there is expending and at the width there is fixed
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setShowGrid(False)
         self.setSelectionBehavior(QTableWidget.SelectRows)
         self.setSelectionMode(QTableWidget.SingleSelection)
+        self.verticalHeader().setVisible(False)
 
-        # Apply shadow
+        self.setStyleSheet("""
+            #StyledTable {
+                background-color: #FFFFFF;
+                border: 1px solid #E2E8F0;
+                border-radius: 8px;
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 13px;
+            }
+            #StyledTable::item {
+                padding: 10px;
+                border-bottom: 1px solid #EDF2F7;
+                color: #2D3748;
+            }
+            #StyledTable::item:selected {
+                background-color: #E2E8F0;
+                color: #1A202C;
+            }
+            #StyledTable QHeaderView::section {
+                background-color: #F7FAFC;
+                border: none;
+                border-bottom: 2px solid #E2E8F0;
+                padding: 12px;
+                font-weight: bold;
+                color: #4A5568;
+                text-align: left;
+            }
+            QTableView {
+                alternate-background-color: #F9FAFB;
+                background-color: #FFFFFF;
+            }
+        """)
+
+        # Keep the initial column widths for later resizing
+        self.initial_widths = {}
+
         self.apply_shadow()
+        self.set_row_height()
 
-    def apply_shadow(self, blur_radius=15, offset=4, opacity=25):
+    def apply_shadow(self, blur_radius=20, offset=5, opacity=30):
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(blur_radius)
         shadow.setColor(QColor(0, 0, 0, opacity))
         shadow.setOffset(0, offset)
         self.setGraphicsEffect(shadow)
+
+    def setColumnWidth(self, column, width):
+        super().setColumnWidth(column, width)
+        self.initial_widths[column] = width  # Save the initial width for later resizing
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_column_widths()
+        self.setColumnWidth(self.columnCount() - 1, self.initial_widths.get(7, 80))
+
+    def set_row_height(self, height = 50):
+        for row in range(self.rowCount()):
+            self.setRowHeight(row, height)
+        self.verticalHeader().setDefaultSectionSize(height)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.update_column_widths()
+        self.setColumnWidth(self.columnCount() - 1, self.initial_widths.get(7, 80))
+
+    def update_column_widths(self):
+        total_width = self.viewport().width()
+        column_count = self.columnCount()
+
+        if column_count > 0 and self.initial_widths:
+            fixed_width = self.initial_widths.get(column_count - 1, 0) if column_count - 1 in self.initial_widths else 0
+            available_width = total_width - fixed_width
+            total_initial_width = sum([w for i, w in self.initial_widths.items() if i != column_count - 1])
+
+            if total_initial_width > 0 and available_width > 0:
+                for col in range(column_count - 1):
+                    if col in self.initial_widths:
+                        ratio = self.initial_widths[col] / total_initial_width
+                        new_width = int(available_width * ratio)
+                        self.setColumnWidth(col, new_width)
 
 
 # ========== CHARTS ==========
