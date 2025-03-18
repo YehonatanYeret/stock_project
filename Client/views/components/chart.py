@@ -78,22 +78,28 @@ class StockChartWidget(QWidget):
         :param end_date: End date as a string in "yyyy-MM-dd" format
         :param data: Stock data in list format
         """
-        self.clear_chart()  # Clear the chart before updating
+
+        # self.clear_chart()  # Clear the chart before updating
         self.data = self.process_data(data)  # Convert to DataFrame
         if self.data is not None:
             # Convert string dates to QDate objects
-            start_date_qdate = QDate.fromString(start_date, "yyyy-MM-dd")
-            end_date_qdate = QDate.fromString(end_date, "yyyy-MM-dd")
-
-            # Convert QDate objects to timestamps (milliseconds)
-            start_dt = pd.to_datetime(start_date_qdate.toString("yyyy-MM-dd"))
-            end_dt = pd.to_datetime(end_date_qdate.toString("yyyy-MM-dd"))
-            start_ts = int(start_dt.timestamp() * 1000)
-            end_ts = int(end_dt.timestamp() * 1000)
+            # start_date_qdate = QDate.fromString(start_date, "yyyy-MM-dd")
+            # end_date_qdate = QDate.fromString(end_date, "yyyy-MM-dd")
+            #
+            # # Convert QDate objects to timestamps (milliseconds)
+            # start_dt = pd.to_datetime(start_date_qdate.toString("yyyy-MM-dd"))
+            # end_dt = pd.to_datetime(end_date_qdate.toString("yyyy-MM-dd"))
+            #
+            # start_ts = int(start_dt.timestamp() * 1000)
+            # end_ts = int(end_dt.timestamp() * 1000)
 
             # Set visible range using the converted timestamps
-            self.chart.set_visible_range(start_ts, end_ts)
+            # self.chart.set_visible_range(start_ts, end_ts)
+            
             self.display_chart()  # Display updated chart
+
+            self.chart.get_webview().page().runJavaScript("chart.timeScale().fitContent();")
+
 
         else:
             print("❌ Error: Unable to process stock data.")

@@ -10,6 +10,10 @@ from models.mainModels.dashboard_model import DashboardModel
 from views.mainViews.stock_view import StockView
 from presenters.mainPresenters.stock_presenter import StockPresenter
 from models.mainModels.stock_model import StockModel
+from views.mainViews.history_view import HistoryView
+from presenters.mainPresenters.history_presenter import HistoryPresenter
+from models.mainModels.history_model import HistoryModel
+
 
 
 class SidebarButton(QPushButton):
@@ -74,7 +78,7 @@ class Sidebar(QFrame):
     """Application sidebar for navigation with exclusive selection."""
 
     dashboard_clicked = Signal()
-    trade_clicked = Signal()
+    stock_clicked = Signal()
     history_clicked = Signal()
     chatbot_clicked = Signal()
     settings_clicked = Signal()
@@ -110,7 +114,7 @@ class Sidebar(QFrame):
         self.buttons = {}
 
         self.dashboard_button = self.create_sidebar_button("Dashboard", "icons/dashboard.png", self.dashboard_clicked)
-        self.trade_button = self.create_sidebar_button("Trade", "icons/trade.png", self.trade_clicked)
+        self.stocks_button = self.create_sidebar_button("Stocks", "icons/trade.png", self.stock_clicked)
         self.history_button = self.create_sidebar_button("History", "icons/history.png", self.history_clicked)
         self.chatbot_button = self.create_sidebar_button("Chatbot", "icons/chatbot.png", self.chatbot_clicked)
         self.settings_button = self.create_sidebar_button("Settings", "icons/settings.png", self.settings_clicked)
@@ -168,7 +172,7 @@ class Main_view(QMainWindow):
         # Create sidebar
         self.sidebar = Sidebar()
         self.sidebar.dashboard_clicked.connect(self.show_dashboard)
-        self.sidebar.trade_clicked.connect(self.show_trade)  # Ensure this connection
+        self.sidebar.stock_clicked.connect(self.show_stocks)
         self.sidebar.history_clicked.connect(self.show_history)
         self.sidebar.chatbot_clicked.connect(self.show_chatbot)
         self.sidebar.settings_clicked.connect(self.show_settings)
@@ -178,14 +182,14 @@ class Main_view(QMainWindow):
 
         # Create placeholders (Dashboard not yet initialized)
         self.dashboard_widget = DashboardView()
-        self.trade_widget = StockView()
-        self.history_widget = QWidget()
+        self.stock_widget = StockView()
+        self.history_widget = HistoryView()
         self.chatbot_widget = QWidget()
         self.settings_widget = QWidget()
 
         # Add widgets to stack
         self.content_stack.addWidget(self.dashboard_widget)
-        self.content_stack.addWidget(self.trade_widget)
+        self.content_stack.addWidget(self.stock_widget)
         self.content_stack.addWidget(self.history_widget)
         self.content_stack.addWidget(self.chatbot_widget)
         self.content_stack.addWidget(self.settings_widget)
@@ -228,14 +232,15 @@ class Main_view(QMainWindow):
         self.content_stack.setCurrentWidget(self.dashboard_widget)
         self.sidebar.set_active_button("dashboard")
 
-    def show_trade(self):
-        """Show the trade screen"""
-        self.stock_presenter = StockPresenter(StockModel(), self.trade_widget, self.user_id)
-        self.content_stack.setCurrentWidget(self.trade_widget)
-        self.sidebar.set_active_button("trade")
+    def show_stocks(self):
+        """Show the stocks screen"""
+        self.stock_presenter = StockPresenter(StockModel(), self.stock_widget, self.user_id)
+        self.content_stack.setCurrentWidget(self.stock_widget)
+        self.sidebar.set_active_button("stocks")
 
     def show_history(self):
         """Show the history screen"""
+        self.history_presenter = HistoryPresenter(HistoryModel(), self.history_widget, self.user_id)
         self.content_stack.setCurrentWidget(self.history_widget)
         self.sidebar.set_active_button("history")
 

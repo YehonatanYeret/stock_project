@@ -2,6 +2,7 @@ class MainPresenter:
     """
     Main presenter that coordinates the overall application flow
     """
+
     def __init__(self, main_window, user_model):
         """
         Initialize the main presenter
@@ -74,8 +75,8 @@ class MainPresenter:
         elif target == "stocks":
             self.view.show_stocks()
 
-        elif target == "transactions":
-            self.view.show_transactions()
+        elif target == "history":
+            self.view.show_history()
 
         elif target == "settings":
             self.view.show_settings()

@@ -1,6 +1,7 @@
-from PySide6.QtWidgets import QPushButton
-from PySide6.QtGui import QIcon
 from PySide6.QtCore import QSize
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QPushButton
+
 
 class IconButton(QPushButton):
     def __init__(self, icon_path=None, color="#5851DB", parent=None):
