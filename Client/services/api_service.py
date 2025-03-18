@@ -49,6 +49,7 @@ class ApiService:
         else:
             return False, self._extract_backend_message(response, "Registration failed. Please try again.")
 
+
     def get_holdings(self, user_id):
         """Fetch holdings for a user"""
         return self.get("holdings", user_id=user_id)
@@ -56,6 +57,52 @@ class ApiService:
     def get_transactions(self, user_id):
         """Fetch transactions for a user"""
         return self.get("transactions", user_id=user_id)
+
+
+    def get_cash_balance(self, user_id):
+        """Fetch cash balance for a user"""
+        success, response = self.get("cash_balance", user_id=user_id)  # Match 'userId' case
+        
+        if success:
+            return float(response)  # Should be a number like 5000.00
+        
+        # Handle API failure gracefully
+        print(f"Failed to fetch cash balance: {response}")
+        return 0.00  # Default to 0 instead of None
+
+    def get_profit(self, user_id):
+        """Fetch total profit for a user"""
+        success, response = self.get("profit", user_id=user_id)
+        
+        if success:
+            return float(response)
+        
+        # Handle API failure gracefully
+        print(f"Failed to fetch total profit: {response}")
+        return 0.00
+    
+    
+    def add_money(self, user_id, amount):
+        """Add money to a user's account"""
+        success, response = self.post("deposit_money", {"userId": user_id, "amount": amount})
+        
+        if success:
+            return float(response)
+
+    def remove_money(self, user_id, amount):
+        """Remove money from a user's account"""
+        success, response = self.post("withdraw_money", {"userId": user_id, "amount": amount})
+        
+        if success:
+            return float(response)
+
+    def sell_stock(self, holding_id, quantity):
+        """Sell a stock holding"""
+        success, response = self.post("sell_stock", {"holdingId": holding_id, "quantity": quantity})
+        if success:
+            return True, response
+        else:
+            return False
 
     def get(self, endpoint, params=None, **kwargs):
         """Generic GET request handler"""
@@ -111,14 +158,3 @@ class ApiService:
                     return errors[0]  # Return first validation error message
         
         return default_message  # Fallback error message
-
-    def get_cash_balance(self, user_id):
-        """Fetch cash balance for a user"""
-        success, response = self.get("cash_balance", user_id=user_id)  # Match 'userId' case
-        
-        if success:
-            return float(response)  # Should be a number like 5000.00
-        
-        # Handle API failure gracefully
-        print(f"Failed to fetch cash balance: {response}")
-        return 0.00  # Default to 0 instead of None

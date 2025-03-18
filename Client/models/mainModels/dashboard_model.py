@@ -1,5 +1,6 @@
 import datetime
 from services.api_service import ApiService
+from PySide6.QtCore import Signal
 
 class Holding:
     def __init__(self, Id, Symbol, Quantity, CurrentPrice, total_gain, total_gain_percentage):
@@ -13,6 +14,7 @@ class Holding:
 
 
 class DashboardModel:
+
     def __init__(self):
         self.api_service = ApiService()
         self.holdings = []
@@ -41,9 +43,10 @@ class DashboardModel:
 
         if status and isinstance(response, list):  # Assuming response is a list of trades
             self.transactions = [
-                {"TradeDate": t["date"], "PortfolioValue": t.get("quantity", 0)*t.get("price", 0)*(-2*t.get("type", 0)+1)}
+                {"TradeDate": t["date"], "PortfolioValue": t.get("quantity", 0)*t.get("price", 0)*( 2*t.get("type", 0)-1)}
                 for t in response
             ]
+            self.transactions.sort(key=lambda x: x["TradeDate"])
         else:
             print("Error fetching transactions:", response)
 
@@ -57,7 +60,21 @@ class DashboardModel:
         pass
 
     def sell_stock(self, holding_id, quantity):
-        pass
+        # Unpack the tuple into corresponding variables
+        trade = self.api_service.sell_stock(holding_id, quantity)
 
+        self.holdings = [h for h in self.holdings if h.Id != holding_id]
+        self.transactions.append({"TradeDate": trade["date"], "PortfolioValue": trade["quantity"]*trade["price"]*(2*trade["type"]-1)})
+        
     def get_cash_balance(self):
         return self.api_service.get_cash_balance(self.user_id)
+    
+    def get_total_gain(self):
+        return self.api_service.get_profit(self.user_id)
+    
+    def add_money(self, user_id, amount):
+        return self.api_service.add_money(user_id, amount)
+
+    
+    def remove_money(self, user_id, amount):
+        return self.api_service.remove_money(user_id, amount)

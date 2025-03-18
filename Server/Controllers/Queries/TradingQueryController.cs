@@ -108,4 +108,19 @@ public class TradingQueryController : ControllerBase
         Console.WriteLine(user.CashBalance);
         return Ok(user.CashBalance);
     }
+
+    ///<summary>
+    ///return the profit and loss for a specific user
+    /// </summary>
+    [HttpGet("profit/{userId}")]
+    public async Task<ActionResult<decimal>> GetProfit(int userId)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+        return Ok(user.Profit);
+    }
 }

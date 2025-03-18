@@ -7,7 +7,7 @@ using Server.Models.DTOs;
 
 namespace Server.Controllers.Commands
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/command")]
     [ApiController]
     public class CashBalanceController : ControllerBase
     {
@@ -43,7 +43,7 @@ namespace Server.Controllers.Commands
                 // Update the user's cash balance
                 user.CashBalance -= model.Amount;
                 await _context.SaveChangesAsync();
-                return Ok(new { message = "Withdrawal successful." });
+                return Ok(user.CashBalance);
             }
             catch
             {
@@ -71,7 +71,7 @@ namespace Server.Controllers.Commands
                 // Update the user's cash balance
                 user.CashBalance += model.Amount;
                 await _context.SaveChangesAsync();
-                return Ok(new { message = "Deposit successful." });
+                return Ok(user.CashBalance);
             }
             catch
             {
