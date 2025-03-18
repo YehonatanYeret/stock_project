@@ -1,5 +1,6 @@
 import datetime
 import sys
+from PySide6.QtCore import Signal
 
 sys.path.append('..')
 
@@ -138,30 +139,45 @@ class PortfolioChart(StyledLineSeriesChart):
         self.chart.addAxis(self.axisY, Qt.AlignLeft)
         self.series.attachAxis(self.axisX)
         self.series.attachAxis(self.axisY)
-
+        
     def load_data(self, data):
+        print(data)
         self.series.clear()
-        if not data:
+        if not data or len(data) < 2:
             return
 
         min_value = float('inf')
         max_value = float('-inf')
 
-        for date, value in data:
-            timestamp = int(date.timestamp() * 1000)
-            self.series.append(timestamp, value)
-            min_value = min(min_value, value)
-            max_value = max(max_value, value)
+        previous_value = data[0][1]  # Initial portfolio value
+        self.series.append(data[0][0].timestamp()*1000, data[0][1])
 
+        for i in range(1, len(data)):
+            current_date, current_value = data[i]
+            delta = (current_value + previous_value)  # Calculate change (delta)
+            timestamp = int(current_date.timestamp() * 1000)
+            
+            self.series.append(timestamp, delta)
+
+            min_value = min(min_value, delta)
+            max_value = max(max_value, delta)
+
+            previous_value = current_value  # Update for next iteration
+
+        self.series.append(datetime.datetime.now(), previous_value)
         first_date = data[0][0]
-        last_date = data[-1][0]
-        self.axisX.setRange(first_date, last_date)
+        self.axisX.setRange(first_date, datetime.datetime.now())
 
         padding = (max_value - min_value) * 0.1
-        self.axisY.setRange(max(0, min_value - padding), max_value + padding)
+        self.axisY.setRange(min_value - padding, max_value + padding)
 
 
 class DashboardView(QWidget):
+    add_money_clicked = Signal()
+    remove_money_clicked = Signal()
+    on_period_changed = Signal(str)
+    on_sell_clicked = Signal(str)
+
     def __init__(self):
         super().__init__()
         self.presenter = None  # Presenter will be set later
@@ -197,7 +213,7 @@ class DashboardView(QWidget):
 
         period_label = StyledLabel("Period:", size=14, color="#666")
         self.period_selector = QComboBox()
-        self.period_selector.addItems(["Last 3 Months", "Last 6 Months", "Last Year", "All Time"])
+        self.period_selector.addItems(["All Time", "Last 3 Months", "Last 6 Months", "Last Year"])
         self.period_selector.currentTextChanged.connect(self.on_period_changed)
 
         header_layout.addWidget(period_label)
@@ -219,13 +235,13 @@ class DashboardView(QWidget):
         self.portfolio_value_card = StyledStatsCard("Portfolio Value", "$0", "+5%", color="#4CAF50")
 
         stats_layout.addWidget(self.cash_balance_card)
-        stats_layout.addWidget(self.total_gain_card)
         stats_layout.addWidget(self.portfolio_value_card)
+        stats_layout.addWidget(self.total_gain_card)
 
         self.container_layout.addLayout(stats_layout)
 
-        self.cash_balance_card.add_money_btn.clicked.connect(self.on_add_money_clicked)
-        self.cash_balance_card.remove_money_btn.clicked.connect(self.on_remove_money_clicked)
+        self.cash_balance_card.add_money_btn.clicked.connect(self.add_money_clicked)
+        self.cash_balance_card.remove_money_btn.clicked.connect(self.remove_money_clicked)
 
         # Holdings Table
         holdings_label = SectionTitleLabel("My Holdings")
@@ -236,29 +252,20 @@ class DashboardView(QWidget):
 
         self.container_layout.addSpacing(40)
 
-    def on_period_changed(self, text):
-        if self.presenter:
-            self.presenter.on_period_changed(text)
-
-    def on_add_money_clicked(self):
-        if self.presenter:
-            self.presenter.on_add_money()
-
-    def on_remove_money_clicked(self):
-        if self.presenter:
-            self.presenter.on_remove_money()
-
-    def on_sell_clicked(self, symbol):
-        if self.presenter:
-            self.presenter.on_sell_stock(symbol)
-
     def set_holdings_data(self, holdings):
         self.holdings_table.load_data(holdings)
 
     def set_chart_data(self, data):
         self.chart.load_data(data)
 
-    def set_portfolio_summary(self, cash_balance, total_value, total_gain):
+    def set_cash_balance(self, cash_balance):
+        """Set the Cash Balance value in the UI"""
         self.cash_balance_card.value_label.setText(f"${cash_balance:,.2f}")
-        self.total_gain_card.value_label.setText(f"${total_gain:,.2f}")
-        self.portfolio_value_card.value_label.setText(f"{total_value:.2f}")
+
+    def set_total_value(self, total_value):
+        """Set the Portfolio Value in the UI"""
+        self.portfolio_value_card.value_label.setText(f"${total_value:,.2f}")
+
+    def set_total_gain(self, total_gain):
+        """Set the Total Gain in the UI"""
+        self.total_gain_card.value_label.setText(f"${total_gain:.2f}")

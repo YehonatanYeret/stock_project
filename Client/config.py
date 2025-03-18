@@ -11,6 +11,10 @@ ENDPOINTS = {
     "holdings": "/trading/query/holdings/{user_id}",
     "transactions": "/trading/query/trades/{user_id}",
     "cash_balance": "/trading/query/cashbalance/{user_id}",
+    "profit": "/trading/query/profit/{user_id}",
+
+    "withdraw_money": "/cashBalance/command/withdraw",
+    "deposit_money": "/cashBalance/command/deposit",
 
 
     "stock_details": "/transaction/query/getDetails",
