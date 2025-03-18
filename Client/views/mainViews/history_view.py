@@ -1,14 +1,16 @@
-
 import sys
+
 sys.path.append('..')
 
 from Client.views.components.styled_widgets import (
     PageTitleLabel, StyledTable, ScrollableContainer,
     StyledLineEdit, StyledLabel, StyledDateEdit,
-    PrimaryButton, Card
+    PrimaryButton, Card, SectionTitleLabel, create_form_field,
+    RoundedCard, FilterComboBox
 )
-from PySide6.QtCore import Qt, QDateTime, Signal
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QTableWidgetItem, QSizePolicy, QScrollArea
+from PySide6.QtCore import Qt, QDateTime, Signal, QDate
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QTableWidgetItem, QSizePolicy, \
+    QScrollArea
 from PySide6.QtGui import QFont
 
 
@@ -36,71 +38,43 @@ class HistoryView(QWidget):
         title = PageTitleLabel("Transaction History")
         main_layout.addWidget(title)
 
-        # Filters section
-        filter_card = Card(self)
-        filter_layout = QVBoxLayout(filter_card)
+        # Create the filter section in one horizontal row
+        self.filter_section = RoundedCard(parent=None, border_radius=16, shadow_enabled=True)
+        filter_layout = QHBoxLayout(self.filter_section)
+        filter_layout.setContentsMargins(15, 15, 15, 15)
+        filter_layout.setSpacing(10)
 
-        # Date range filters
-        date_filter_layout = QHBoxLayout()
-        date_filter_layout.setSpacing(10)
+        # Symbol input field
+        symbol_input = StyledLineEdit(placeholder="Enter symbol", parent=self.filter_section)
+        self.symbol_input = symbol_input
+        symbol_field = create_form_field("Symbol", symbol_input)
 
-        from_date_label = StyledLabel("From:", color="#334155")
-        self.from_date_edit = StyledDateEdit()
-        self.from_date_edit.setDate(QDateTime.currentDateTime().addMonths(-1).date())
+        # Start Date input field
+        start_date = StyledDateEdit(default_date=QDate.currentDate().addYears(-3), parent=self.filter_section)
+        self.start_date = start_date
+        start_date_field = create_form_field("Start Date", start_date)
 
-        to_date_label = StyledLabel("To:", color="#334155")
-        self.to_date_edit = StyledDateEdit()
-        self.to_date_edit.setDate(QDateTime.currentDateTime().date())
+        # End Date input field
+        end_date = StyledDateEdit(default_date=QDate.currentDate(), parent=self.filter_section)
+        self.end_date = end_date
+        end_date_field = create_form_field("End Date", end_date)
 
-        date_filter_layout.addWidget(from_date_label)
-        date_filter_layout.addWidget(self.from_date_edit)
-        date_filter_layout.addWidget(to_date_label)
-        date_filter_layout.addWidget(self.to_date_edit)
-        date_filter_layout.addStretch()
+        # Type combo (All/Buy/Sell)
+        self.type_combo = FilterComboBox(parent=self.filter_section, placeholder="All", items=["All", "Buy", "Sell"])
+        type_field = create_form_field("Type", self.type_combo)
 
-        # Transaction type filter
-        type_filter_layout = QHBoxLayout()
-        type_filter_layout.setSpacing(10)
+        # Apply Filters button
+        apply_button = PrimaryButton("Apply Filters", object_name="applyFiltersButton", parent=self.filter_section)
+        self.apply_button = apply_button
 
-        type_label = StyledLabel("Type:", color="#334155")
-        self.type_combo = QComboBox()
-        self.type_combo.setFixedHeight(38)
-        self.type_combo.setStyleSheet("""
-            QComboBox {
-                border: 1px solid #D1D5DB;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: white;
-            }
-            QComboBox::drop-down {
-                border: none;
-                width: 24px;
-            }
-        """)
-        self.type_combo.addItem("All")
-        self.type_combo.addItem("Buy")
-        self.type_combo.addItem("Sell")
+        # Add all fields and the button to the horizontal layout
+        filter_layout.addLayout(symbol_field, 2)
+        filter_layout.addLayout(start_date_field, 2)
+        filter_layout.addLayout(end_date_field, 2)
+        filter_layout.addLayout(type_field, 2)
+        filter_layout.addWidget(apply_button, 1, Qt.AlignBottom)
 
-        search_label = StyledLabel("Search:", color="#334155")
-        self.search_input = StyledLineEdit(placeholder="Symbol")
-
-        type_filter_layout.addWidget(type_label)
-        type_filter_layout.addWidget(self.type_combo)
-        type_filter_layout.addWidget(search_label)
-        type_filter_layout.addWidget(self.search_input)
-
-        # Apply filters button
-        self.apply_button = PrimaryButton("Apply Filters")
-        apply_button_layout = QHBoxLayout()
-        apply_button_layout.addStretch()
-        apply_button_layout.addWidget(self.apply_button)
-
-        # Add all filter layouts
-        filter_layout.addLayout(date_filter_layout)
-        filter_layout.addLayout(type_filter_layout)
-        filter_layout.addLayout(apply_button_layout)
-
-        main_layout.addWidget(filter_card)
+        main_layout.addWidget(self.filter_section)
 
         # Transactions table
         self.transactions_table = StyledTable()
@@ -127,10 +101,10 @@ class HistoryView(QWidget):
 
     def _on_apply_filters(self):
         """Handle filter application"""
-        from_date = self.from_date_edit.date().toString("yyyy-MM-dd")
-        to_date = self.to_date_edit.date().toString("yyyy-MM-dd")
+        from_date = self.start_date.date().toString("yyyy-MM-dd")
+        to_date = self.end_date.date().toString("yyyy-MM-dd")
         type_filter = self.type_combo.currentText()
-        search_text = self.search_input.text()
+        search_text = self.symbol_input.text()
 
         self.filter_applied.emit(from_date, to_date, type_filter, search_text)
 

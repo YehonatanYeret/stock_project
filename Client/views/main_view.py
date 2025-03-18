@@ -1,21 +1,19 @@
-﻿from PySide6.QtWidgets import (
+﻿from PySide6.QtCore import QObject
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
     QMainWindow, QStackedWidget, QWidget, QVBoxLayout,
     QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtCore import QObject
-from PySide6.QtGui import QIcon
-from views.mainViews.history_view import HistoryView
-from views.mainViews.dashboard_view import DashboardView
-from presenters.mainPresenters.dashboard_presenter import DashboardPresenter
 from models.mainModels.dashboard_model import DashboardModel
-from views.mainViews.stock_view import StockView
-from presenters.mainPresenters.stock_presenter import StockPresenter
+from models.mainModels.history_model import HistoryModel
 from models.mainModels.stock_model import StockModel
-# from views.mainViews.history_view import HistoryView
-# from presenters.mainPresenters.history_presenter import HistoryPresenter
-# from models.mainModels.history_model import HistoryModel
-
+from presenters.mainPresenters.dashboard_presenter import DashboardPresenter
+from presenters.mainPresenters.history_presenter import HistoryPresenter
+from presenters.mainPresenters.stock_presenter import StockPresenter
+from views.mainViews.dashboard_view import DashboardView
+from views.mainViews.history_view import HistoryView
+from views.mainViews.stock_view import StockView
 
 
 class SidebarButton(QPushButton):
@@ -180,7 +178,7 @@ class Main_view(QMainWindow):
         self.sidebar.history_clicked.connect(self.show_history)
         self.sidebar.chatbot_clicked.connect(self.show_chatbot)
         self.sidebar.settings_clicked.connect(self.show_settings)
-        self.sidebar.logout_clicked.connect(lambda : self.logout_requested.emit())
+        self.sidebar.logout_clicked.connect(lambda: self.logout_requested.emit())
 
         # Create content stack
         self.content_stack = QStackedWidget()
@@ -245,7 +243,7 @@ class Main_view(QMainWindow):
 
     def show_history(self):
         """Show the history screen"""
-        # self.history_presenter = HistoryPresenter(HistoryModel(), self.history_widget, self.user_id)
+        self.history_presenter = HistoryPresenter(HistoryModel(), self.history_widget, self.user_id)
         self.content_stack.setCurrentWidget(self.history_widget)
         self.sidebar.set_active_button("history")
 

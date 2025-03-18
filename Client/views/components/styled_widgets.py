@@ -10,7 +10,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout, QHBoxLayout,
     QTableWidget, QTableWidgetItem, QComboBox, QGraphicsDropShadowEffect,
-    QHeaderView, QScrollArea, QSizePolicy, QDateEdit, QWidget
+    QHeaderView, QScrollArea, QSizePolicy, QDateEdit, QWidget, QComboBox
 )
 
 
@@ -484,7 +484,7 @@ class StyledTable(QTableWidget):
         self.update_column_widths()
         self.setColumnWidth(self.columnCount() - 1, self.initial_widths.get(7, 80))
 
-    def set_row_height(self, height = 50):
+    def set_row_height(self, height=50):
         for row in range(self.rowCount()):
             self.setRowHeight(row, height)
         self.verticalHeader().setDefaultSectionSize(height)
@@ -781,6 +781,93 @@ class CompanyIconView(QFrame):
         self.setGraphicsEffect(shadow)
 
 
+# ========== COMBO BOXES ==========
+
+class FilterComboBox(QComboBox):
+    def __init__(self,
+                 parent=None,
+                 placeholder="Filter by...",
+                 items=None):
+        super().__init__(parent)
+
+        # Set placeholder text
+        self.setPlaceholderText(placeholder)
+
+        # Set minimum dimensions
+        self.setMinimumHeight(45)
+        self.setMinimumWidth(160)
+
+        # Make it expandable horizontally
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        # Style the combobox to match existing components
+        self.setStyleSheet("""
+            FilterComboBox {
+                border: 2px solid #E2E8F0;
+                border-radius: 10px;
+                padding: 5px 15px;
+                background-color: #F8FAFC;
+                font-size: 15px;
+                color: #1E293B;
+            }
+            FilterComboBox:focus {
+                border: 2px solid #3B82F6;
+                background-color: white;
+            }
+            FilterComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: center right;
+                width: 25px;
+                border: none;
+                padding-right: 10px;
+            }
+            FilterComboBox::down-arrow {
+                image: url(none);
+                width: 12px;
+                height: 12px;
+                border: none;
+                border-top: 2px solid #94A3B8;
+                border-right: 2px solid #94A3B8;
+                transform: rotate(135deg);
+                margin-right: 10px;
+            }
+            FilterComboBox QAbstractItemView {
+                border: 1px solid #E2E8F0;
+                background-color: white;
+                border-radius: 8px;
+                padding: 5px;
+                selection-background-color: #EBF4FF;
+                selection-color: #1E293B;
+            }
+            FilterComboBox QAbstractItemView::item {
+                min-height: 30px;
+                padding: 8px 10px;
+                border-radius: 4px;
+            }
+            FilterComboBox QAbstractItemView::item:hover {
+                background-color: #F1F5F9;
+            }
+            FilterComboBox QAbstractItemView::item:selected {
+                background-color: #E2E8F0;
+            }
+        """)
+
+        # Add shadow effect for depth
+        self.apply_shadow()
+
+        # Add items if provided
+        if items:
+            self.addItems(items)
+
+    def apply_shadow(self, blur_radius=8, offset=1, opacity=15):
+        """Apply subtle shadow effect"""
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(blur_radius)
+        shadow.setColor(QColor(0, 0, 0, opacity))
+        shadow.setOffset(0, offset)
+        self.setGraphicsEffect(shadow)
+
+
 '''
 # UI Framework Components and Functions
 
@@ -871,5 +958,10 @@ class CompanyIconView(QFrame):
 - `__init__(self, parent=None, size=48, shadow_enabled=True)`
 - `_set_placeholder(self)`
 - `set_icon_from_base64(self, base64_string)`
+
+## COMBO BOXES
+### FilterComboBox(QComboBox)
+- `__init__(self, parent=None, placeholder="Filter by...", items=None)`
+- `apply_shadow(self, blur_radius=8, offset=1, opacity=15)`
 
 '''
