@@ -5,8 +5,8 @@ API_BASE_URL = "http://localhost:5039/api"  # Replace with your ASP.NET backend 
 
 # API Endpoints
 ENDPOINTS = {
-    "login": "/auth/query/signin",
-    "register": "/auth/command/signup",
+    "signin": "/auth/query/signin",
+    "signup": "/auth/command/signup",
 
     "holdings": "/trading/query/holdings/{user_id}",
     "transactions": "/trading/query/trades/{user_id}",

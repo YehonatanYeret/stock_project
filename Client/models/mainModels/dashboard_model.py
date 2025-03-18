@@ -24,7 +24,6 @@ class DashboardModel:
         self.user_id = user_id  # Store user_id for future calls
         print(f"Fetching holdings for user {user_id} from backend")
         status, response = self.api_service.get_holdings(user_id)
-        print(response)
         if status and isinstance(response, list):  # Assuming response is a list of holdings
             self.holdings = [
                 Holding(h["id"], h["symbol"], h["quantity"], h["currentPrice"], h["totalGain"], h["totalGainPercentage"])
@@ -40,7 +39,6 @@ class DashboardModel:
         status, response = self.api_service.get_transactions(user_id)
 
         if status and isinstance(response, list):  # Assuming response is a list of trades
-            print(response)
             self.transactions = [
                 {"TradeDate": t["date"], "PortfolioValue": t.get("quantity", 0)*t.get("price", 0)*(-2*t.get("type", 0)+1)}
                 for t in response

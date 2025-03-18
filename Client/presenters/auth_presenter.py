@@ -43,55 +43,8 @@ class AuthPresenter:
             password: User's password
             confirm_password: Password confirmation
         """
-        # Validate inputs
-        if not email or not username or not password:
-            self.view.show_error("All fields are required")
-            return False
-
-        if password != confirm_password:
-            self.view.show_error("Passwords do not match")
-            return False
-
-        # Basic email validation
-        if '@' not in email or '.' not in email:
-            self.view.show_error("Please enter a valid email address")
-            return False
-
-        # Prepare registration data
-        register_data = {
-            "email": email,
-            "username": username,
-            "password": password
-        }
-
-        try:
-            # Make API call to register endpoint
-            response = self.api_service.post("/auth/register", data=register_data)
-
-            if response.status_code == 201:  # Assuming 201 for successful creation
-                # Extract token and user data
-                response_data = response.json()
-                token = response_data.get("token")
-                user_data = response_data.get("user")
-
-                # Update user model with new data
-                self.user_model.set_token(token)
-                self.user_model.set_user_data(user_data)
-
-                # Reset the view
-                self.view.clear_error()
-                self.view.clear_fields()
-
-                return True
-            else:
-                # Handle failed registration
-                error_message = response.json().get("message", "Registration failed. Please try again.")
-                self.view.show_error(error_message)
-                return False
-
-        except Exception as e:
-            self.view.show_error(f"Connection error: {str(e)}")
-            return False
+        message = self.model.signup(email, username, password, confirm_password)
+        self.view.show_error(message)
 
     def logout(self):
         """Log out the current user by clearing user data"""
