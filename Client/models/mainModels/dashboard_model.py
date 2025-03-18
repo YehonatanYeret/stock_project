@@ -24,21 +24,18 @@ class DashboardModel:
     def fetch_holdings(self, user_id):
         """Fetch holdings from backend"""
         self.user_id = user_id  # Store user_id for future calls
-        print(f"Fetching holdings for user {user_id} from backend")
         status, response = self.api_service.get_holdings(user_id)
         if status and isinstance(response, list):  # Assuming response is a list of holdings
             self.holdings = [
                 Holding(h["id"], h["symbol"], h["quantity"], h["currentPrice"], h["totalGain"], h["totalGainPercentage"])
                 for h in response
             ]
-            print(self.holdings)
         else:
             print("Error fetching holdings:", response)
 
     def fetch_trades(self, user_id):
         """Fetch transactions from backend"""
         self.user_id = user_id
-        print(f"Fetching trades for user {user_id} from backend")
         status, response = self.api_service.get_transactions(user_id)
 
         if status and isinstance(response, list):  # Assuming response is a list of trades

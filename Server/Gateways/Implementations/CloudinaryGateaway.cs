@@ -19,30 +19,35 @@ namespace Server.Gateways.Implementations
         /// <summary>
         /// Upload an image to Cloudinary and return the URL.
         /// </summary>
-        public async Task<string> UploadImageAsync(IFormFile file)
+        public async Task<ImageUploadResult> UploadImageAsync(string imageUrl, string fileName)
         {
-            using (var stream = file.OpenReadStream())
+            var uploadParams = new ImageUploadParams
             {
-                var uploadParams = new ImageUploadParams
-                {
-                    File = new FileDescription(file.FileName, stream),
-                    UseFilename = true,
-                    UniqueFilename = false,
-                    Overwrite = true
+                File = new FileDescription(imageUrl),
+                PublicId=fileName,
+                UniqueFilename = false,
+                Overwrite = true
+            };
 
-                };
-
-                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-                return uploadResult.SecureUrl.AbsoluteUri;
-            }
+            return await _cloudinary.UploadAsync(uploadParams);
         }
 
         /// <summary>
         /// Retrieve an image URL from Cloudinary using the public ID.
         /// </summary>
-        public string GetImageUrl(string publicId)
+        public string? GetImageUrl(string publicId)
         {
-            return _cloudinary.Api.UrlImgUp.Secure(true).BuildUrl(publicId);
+            try
+            {
+                var getResourceParams = new GetResourceParams(publicId);
+                var getResourceResult = _cloudinary.GetResource(getResourceParams);
+
+                return getResourceResult?.SecureUrl;
+            }
+            catch
+            {
+                return null; // Image not found in Cloudinary
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Server.Models.DTOs;
+﻿using Newtonsoft.Json.Linq;
+using Server.Models.DTOs;
 
 namespace Server.Gateways.Interfaces
 {
@@ -11,7 +12,7 @@ namespace Server.Gateways.Interfaces
         /// <param name="startDate">The start date for the data range</param>
         /// <param name="endDate">The end date for the data range</param>
         /// <returns>A JSON string containing the aggregate data for the given ticker symbol</returns>
-        Task<string> GetAggregateDataAsync(string ticker, string startDate, string endDate);
+        Task<JObject> GetAggregateDataAsync(string ticker, string startDate, string endDate);
 
         /// <summary>
         /// This method fetches the closing price for the given ticker symbol on a specific date.
@@ -19,7 +20,7 @@ namespace Server.Gateways.Interfaces
         /// <param name="ticker">The stock ticker symbol</param>
         /// <param name="date">The date to fetch the closing price for</param>
         /// <returns>The closing price for the given ticker on the specified date</returns>
-        Task<decimal> GetSellPriceAsync(string ticker, DateTime date);
+        Task<decimal?> GetSellPriceAsync(string ticker, DateTime date);
 
         /// <summary>
         /// This method fetches the metadata for the given ticker symbol from the Polygon API.
@@ -33,6 +34,6 @@ namespace Server.Gateways.Interfaces
         /// </summary>
         /// <param name="ticker">the given ticker</param>
         /// <returns>the url</returns>
-        Task<string> GetTickerImageBase64Async(string ticker);
+        Task<string> GetTickerImageBase64Async(string imageUrl, string ticker);
     }
 }

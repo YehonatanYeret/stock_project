@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Server.Gateways.Implementations;
+using Newtonsoft.Json.Linq;
 using Server.Gateways.Interfaces;
+using System;
+using System.Threading.Tasks;
 
 namespace Server.Controllers.Queries
 {
@@ -16,46 +18,61 @@ namespace Server.Controllers.Queries
         }
 
         /// <summary>
-        /// the method will get the aggregate data for a given ticker symbol and date range
+        /// Gets aggregate stock data for a given ticker symbol and date range.
         /// </summary>
-        /// <param name="ticker">the ticker symbol</param>
-        /// <param name="startDate"> the start date of the date range</param>
-        /// <param name="endDate"> the end date of the date range</param>
-        /// <returns> the aggregate data for the given ticker symbol and date range</returns>
+        /// <param name="ticker">The ticker symbol</param>
+        /// <param name="startDate">The start date of the date range</param>
+        /// <param name="endDate">The end date of the date range</param>
+        /// <returns>Aggregate data for the given ticker symbol and date range</returns>
         [HttpGet("getDetails")]
         public async Task<ActionResult> GetAggregateData(string ticker, string startDate, string endDate)
         {
             try
             {
-                if (string.IsNullOrEmpty(ticker) || string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
+                // Validate input parameters
+                if (string.IsNullOrWhiteSpace(ticker) || string.IsNullOrWhiteSpace(startDate) || string.IsNullOrWhiteSpace(endDate))
                 {
                     return BadRequest("Ticker, startDate, and endDate are required.");
                 }
 
+                // Fetch data in parallel
                 var aggregateDataTask = _polygonGateway.GetAggregateDataAsync(ticker, startDate, endDate);
                 var metadataTask = _polygonGateway.GetTickerMetadataAsync(ticker);
-                var imageBase64Task = _polygonGateway.GetTickerImageBase64Async(ticker); // Fetch actual image bytes as Base64
 
-                await Task.WhenAll(aggregateDataTask, metadataTask, imageBase64Task);
+                await Task.WhenAll(aggregateDataTask, metadataTask);
 
                 var aggregateData = await aggregateDataTask;
                 var metadata = await metadataTask;
-                var imageBase64 = await imageBase64Task;
 
+                // Handle cases where the ticker is invalid or data is missing
+                if (aggregateData == null || aggregateData["queryCount"]?.Value<int>() == 0)
+                {
+                    return NotFound(new { message = $"Ticker '{ticker}' not found." });
+                }
+
+                if (metadata == null)
+                {
+                    return NotFound(new { message = $"Metadata for ticker '{ticker}' not found." });
+                }
+
+                // Fetch image only if a logo URL exists
+                string imageBase64 = await _polygonGateway.GetTickerImageBase64Async(metadata.Logo, ticker);
+
+                // Build response
                 var response = new
                 {
-                    Ticker = metadata.Ticker,
-                    Name = metadata.Name,
-                    Description = metadata.Description,
-                    LogoBase64 = imageBase64, // Embed image in Base64 format
-                    AggregateData = aggregateData
+                    metadata.Ticker,
+                    metadata.Name,
+                    metadata.Description,
+                    LogoBase64 = imageBase64,
+                    AggregateData = aggregateData?.ToString(Newtonsoft.Json.Formatting.None)
                 };
-
                 return Ok(response);
             }
-            catch
+            catch (Exception ex)
             {
-                return BadRequest("Failed to fetch data.");
+                Console.WriteLine($"Error in GetAggregateData: {ex.Message}");
+                return StatusCode(500, new { message = "An internal error occurred.", error = ex.Message });
             }
         }
     }

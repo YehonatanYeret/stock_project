@@ -68,7 +68,6 @@ class StockPresenter(QObject):
         if success:
             # Format data for view if needed
             formatted_data = self._format_stock_data(symbol, stock_data)
-
             # Update view with the data
             # Convert QDate to datetime.date if necessary
             def convert_to_date(date_obj):
@@ -166,15 +165,15 @@ class StockPresenter(QObject):
         """
         try:
             aggregate_data = json.loads(api_data.get("aggregateData", "{}"))
-            print(api_data)
             return {
                 "name": api_data.get("name", "Unknown Company"),
                 "symbol": symbol,
                 "description": api_data.get("description", "No description available"),
                 "volume": api_data.get("volume", 0),
-                "chart_data": aggregate_data.get("results", {}),
+                "chart_data": aggregate_data.get("results", []),  # Default to empty list
                 "img": api_data.get("logoBase64", DEFAULT_ICON)
             }
+
         except Exception as e:
             print(f"Error formatting stock data: {str(e)}")
 

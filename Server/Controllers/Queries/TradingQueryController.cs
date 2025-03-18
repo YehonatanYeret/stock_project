@@ -76,7 +76,7 @@ public class TradingQueryController : ControllerBase
     /// </summary>
     private async Task<HoldingDto> CalculateHoldingDto(Holding holding)
     {
-        decimal currentPrice = await _polygonGateway.GetSellPriceAsync(holding.Symbol, DateTime.UtcNow);
+        decimal currentPrice = await _polygonGateway.GetSellPriceAsync(holding.Symbol, DateTime.UtcNow) ?? 0;
         decimal totalValue = holding.Quantity * currentPrice;
         decimal totalGain = (currentPrice - holding.BuyPrice) * holding.Quantity;
         decimal totalGainPercentage = holding.BuyPrice > 0 ? (totalGain / (holding.BuyPrice * holding.Quantity)) * 100 : 0;

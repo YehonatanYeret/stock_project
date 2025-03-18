@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Gateways.Implementations;
 using Server.Gateways.Interfaces;
@@ -14,6 +14,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<IStocksGateway, PolygonGateway>();
+builder.Services.AddScoped<IImageGateaway, CloudinaryGateway>();
 
 builder.Services.AddDbContext<StockContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("StockContext")

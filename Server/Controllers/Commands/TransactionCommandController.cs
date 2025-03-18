@@ -49,7 +49,7 @@ public class TransactionCommandController : Controller
             }
 
             // Fetch current price from Polygon API using the PolygonGateway
-            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(holding.Symbol, model.SellDate);
+            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(holding.Symbol, model.SellDate) ?? 0;
 
             // Calculate profit/loss
             decimal profitLoss = (currentPrice - holding.BuyPrice) * model.Quantity;
@@ -106,7 +106,7 @@ public class TransactionCommandController : Controller
         try
         {
             // Fetch the current stock price from Polygon API
-            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(model.Symbol, model.BuyDate);
+            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(model.Symbol, model.BuyDate) ?? 0;
 
             User? user = _context.Users.FirstOrDefault(u => u.Id == model.UserId);
             if (user is null)

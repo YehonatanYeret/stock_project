@@ -1,10 +1,15 @@
 import base64
 import os
 from PySide6.QtCore import Signal
+import base64
+from PySide6.QtCore import Qt
+from PySide6.QtSvgWidgets import QGraphicsSvgItem, QSvgWidget
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
 from PySide6.QtCore import Qt, QByteArray, QSize
 from PySide6.QtCore import Qt, QMargins, QPointF, QDate
+from PySide6.QtGui import QImage
 from PySide6.QtGui import (
     QPixmap, QColor, QFont, QPainter, QPen, QBrush, QLinearGradient
 )
@@ -13,6 +18,8 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QComboBox, QGraphicsDropShadowEffect,
     QHeaderView, QScrollArea, QSizePolicy, QDateEdit, QWidget, QComboBox
 )
+
+
 
 
 # ========== TEXT ELEMENTS ==========
@@ -692,7 +699,6 @@ def apply_shadow_effect(widget, blur_radius=20, color=QColor(15, 23, 42, 40), of
 
 
 # ========= IMG =========
-
 class CompanyIconView(QFrame):
     """
     A component that renders company icons from base64 strings.
@@ -731,6 +737,12 @@ class CompanyIconView(QFrame):
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setFixedSize(size, size)
 
+        # Create layout
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.image_label)
+        self.setLayout(layout)
+
         # Style
         self.setStyleSheet("""
             CompanyIconView {
@@ -743,7 +755,15 @@ class CompanyIconView(QFrame):
             self.apply_shadow()
 
         # Set default placeholder
-        # self._set_placeholder()
+        self._set_placeholder()
+
+    def apply_shadow(self):
+        """Apply shadow effect to the icon"""
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(10)
+        shadow.setColor(QColor(0, 0, 0, 50))
+        shadow.setOffset(0, 2)
+        self.image_label.setGraphicsEffect(shadow)
 
     def _set_placeholder(self):
         """Set a default placeholder image"""
@@ -755,41 +775,63 @@ class CompanyIconView(QFrame):
 
     def set_icon_from_base64(self, base64_string):
         """
-        Update the icon from a base64 encoded string.
-
+        Set the icon from a base64 encoded string.
+        
         Args:
             base64_string: Base64 encoded image string
         """
+        if not base64_string:
+            self._set_placeholder()
+            return
+            
         try:
-            # Remove data URL prefix if present
-            if isinstance(base64_string, str) and "base64," in base64_string:
-                base64_string = base64_string.split("base64,")[1]
-
             # Convert base64 to bytes
-            image_data = QByteArray.fromBase64(
-                base64_string.encode() if isinstance(base64_string, str) else base64_string)
-
-            # Create pixmap from the byte data
-            pixmap = QPixmap()
-            success = pixmap.loadFromData(image_data)
-
-            if not success:
+            image_data = QByteArray.fromBase64(base64_string.encode())
+            
+            # Create image from data
+            image = QImage()
+            image.loadFromData(image_data)
+            
+            if image.isNull():
                 self._set_placeholder()
                 return
-
-            # Scale the pixmap
-            pixmap = pixmap.scaled(
-                self.image_label.width(),
-                self.image_label.height(),
+                
+            # Convert to pixmap and scale
+            pixmap = QPixmap.fromImage(image)
+            
+            # Scale maintaining aspect ratio
+            scaled_pixmap = pixmap.scaled(
+                self.image_label.size(),
                 Qt.KeepAspectRatio,
                 Qt.SmoothTransformation
             )
-
-            # Set the pixmap to the label
-            self.image_label.setPixmap(pixmap)
-        except Exception:
-            # In case of any error, show placeholder
+            
+            # Set the pixmap
+            self.image_label.setPixmap(scaled_pixmap)
+            
+        except Exception as e:
+            print(f"Error loading image from base64: {e}")
             self._set_placeholder()
+
+def load_image_from_base64(base64_string, parent=None):
+    # Remove data URL prefix if present
+    if "," in base64_string:
+        base64_string = base64_string.split(",")[1]
+
+    # Decode base64 to raw bytes
+    image_data = base64.b64decode(base64_string)
+
+    # Try loading as a raster image (PNG, JPEG, etc.)
+    pixmap = QPixmap()
+    if pixmap.loadFromData(image_data):
+        label = QLabel(parent)
+        label.setPixmap(pixmap)
+        return label  # Return QLabel with pixmap
+
+    # If raster loading failed, assume it is an SVG
+    svg_widget = QSvgWidget(parent)
+    svg_widget.load(image_data)
+    return svg_widget  # Return QSvgWidget for SVG images
 
     def apply_shadow(self, blur_radius=10, offset=2, opacity=20):
         """

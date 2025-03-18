@@ -16,7 +16,6 @@ from views.components.styled_widgets import (
     DescriptionLabel, CompanyIconView
 )
 
-
 class StockChart(RoundedCard):
     """Widget for displaying the stock price chart"""
 
@@ -26,24 +25,45 @@ class StockChart(RoundedCard):
 
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
+        layout.setContentsMargins(10, 10, 10, 10)  # Reduce margins for more space
 
         self.chart_container = RoundedCard(parent=self, border_radius=10, shadow_enabled=False)
         self.chart_container.setStyleSheet("QFrame {background-color: #F8FAFC;}")
-        layout.addWidget(self.chart_container)
-
-        # Embed StockChartWidget inside the container
-        self.stock_chart_widget = StockChartWidget(self.chart_container)
+        
+        # Use a more direct layout approach to ensure events pass through properly
         chart_layout = QVBoxLayout(self.chart_container)
+        chart_layout.setContentsMargins(0, 0, 0, 0)  # Remove internal margins
+        
+        # Create the chart widget with the container as parent
+        self.stock_chart_widget = StockChartWidget(self.chart_container)
+        
+        # Make sure widget accepts focus and mouse events
+        self.stock_chart_widget.setFocusPolicy(Qt.StrongFocus)
+        self.stock_chart_widget.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+        self.stock_chart_widget.setMouseTracking(True)
+        
+        # Add to layout
         chart_layout.addWidget(self.stock_chart_widget)
+        layout.addWidget(self.chart_container)
 
     def update_chart(self, ticker, start_date, end_date, data):
         """Update chart with new stock data"""
+        # Clear any existing chart first
+        self.stock_chart_widget.clear_chart()
+        
+        # Delay slightly to ensure the chart is properly cleared
+        QApplication.processEvents()
+        
+        # Now update with new data
         self.stock_chart_widget.update_chart(ticker, start_date, end_date, data)
+        
+        # Force a layout update
+        self.chart_container.layout().activate()
+        self.layout().activate()
 
     def clear_chart(self):
         """Clear chart data"""
         self.stock_chart_widget.clear_chart()
-
 
 class StockView(QWidget):
     """Stock trading view for searching, analyzing, and trading stocks"""
