@@ -2,7 +2,6 @@ import json
 import requests
 from config import API_BASE_URL, ENDPOINTS
 
-
 class ApiService:
     def __init__(self):
         self.base_url = API_BASE_URL
@@ -34,12 +33,22 @@ class ApiService:
 
     def login(self, email, password):
         """Authenticate a user with the API"""
-        return self.post("login", {"Email": email, "Password": password})
+        success, response = self.post("signin", {"Email": email, "Password": password})
+        
+        if success:
+            return True, response
+        else:
+            return False, self._extract_backend_message(response, "Login failed. Please try again.")
 
     def register(self, email, username, password):
         """Register a new user with the API"""
-        return self.post("register", {"email": email, "username": username, "password": password})
-    
+        success, response = self.post("signup", {"Email": email, "Name": username, "Password": password})
+        
+        if success:
+            return True, response
+        else:
+            return False, self._extract_backend_message(response, "Registration failed. Please try again.")
+
     def get_holdings(self, user_id):
         """Fetch holdings for a user"""
         return self.get("holdings", user_id=user_id)
@@ -47,7 +56,6 @@ class ApiService:
     def get_transactions(self, user_id):
         """Fetch transactions for a user"""
         return self.get("transactions", user_id=user_id)
-
 
     def get(self, endpoint, params=None, **kwargs):
         """Generic GET request handler"""
@@ -61,6 +69,8 @@ class ApiService:
             return False, {"error": str(e)}
         except json.JSONDecodeError:
             return False, {"error": "Invalid JSON response from server"}
+        except Exception as e:
+            return False, {"error": str(e)}
 
     def post(self, endpoint, data, **kwargs):
         """Generic POST request handler"""
@@ -69,17 +79,35 @@ class ApiService:
             response = requests.post(url, json=data, headers=self.get_headers())
             response.raise_for_status()
             return True, response.json()
+        
+        except requests.exceptions.HTTPError as http_err:
+            try:
+                error_data = response.json() if response.content else {}
+            except json.JSONDecodeError:
+                error_data = {"message": "Invalid response from server."}
+
+            return False, error_data  # Return raw error data to be handled properly
+        
         except requests.exceptions.RequestException as e:
             print(f"POST {url} failed: {str(e)}")
             return False, {"error": str(e)}
         except json.JSONDecodeError:
             return False, {"error": "Invalid JSON response from server"}
+        except Exception as e:
+            return False, {"error": str(e)}
 
-
-
-    def _get_first_error_message(self, error_data, default_message):
-        """Extract the first error message from validation errors."""
-        if 'errors' in error_data:
-            for field, errors in error_data['errors'].items():
-                return errors[0]  # Return first error message
-        return default_message
+    def _extract_backend_message(self, response, default_message):
+        """
+        Extract meaningful error messages from the backend response.
+        - Looks for a "message" field first.
+        - If validation errors exist, it extracts the first one.
+        - Otherwise, it falls back to a default message.
+        """
+        if isinstance(response, dict):
+            if "message" in response:
+                return response["message"]
+            elif "errors" in response:
+                for field, errors in response["errors"].items():
+                    return errors[0]  # Return first validation error message
+        
+        return default_message  # Fallback error message

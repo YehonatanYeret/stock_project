@@ -23,18 +23,31 @@ class AuthModel(QObject):
         else:
             return msg
 
-    def signup(self, email, username, password):
+    def signup(self, email, username, password, confirm_password):
         # Validate password before sending request
-        if len(password) < 6:
-            return False, None, "Password must be at least 6 characters long."
+        if not email or not username or not password or not confirm_password:
+            self.view.show_error("All fields are required")
+            return False
 
-        if len(username) < 4:
-            return False, None, "Username must be at least 4 characters long."
-        if username.isnumeric():
-            return False, None, "Username cannot be all numbers."
+        if password != confirm_password:
+            self.view.show_error("Passwords do not match")
+            return False
 
-        status, msg = self.api_service.register(email, username, password)
-        if status:
-            self.completed.emit()
-        else:
-            return msg
+        # Basic email validation
+        # if '@' not in email or '.' not in email:
+        #     self.view.show_error("Please enter a valid email address")
+        #     return False
+
+        try:
+            # Make API call to register endpoint
+            status, msg = self.api_service.register(email, username, password)
+            if status:
+                user = msg.get("user")
+                if user and "id" in user:
+                    # Emit the user's ID
+                    self.completed.emit(user["id"])
+            else:
+                return msg
+
+        except Exception as e:
+            return str("An error occurred while registering: " + str(e))

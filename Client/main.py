@@ -17,10 +17,6 @@ from presenters.main_presenter import MainPresenter
 class MainWindow(QMainWindow):
     """Main application window"""
     # Authentication signals
-    login_requested = Signal(str, str)
-    register_requested = Signal(str, str, str)
-    logout_requested = Signal()
-
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Stock Portfolio Manager")
@@ -36,10 +32,10 @@ class MainWindow(QMainWindow):
         self.auth_view = Auth_view()
         self.auth_view.presenter = AuthPresenter(self.auth_view, AuthModel(), ApiService())
         self.auth_view.completed.connect(self.show_app)
-        # TODO: connect logout_requested signal to show_auth
-
+    
         # Main application widget
         self.app_widget = Main_view()
+        self.app_widget.logout_requested.connect(self.show_auth)
 
         # Main stacked widget to switch between auth and app
         self.main_stack = QStackedWidget()
@@ -62,6 +58,7 @@ class MainWindow(QMainWindow):
     def show_auth(self):
         """Show the authentication screen"""
         self.main_stack.setCurrentWidget(self.auth_view)
+        self.auth_view.clear_error()
 
     def show_app(self, user_id):
         """Show the main application screen"""

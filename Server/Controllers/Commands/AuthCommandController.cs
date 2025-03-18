@@ -37,7 +37,13 @@ public class AuthCommandController : ControllerBase
                 return BadRequest(new { message = "Email is already in use." });
             }
 
-            User user = new User
+            //check for 6 letters password
+            if(model.Password.Length < 6)
+            {
+                return BadRequest(new { message = "Password must be at least 6 characters." });
+            }
+
+            User user = new()
             {
                 Email = model.Email,
                 HashPassword = HashUtils.HashPassword(model.Password),

@@ -183,7 +183,6 @@ class LoginWidget(AuthWidget):
         if self.validate_inputs():
             email = self.email_input.text().strip()
             password = self.password_input.text()
-            print(email, password)
             # (Optional) Insert additional authentication logic here.
             self.login_attempt.emit(email, password)
     
@@ -195,7 +194,7 @@ class LoginWidget(AuthWidget):
 class RegisterWidget(AuthWidget):
     """Registration widget for new users."""
     # Signal emitted when a valid registration attempt occurs
-    register_attempt = Signal(str, str, str)
+    register_attempt = Signal(str, str, str, str)
     # Signal emitted to switch back to the login view
     switch_to_login = Signal()
 
@@ -251,8 +250,8 @@ class RegisterWidget(AuthWidget):
             email = self.email_input.text().strip()
             username = self.username_input.text().strip()
             password = self.password_input.text()
-            # (Optional) Insert additional registration logic here.
-            self.register_attempt.emit(email, username, password)
+            confirm_password = self.confirm_password_input.text()
+            self.register_attempt.emit(email, username, password, confirm_password)
     
     def on_switch_to_login(self):
         """Signal a view change to the login screen."""
@@ -266,7 +265,7 @@ class Auth_view(QStackedWidget):
     """
     completed = Signal(int)
     login_attempted = Signal(str, str)
-    register_attempted = Signal(str, str, str)
+    register_attempted = Signal(str, str, str, str)
     
 
     def __init__(self, parent=None):
@@ -300,3 +299,7 @@ class Auth_view(QStackedWidget):
         """Switch to the login view."""
         self.register_widget.clear_error()
         self.setCurrentWidget(self.login_widget)
+
+    def clear_error(self):
+        """Hide the error message."""
+        self.currentWidget().clear_error()

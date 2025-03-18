@@ -3,6 +3,7 @@
     QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy
 )
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QObject
 from PySide6.QtGui import QIcon
 from views.mainViews.dashboard_view import DashboardView
 from presenters.mainPresenters.dashboard_presenter import DashboardPresenter
@@ -155,6 +156,8 @@ class Sidebar(QFrame):
 
 
 class Main_view(QMainWindow):
+    logout_requested = Signal()
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Trading App")
@@ -176,6 +179,7 @@ class Main_view(QMainWindow):
         self.sidebar.history_clicked.connect(self.show_history)
         self.sidebar.chatbot_clicked.connect(self.show_chatbot)
         self.sidebar.settings_clicked.connect(self.show_settings)
+        self.sidebar.logout_clicked.connect(lambda : self.logout_requested.emit())
 
         # Create content stack
         self.content_stack = QStackedWidget()
