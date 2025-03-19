@@ -206,8 +206,8 @@ class StockView(QWidget):
         self.stock_name = StyledLabel("", size=26, font_weight="bold", color="#0F172A", parent=stock_header_card)
         self.company_icon = CompanyIconView(size=48)
 
-        stock_info_layout.addWidget(self.company_icon)
         stock_info_layout.addWidget(self.stock_name)
+        stock_info_layout.addWidget(self.company_icon)
         stock_info_layout.addStretch(1)
 
         # Description
