@@ -755,7 +755,7 @@ class CompanyIconView(QFrame):
             self.apply_shadow()
 
         # Set default placeholder
-        self._set_placeholder()
+        # self._set_placeholder()
 
     def apply_shadow(self):
         """Apply shadow effect to the icon"""
@@ -1036,4 +1036,7 @@ class FilterComboBox(QComboBox):
 - `__init__(self, parent=None, placeholder="Filter by...", items=None)`
 - `apply_shadow(self, blur_radius=8, offset=1, opacity=15)`
 
+
+# #EBECEE
+# #69839B
 '''

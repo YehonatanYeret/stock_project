@@ -107,10 +107,10 @@ class Sidebar(QFrame):
         self.logo_label = self.logo_label = QLabel("📈 STOCK PORTFOLIO")
         self.logo_label.setStyleSheet("""
             QLabel {
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: bold;
                 color: #4C6FFF;
-                padding: 10px 0;
+                padding: 8px 0;
             }
         """)
         self.layout.addWidget(self.logo_label)
@@ -242,7 +242,7 @@ class Main_view(QMainWindow):
 
     def show_stocks(self):
         """Show the stocks screen"""
-        self.stock_presenter = StockPresenter(StockModel(), self.stock_widget, self.user_id)
+        self.stock_presenter = StockPresenter(StockModel(), self.stock_widget, self.user_id, )
         self.content_stack.setCurrentWidget(self.stock_widget)
         self.sidebar.set_active_button("stocks")
 

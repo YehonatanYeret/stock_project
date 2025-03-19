@@ -74,7 +74,6 @@ class DashboardPresenter:
             # Show all data for "All Time"
             self.view.set_chart_data(chart_data)
 
-
     def on_buy_stock(self, symbol, quantity):
         if self.user_id is not None:
             self.model.buy_stock(self.user_id, symbol, quantity)
@@ -85,7 +84,6 @@ class DashboardPresenter:
         if holding:
             self.model.sell_stock(holding.Id, holding.Quantity)
             self.model_updated()
-
 
     def on_add_money(self):
         new_cash_balance = self.model.add_money(self.user_id, 500.0)

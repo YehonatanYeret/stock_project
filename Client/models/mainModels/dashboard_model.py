@@ -1,6 +1,8 @@
 import datetime
-from services.api_service import ApiService
+
 from PySide6.QtCore import Signal
+from services.api_service import ApiService
+
 
 class Holding:
     def __init__(self, Id, Symbol, Quantity, CurrentPrice, total_gain, total_gain_percentage):
@@ -27,7 +29,8 @@ class DashboardModel:
         status, response = self.api_service.get_holdings(user_id)
         if status and isinstance(response, list):  # Assuming response is a list of holdings
             self.holdings = [
-                Holding(h["id"], h["symbol"], h["quantity"], h["currentPrice"], h["totalGain"], h["totalGainPercentage"])
+                Holding(h["id"], h["symbol"], h["quantity"], h["currentPrice"], h["totalGain"],
+                        h["totalGainPercentage"])
                 for h in response
             ]
         else:
@@ -40,7 +43,8 @@ class DashboardModel:
 
         if status and isinstance(response, list):  # Assuming response is a list of trades
             self.transactions = [
-                {"TradeDate": t["date"], "PortfolioValue": t.get("quantity", 0)*t.get("price", 0)*( 2*t.get("type", 0)-1)}
+                {"TradeDate": t["date"],
+                 "PortfolioValue": t.get("quantity", 0) * t.get("price", 0) * (2 * t.get("type", 0) - 1)}
                 for t in response
             ]
             self.transactions.sort(key=lambda x: x["TradeDate"])
@@ -58,20 +62,20 @@ class DashboardModel:
 
     def sell_stock(self, holding_id, quantity):
         # Unpack the tuple into corresponding variables
-        trade = self.api_service.sell_stock(holding_id, quantity)
-
+        _, trade = self.api_service.sell_stock(holding_id, quantity)
+        print("Trade response:", trade)
         self.holdings = [h for h in self.holdings if h.Id != holding_id]
-        self.transactions.append({"TradeDate": trade["date"], "PortfolioValue": trade["quantity"]*trade["price"]*(2*trade["type"]-1)})
-        
+        self.transactions.append({"TradeDate": trade["date"],
+                                  "PortfolioValue": trade["quantity"] * trade["price"] * (2 * trade["type"] - 1)})
+
     def get_cash_balance(self):
         return self.api_service.get_cash_balance(self.user_id)
-    
+
     def get_total_gain(self):
         return self.api_service.get_profit(self.user_id)
-    
+
     def add_money(self, user_id, amount):
         return self.api_service.add_money(user_id, amount)
 
-    
     def remove_money(self, user_id, amount):
         return self.api_service.remove_money(user_id, amount)
