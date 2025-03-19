@@ -1,7 +1,7 @@
 import sys
 
 from PySide6.QtCore import Qt, Signal, QDate, QPropertyAnimation, QEasingCurve, QSize
-from PySide6.QtGui import QColor, QFont, QIcon, QIntValidator, QPalette, QLinearGradient, QGradient
+from PySide6.QtGui import QColor, QFont, QIcon, QDoubleValidator, QPalette, QLinearGradient, QGradient
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QDateEdit, QFrame, QSplitter, QScrollArea, QGridLayout,
@@ -21,7 +21,7 @@ class StockChart(RoundedCard):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent, border_radius=12, shadow_enabled=True)
-        self.setMinimumHeight(350)
+        # self.setMinimumHeight(350)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
@@ -250,7 +250,7 @@ class StockView(QWidget):
         # Use StyledLineEdit instead
         self.quantity_input = StyledLineEdit(placeholder="Enter quantity", parent=order_panel)
         self.quantity_input.setText("1")
-        self.quantity_input.setValidator(QIntValidator(1, 10000))
+        self.quantity_input.setValidator(QDoubleValidator(1.00, 1000.00, 2))
 
         # Price info card
         price_info_card = self._create_price_info_card()
@@ -398,7 +398,7 @@ class StockView(QWidget):
     def update_total_value(self):
         """Update total value based on quantity"""
         try:
-            quantity = int(self.quantity_input.text()) if self.quantity_input.text() else 0
+            quantity = float(self.quantity_input.text()) if self.quantity_input.text() else 0
             price = float(self.price_value.text().replace('$', ''))
             total = quantity * price
             self.total_value.setText(f"${total:.2f}")
@@ -409,7 +409,7 @@ class StockView(QWidget):
         """Handle buy/sell action"""
         try:
             symbol = self.symbol_input.text().strip().upper()
-            quantity = int(self.quantity_input.text())
+            quantity = float(self.quantity_input.text())
 
             if self.buy_button.isChecked():
                 self.buy_stock_requested.emit(symbol, quantity)

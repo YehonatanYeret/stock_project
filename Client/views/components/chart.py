@@ -25,7 +25,7 @@ class StockChartWidget(QWidget):
 
         # Set size policy for auto resizing
         self.chart.get_webview().setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.chart.get_webview().setMinimumSize(800, 400)
+        self.chart.get_webview().setMinimumSize(680, 300)
 
         # Add the chart widget
         layout.addWidget(self.chart.get_webview(), stretch=1)
