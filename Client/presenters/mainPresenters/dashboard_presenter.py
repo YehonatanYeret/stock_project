@@ -1,8 +1,10 @@
 import datetime
+from PySide6.QtCore import Signal, QObject
 
-
-class DashboardPresenter:
+class DashboardPresenter(QObject):
+    move_to_sell_signal = Signal(str)
     def __init__(self, model, view, user_id=None):
+        super().__init__()
         self.view = view
         self.model = model
         self.user_id = user_id
@@ -10,7 +12,7 @@ class DashboardPresenter:
         self.view.add_money_clicked.connect(self.on_add_money)
         self.view.remove_money_clicked.connect(self.on_remove_money)
         self.view.on_period_changed.connect(self.on_period_changed)
-        self.view.on_sell_clicked.connect(self.on_sell_stock)
+        self.view.on_sell_clicked.connect(self.move_to_sell_signal)
 
         # If a valid user_id is provided at initialization, fetch initial data.
         if self.user_id is not None:
@@ -73,17 +75,6 @@ class DashboardPresenter:
         else:
             # Show all data for "All Time"
             self.view.set_chart_data(chart_data)
-
-    def on_buy_stock(self, symbol, quantity):
-        if self.user_id is not None:
-            self.model.buy_stock(self.user_id, symbol, quantity)
-            self.model_updated()
-
-    def on_sell_stock(self, holding_id):
-        holding = next((h for h in self.model.get_holdings() if h.Id == holding_id), None)
-        if holding:
-            self.model.sell_stock(holding.Id, holding.Quantity)
-            self.model_updated()
 
     def on_add_money(self):
         new_cash_balance = self.model.add_money(self.user_id, 500.0)

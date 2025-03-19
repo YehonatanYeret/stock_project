@@ -1,10 +1,12 @@
-﻿from PySide6.QtCore import QObject
+﻿import datetime
+from PySide6.QtCore import QObject
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QStackedWidget, QWidget, QVBoxLayout,
     QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy
 )
+from PySide6.QtCore import QDate
 from models.mainModels.dashboard_model import DashboardModel
 from models.mainModels.history_model import HistoryModel
 from models.mainModels.stock_model import StockModel
@@ -161,7 +163,7 @@ class Sidebar(QFrame):
 
 class Main_view(QMainWindow):
     logout_requested = Signal()
-
+    sell_requested = Signal(str)
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Trading App")
@@ -194,6 +196,8 @@ class Main_view(QMainWindow):
         self.history_widget = HistoryView()
         self.chatbot_widget = ChatbotView()
         self.settings_widget = QWidget()
+
+        self.sell_requested.connect(self.open_sell_window)
 
         # Add widgets to stack
         self.content_stack.addWidget(self.dashboard_widget)
@@ -228,21 +232,18 @@ class Main_view(QMainWindow):
     def set_user(self, user_id):
         """Initialize the dashboard only when user_id is available"""
         self.user_id = user_id
-        self.dashboard_presenter = DashboardPresenter(DashboardModel(), self.dashboard_widget, self.user_id)
         self.show_dashboard()  # Now that the user is set, show dashboard
 
     def show_dashboard(self):
         """Show the dashboard screen"""
-        if self.user_id is None:
-            print("User ID not set yet!")  # Debug message
-            return
-
+        self.dashboard_presenter = DashboardPresenter(DashboardModel(), self.dashboard_widget, self.user_id)
         self.content_stack.setCurrentWidget(self.dashboard_widget)
         self.sidebar.set_active_button("dashboard")
+        self.dashboard_presenter.move_to_sell_signal.connect(self.sell_requested)
 
     def show_stocks(self):
         """Show the stocks screen"""
-        self.stock_presenter = StockPresenter(StockModel(), self.stock_widget, self.user_id, )
+        self.stock_presenter = StockPresenter(StockModel(), self.stock_widget, self.user_id)
         self.content_stack.setCurrentWidget(self.stock_widget)
         self.sidebar.set_active_button("stocks")
 
@@ -263,3 +264,24 @@ class Main_view(QMainWindow):
         """Show the settings screen"""
         self.content_stack.setCurrentWidget(self.settings_widget)
         self.sidebar.set_active_button("settings")
+    
+    from PySide6.QtCore import QDate
+
+    def open_sell_window(self, symbol):
+        """
+        This method is called when the sell_requested signal is emitted.
+        It receives the symbol (or any other parameter) and performs the action
+        of switching the view to the sell window, passing along the parameter.
+        """
+        print(f"Opening sell window for: {symbol}")
+        
+        # Get today's date
+        endDate = QDate.currentDate()
+        # Subtract one year from today's date
+        startDate = endDate.addYears(-1)
+        
+        # Switch view if needed
+        self.show_stocks()
+        # Emit the signal with the symbol and date parameters (ensure your signal expects QDate types)
+        self.stock_widget.search_stock_requested.emit(symbol, startDate, endDate)
+        

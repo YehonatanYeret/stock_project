@@ -15,9 +15,7 @@ public class Holding
     [ForeignKey("User")]
     public required int UserId { get; set; }
     public required string Symbol { get; set; }
-    public int Quantity { get; set; }
+    public decimal Quantity { get; set; }
     public decimal BuyPrice { get; set; }
-    //public required string Name { get; set; }
-    //public required string Url { get; set; }
-    //public required string LogoUrl { get; set; }
+
 }

@@ -12,6 +12,6 @@ public class Trade
     public required string Symbol { get; set; }
     public required DateTime Date { get; set; }
     public Enums.historyType Type { get; set; }
-    public int Quantity { get; set; }
+    public decimal Quantity { get; set; }
     public decimal Price { get; set; }
 }

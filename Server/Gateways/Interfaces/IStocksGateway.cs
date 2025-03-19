@@ -20,7 +20,7 @@ namespace Server.Gateways.Interfaces
         /// <param name="ticker">The stock ticker symbol</param>
         /// <param name="date">The date to fetch the closing price for</param>
         /// <returns>The closing price for the given ticker on the specified date</returns>
-        Task<decimal?> GetSellPriceAsync(string ticker, DateTime date);
+        Task<decimal?> GetSellPriceAsync(string ticker);
 
         /// <summary>
         /// This method fetches the metadata for the given ticker symbol from the Polygon API.
