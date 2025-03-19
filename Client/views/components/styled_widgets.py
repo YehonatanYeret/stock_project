@@ -633,7 +633,7 @@ class ScrollableContainer(QScrollArea):
             }}
             QScrollBar:vertical {{
                 background: #E2E8F0;
-                width: 14px;
+                width: 8px;
                 margin: 0px;
                 border-radius: 7px;
             }}
