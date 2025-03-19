@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MyApp.Controllers;
 using Server.Data;
 using Server.Gateways.Implementations;
 using Server.Gateways.Interfaces;
@@ -15,11 +16,14 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<IStocksGateway, PolygonGateway>();
 builder.Services.AddScoped<IImageGateaway, CloudinaryGateway>();
+builder.Services.AddHttpClient<ModelController>(client =>
+{
+    client.Timeout = Timeout.InfiniteTimeSpan;
+});
 
 builder.Services.AddDbContext<StockContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("StockContext")
     ?? throw new InvalidOperationException("No connection string found.")));
-
 
 var app = builder.Build();
 
@@ -32,7 +36,6 @@ using (var scope = app.Services.CreateScope())
                    DbContextOptions<StockContext>>());
 
 }
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
