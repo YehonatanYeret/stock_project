@@ -23,10 +23,10 @@ public class TransactionCommandController : Controller
     }
 
     // POST: api/transaction/command/sell
-    [HttpPost("sell")]
-    public async Task<ActionResult> Sell([FromBody] SellRequest model)
+    [HttpPost("sell/{userId}")]
+    public async Task<ActionResult> Sell(int userId, [FromBody] TransactionRequest model)
     {
-        if (model.HoldingId == 0 || model.Quantity == 0)
+        if (string.IsNullOrEmpty(model.Ticker) || model.Quantity == 0)
         {
             return BadRequest(new { message = "HoldingId and Quantity are required." });
         }
@@ -35,7 +35,7 @@ public class TransactionCommandController : Controller
         {
             // Find the holding by HoldingId
             Holding? holding = await _context.Holdings
-                .FirstOrDefaultAsync(h => h.Id == model.HoldingId);
+                .FirstOrDefaultAsync(h => h.Symbol == model.Ticker && h.UserId == userId);
 
             if (holding is null)
             {
@@ -49,7 +49,7 @@ public class TransactionCommandController : Controller
             }
 
             // Fetch current price from Polygon API using the PolygonGateway
-            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(holding.Symbol, model.SellDate) ?? 0;
+            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(holding.Symbol) ?? 0;
 
             // Calculate profit/loss
             decimal profitLoss = (currentPrice - holding.BuyPrice) * model.Quantity;
@@ -68,7 +68,7 @@ public class TransactionCommandController : Controller
             {
                 UserId = holding.UserId,
                 Symbol = holding.Symbol,
-                Date = model.SellDate,
+                Date = model.Date,
                 Type = Enums.historyType.Sell,
                 Quantity = model.Quantity,
                 Price = currentPrice
@@ -95,10 +95,10 @@ public class TransactionCommandController : Controller
 
 
     // POST: api/transaction/command/buy
-    [HttpPost("buy")]
-    public async Task<ActionResult> Buy([FromBody] BuyRequest model)
+    [HttpPost("buy/{userId}")]
+    public async Task<ActionResult> Buy(int userId, [FromBody] TransactionRequest model)
     {
-        if (string.IsNullOrWhiteSpace(model.Symbol) || model.Quantity <= 0)
+        if (string.IsNullOrWhiteSpace(model.Ticker) || model.Quantity <= 0)
         {
             return BadRequest(new { message = "Symbol and Quantity are required." });
         }
@@ -106,9 +106,9 @@ public class TransactionCommandController : Controller
         try
         {
             // Fetch the current stock price from Polygon API
-            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(model.Symbol, model.BuyDate) ?? 0;
+            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(model.Ticker) ?? 0;
 
-            User? user = _context.Users.FirstOrDefault(u => u.Id == model.UserId);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
             if (user is null)
             {
                 return BadRequest(new { message = "User not found." });
@@ -121,7 +121,7 @@ public class TransactionCommandController : Controller
 
             // Find existing holding for the user and stock
             Holding? holding = await _context.Holdings
-                .FirstOrDefaultAsync(h => h.UserId == model.UserId && h.Symbol == model.Symbol);
+                .FirstOrDefaultAsync(h => h.UserId == userId && h.Symbol == model.Ticker);
 
             if (holding is not null)
             {
@@ -135,8 +135,8 @@ public class TransactionCommandController : Controller
                 // Create new holding
                 holding = new Holding
                 {
-                    UserId = model.UserId,
-                    Symbol = model.Symbol,
+                    UserId = userId,
+                    Symbol = model.Ticker,
                     Quantity = model.Quantity,
                     BuyPrice = currentPrice
                 };
@@ -146,9 +146,9 @@ public class TransactionCommandController : Controller
             // Log the trade in the Trades table as a buy
             var trade = new Trade
             {
-                UserId = model.UserId,
-                Symbol = model.Symbol,
-                Date = model.BuyDate,
+                UserId = userId,
+                Symbol = model.Ticker,
+                Date = model.Date,
                 Type = Enums.historyType.Buy,
                 Quantity = model.Quantity,
                 Price = currentPrice

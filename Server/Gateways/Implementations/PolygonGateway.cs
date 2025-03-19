@@ -1,145 +1,4 @@
-﻿//using Newtonsoft.Json.Linq;
-//using Server.Gateways.Interfaces;
-//using Server.Models.DTOs;
-//using System.Text;
-
-//namespace Server.Gateways.Implementations
-//{
-//    public class PolygonGateway : IStocksGateway
-//    {
-//        private readonly string _polygonApiKey;
-//        private readonly HttpClient _httpClient;
-//        private const string BaseUrl = "https://api.polygon.io";
-
-//        public PolygonGateway(IConfiguration configuration)
-//        {
-//            _polygonApiKey = configuration["ApiKeys:polygon"]
-//                ?? throw new InvalidOperationException("Polygon API key is missing from configuration.");
-//            _httpClient = new HttpClient();
-//        }
-
-//        public async Task<JObject?> GetAggregateDataAsync(string ticker, string startDate, string endDate)
-//        {
-//            var endpoint = $"/v2/aggs/ticker/{ticker}/range/1/day/{startDate}/{endDate}?apiKey={_polygonApiKey}";
-//            var response = await SendRequestAsync(endpoint);
-
-//            if (string.IsNullOrEmpty(response)) return null;
-
-//            var json = JObject.Parse(response);
-
-//            // Detect unrecognized ticker
-//            if (json["queryCount"]?.Value<int>() == 0 || json["resultsCount"]?.Value<int>() == 0)
-//            {
-//                return null;
-//            }
-
-//            return json;
-//        }
-
-//        public async Task<decimal?> GetSellPriceAsync(string ticker, DateTime date)
-//        {
-//            var endpoint = $"/v2/aggs/ticker/{ticker}/prev?adjusted=true&apiKey={_polygonApiKey}";
-
-//            var response = await SendRequestAsync(endpoint);
-//            if (string.IsNullOrEmpty(response)) return null;
-
-//            var json = JObject.Parse(response);
-
-//            if (json["results"] is JArray results && results.Count > 0)
-//            {
-//                return results[0]["c"]?.Value<decimal>();
-//            }
-
-//            return null; // Return null instead of throwing an exception
-//        }
-
-//        public async Task<TickerMetadataDto?> GetTickerMetadataAsync(string ticker)
-//        {
-//            var endpoint = $"/v3/reference/tickers/{ticker}?apiKey={_polygonApiKey}";
-//            var response = await SendRequestAsync(endpoint);
-
-//            if (string.IsNullOrEmpty(response)) return null;
-
-//            var json = JObject.Parse(response);
-
-//            if (json["results"] is not null)
-//            {
-//                var result = json["results"];
-//                return new TickerMetadataDto
-//                {
-//                    Ticker = result["ticker"]?.Value<string>() ?? string.Empty,
-//                    Name = result["name"]?.Value<string>() ?? string.Empty,
-//                    Description = result["description"]?.Value<string>() ?? string.Empty,
-//                    Logo = result["branding"]?["logo_url"]?.Value<string>() ?? string.Empty
-//                };
-//            }
-
-//            return null; // Return null if no data is found
-//        }
-
-//        public async Task<string> GetTickerImageBase64Async(string imageUrl)
-//        {
-//            try
-//            {
-//                if (!string.IsNullOrEmpty(imageUrl))
-//                {
-//                    var imageBytes = await FetchImageBytesAsync(imageUrl + $"?apiKey={_polygonApiKey}");
-//                    return Convert.ToBase64String(imageBytes);
-//                }
-
-//                var defaultImageBytes = await FetchImageBytesAsync(GetDefaultLogoUrl());
-//                return Convert.ToBase64String(defaultImageBytes);
-//            }
-//            catch (Exception)
-//            {
-//                var defaultImageBytes = await FetchImageBytesAsync(GetDefaultLogoUrl());
-//                return Convert.ToBase64String(defaultImageBytes);
-//            }
-//        }
-
-//        private async Task<byte[]> FetchImageBytesAsync(string imageUrl)
-//        {
-//            var response = await _httpClient.GetAsync(imageUrl);
-//            if (response.IsSuccessStatusCode)
-//            {
-//                return await response.Content.ReadAsByteArrayAsync();
-//            }
-
-//            throw new InvalidOperationException("Failed to fetch ticker image.");
-//        }
-
-//        private string GetDefaultLogoUrl()
-//        {
-//            return "https://www.shutterstock.com/image-vector/no-image-available-picture-coming-600nw-2057829641.jpg";
-//        }
-
-//        private async Task<string?> SendRequestAsync(string endpoint)
-//        {
-//            try
-//            {
-//                var url = $"{BaseUrl}{endpoint}";
-//                var response = await _httpClient.GetAsync(url);
-
-//                if (!response.IsSuccessStatusCode)
-//                {
-//                    Console.WriteLine($"API Request Failed: {url} - {response.StatusCode}");
-//                    return null;
-//                }
-
-//                return await response.Content.ReadAsStringAsync();
-//            }
-//            catch (Exception ex)
-//            {
-//                Console.WriteLine($"API Request Exception: {ex.Message}");
-//                return null;
-//            }
-//        }
-//    }
-//}
-
-
-using CloudinaryDotNet.Actions;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using Server.Gateways.Interfaces;
 using Server.Models.DTOs;
 using System.Text;
@@ -179,7 +38,7 @@ namespace Server.Gateways.Implementations
             return json;
         }
 
-        public async Task<decimal?> GetSellPriceAsync(string ticker, DateTime date)
+        public async Task<decimal?> GetSellPriceAsync(string ticker)
         {
             var endpoint = $"/v2/aggs/ticker/{ticker}/prev?adjusted=true&apiKey={_polygonApiKey}";
             var response = await SendRequestAsync(endpoint);
@@ -260,11 +119,6 @@ namespace Server.Gateways.Implementations
                 return await response.Content.ReadAsByteArrayAsync();
             }
             throw new HttpRequestException("Failed to fetch ticker image.");
-        }
-
-        private string GetDefaultLogoUrl()
-        {
-            return "https://www.shutterstock.com/image-vector/no-image-available-picture-coming-600nw-2057829641.jpg";
         }
 
         private async Task<string?> SendRequestAsync(string endpoint)

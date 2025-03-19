@@ -57,17 +57,6 @@ class DashboardModel:
     def get_transactions(self):
         return self.transactions
 
-    def buy_stock(self, user_id, symbol, quantity):
-        pass
-
-    def sell_stock(self, holding_id, quantity):
-        # Unpack the tuple into corresponding variables
-        _, trade = self.api_service.sell_stock(holding_id, quantity)
-        print("Trade response:", trade)
-        self.holdings = [h for h in self.holdings if h.Id != holding_id]
-        self.transactions.append({"TradeDate": trade["date"],
-                                  "PortfolioValue": trade["quantity"] * trade["price"] * (2 * trade["type"] - 1)})
-
     def get_cash_balance(self):
         return self.api_service.get_cash_balance(self.user_id)
 

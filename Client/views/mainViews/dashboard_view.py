@@ -3,6 +3,7 @@ import sys
 from PySide6.QtCore import Signal
 from PySide6.QtCharts import QAreaSeries
 from PySide6.QtGui import QBrush, QColor, QPen
+from functools import partial
 
 sys.path.append('..')
 
@@ -41,7 +42,7 @@ class CashBalanceCard(StyledStatsCard):
 
 class HoldingsTable(StyledTable):
     # Create a custom signal that emits an integer (the holding ID)
-    sellClicked = Signal(int)
+    sellClicked = Signal(str)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -117,7 +118,8 @@ class HoldingsTable(StyledTable):
 
             # Sell button - connect using a lambda that captures the current holding's ID.
             sell_button = SellButton("Sell")
-            sell_button.clicked.connect(lambda _, hold_id=holding.Id: self.sellClicked.emit(hold_id))
+
+            sell_button.clicked.connect(partial(self.sellClicked.emit, holding.Symbol))
             self.setCellWidget(row, 7, sell_button)
 
 
@@ -203,7 +205,7 @@ class DashboardView(QWidget):
     add_money_clicked = Signal()
     remove_money_clicked = Signal()
     on_period_changed = Signal(str)
-    on_sell_clicked = Signal(int)
+    on_sell_clicked = Signal(str)
 
     def __init__(self):
         super().__init__()

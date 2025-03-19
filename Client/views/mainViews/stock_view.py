@@ -70,8 +70,8 @@ class StockView(QWidget):
 
     # Signals
     search_stock_requested = Signal(str, QDate, QDate)
-    buy_stock_requested = Signal(str, int, float)
-    sell_stock_requested = Signal(str, int, float)
+    buy_stock_requested = Signal(str, float)
+    sell_stock_requested = Signal(str, float)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -83,7 +83,7 @@ class StockView(QWidget):
         """Initialize the UI components"""
         # Main layout
         self.main_layout = QVBoxLayout(self)
-        self.setMinimumSize(1000, 700)
+        # self.setMinimumSize(1000, 700)
         # self.main_layout.setSpacing(30)
 
         # Create scrollable content area
@@ -410,51 +410,39 @@ class StockView(QWidget):
         try:
             symbol = self.symbol_input.text().strip().upper()
             quantity = int(self.quantity_input.text())
-            price = float(self.price_value.text().replace('$', ''))
 
             if self.buy_button.isChecked():
-                self.buy_stock_requested.emit(symbol, quantity, price)
+                self.buy_stock_requested.emit(symbol, quantity)
             elif self.sell_button.isChecked():
-                self.sell_stock_requested.emit(symbol, quantity, price)
+                self.sell_stock_requested.emit(symbol, quantity)
         except (ValueError, AttributeError):
             pass  # Handle error in presenter
 
     def update_stock_data(self, symbol, start_date, end_date, stock_data):
-        """Update stock information in the UI
-
-        Args:
-            :param stock_data:  - name: Company name
-                                - symbol: Stock symbol
-                                - volume: Trading volume
-                                - description: Company description
-                                - img: Company logo
-            :param end_date: end date
-            :param symbol: stock symbol
-            :param start_date: start date
-        """
+        """Update stock information in the UI"""
         # Update stock header
         self.stock_name.setText(f"{stock_data['name']} ({stock_data['symbol']})")
-
-        # # Format volume with commas
-        # formatted_volume = f"{stock_data['volume']:,}"
-        # self.volume_label.setText(f"Volume: {formatted_volume}")
-
+        print(stock_data)
         # Update action button text
         is_buy = self.buy_button.isChecked()
         self._update_action_button(is_buy=is_buy, symbol=stock_data['symbol'])
-
+        
         # Regenerate the chart
         if 'chart_data' in stock_data:
-            # self.chart.update_chart(symbol, start_date, end_date, stock_data['chart_data'])
-            # self.chart = StockChart()
             self.chart.update_chart(symbol, start_date, end_date, stock_data['chart_data'])
-
+        
         # Update description
         self.description.setText(stock_data['description'])
-
+        
         # Update company icon
-        if stock_data['img'] != "":
+        if stock_data['img'] is not None:
             self.company_icon.set_icon_from_base64(stock_data['img'])
+        
+        # Update the market/sell price and recalculate the total order value
+        if "price" in stock_data:
+            print("price is",stock_data['price'])
+            self.price_value.setText(f"${stock_data['price']:.2f}")
+            self.update_total_value()
 
     def show_message(self, message, is_error=False):
         """Display a message to the user"""

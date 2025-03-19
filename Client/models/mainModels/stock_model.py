@@ -52,18 +52,14 @@ class StockModel:
         start_str = start_date.strftime("%Y-%m-%d") if isinstance(start_date, datetime.date) else start_date
         end_str = end_date.strftime("%Y-%m-%d") if isinstance(end_date, datetime.date) else end_date
 
-        success, response = self.api_service.get("stock_details", params={
-            "ticker": symbol,
-            "startDate": start_str,
-            "endDate": end_str
-        })
+        success, response = self.api_service.search_stock(symbol, start_str, end_str)
 
         if success:
             self.current_stock = response
 
         return success, response
 
-    def execute_buy_order(self, symbol, quantity, price):
+    def execute_sell_order(self, symbol, quantity):
         """Execute a buy order
         
         Args:
@@ -77,18 +73,15 @@ class StockModel:
         if not self.current_user_id:
             return False, {"error": "No user is logged in"}
 
-        order_data = {
-            "user_id": self.current_user_id,
-            "symbol": symbol,
-            "quantity": quantity,
-            "price": price,
-            "type": "buy",
-            "timestamp": datetime.datetime.now().isoformat()
-        }
+        if not symbol:
+            return False, {"error": "No stock selected"}
 
-        return self.api_service.post("orders", order_data)
+        if quantity <= 0:
+            return False, {"error": "Quantity must be greater than zero"}
 
-    def execute_sell_order(self, symbol, quantity, price):
+        return self.api_service.sell_stock(self.current_user_id, symbol, quantity)
+
+    def execute_buy_order(self, symbol, quantity):
         """Execute a sell order
         
         Args:
@@ -102,18 +95,12 @@ class StockModel:
         if not self.current_user_id:
             return False, {"error": "No user is logged in"}
 
-        # Check if user has enough shares to sell
-        for holding in self.user_holdings:
-            if holding["symbol"] == symbol and holding["quantity"] >= quantity:
-                order_data = {
-                    "user_id": self.current_user_id,
-                    "symbol": symbol,
-                    "quantity": quantity,
-                    "price": price,
-                    "type": "sell",
-                    "timestamp": datetime.datetime.now().isoformat()
-                }
+        if not symbol:
+            return False, {"error": "No stock selected"}
 
-                return self.api_service.post("orders", order_data)
+        if quantity <= 0:
+            return False, {"error": "Quantity must be greater than zero"}
+        
+        print("hi")
 
-        return False, {"error": f"Insufficient shares of {symbol} to sell"}
+        return self.api_service.buy_stock(self.current_user_id, symbol, quantity)
