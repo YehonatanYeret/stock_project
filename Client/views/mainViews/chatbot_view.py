@@ -1,4 +1,5 @@
 import datetime
+from time import sleep
 
 from PySide6.QtCore import Qt, Signal, Slot, QSize, QDateTime, QTimer, QEasingCurve, QPropertyAnimation, \
     QParallelAnimationGroup, QAbstractAnimation, QPoint
@@ -150,21 +151,24 @@ class ChatbotView(QWidget):
         self.setObjectName("chatbotView")
         self.setWindowTitle("AI Trading Assistant")
 
+        self.messages = []  # Store message bubbles for reference
+
         # Setup fonts and UI
         self.setup_fonts()
         self.setup_ui()
 
-        # Keep track of messages
-        self.messages = []
+    def wellcome_message(self):
+        """Add a welcome message to the chat"""
 
-        # First add UI elements, then add the welcome message
-        QTimer.singleShot(300, lambda: self._add_assistant_message("Hello. How can I assist with your trading today?"))
+        if not self.messages:
+            # Add a welcome message if the chat is empty
+            self._add_assistant_message("Hello! I'm your AI trading assistant. How can I help you today?")
+
+    def _enable_send_button_and_add_welcome_message(self):
+        """Enable the send button and add the welcome message"""
 
     def setup_fonts(self):
         """Set up custom fonts for more elegant typography"""
-        # Using modern system fonts
-        self.title_font = QFont("Segoe UI", 16)
-        self.title_font.setWeight(QFont.DemiBold)
 
         self.body_font = QFont("Segoe UI", 12)
 
@@ -228,18 +232,7 @@ class ChatbotView(QWidget):
         self.chat_container.setWidget(self.message_container)
 
         # Modern input area with solid color
-        input_frame = StyledLineEdit(placeholder="Type your message...", parent=self)
-        input_frame.setObjectName("inputFrame")
-        input_frame.setMinimumHeight(80)
-        input_frame.setMaximumHeight(80)
-        input_frame.setStyleSheet("""
-            #inputFrame {
-                background-color: #FFFFFF;
-                border-radius: 12px;
-                margin: 0 15px;
-                border: 1px solid #EAEAEA;
-            }
-        """)
+        input_frame = RoundedCard(border_radius=30, shadow_enabled=True)
 
         input_layout = QHBoxLayout(input_frame)
         input_layout.setContentsMargins(15, 10, 15, 10)
@@ -265,7 +258,7 @@ class ChatbotView(QWidget):
         """)
         self.message_input.returnPressed.connect(self._on_send_clicked)
 
-        # Modern send button with solid color
+        # Send button with solid color
         self.send_button = QPushButton()
         self.send_button.setObjectName("sendButton")
         self.send_button.setFixedSize(50, 50)

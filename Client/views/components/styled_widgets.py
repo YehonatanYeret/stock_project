@@ -1,25 +1,24 @@
 import base64
-import os
-from PySide6.QtCore import Signal
 import base64
-from PySide6.QtCore import Qt
-from PySide6.QtSvgWidgets import QGraphicsSvgItem, QSvgWidget
-from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
+import os
+import this
 
 from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
+from PySide6.QtCore import Qt
 from PySide6.QtCore import Qt, QByteArray, QSize
 from PySide6.QtCore import Qt, QMargins, QPointF, QDate
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QImage
 from PySide6.QtGui import (
     QPixmap, QColor, QFont, QPainter, QPen, QBrush, QLinearGradient
 )
+from PySide6.QtSvgWidgets import QGraphicsSvgItem, QSvgWidget
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 from PySide6.QtWidgets import (
     QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout, QHBoxLayout,
     QTableWidget, QTableWidgetItem, QComboBox, QGraphicsDropShadowEffect,
     QHeaderView, QScrollArea, QSizePolicy, QDateEdit, QWidget, QComboBox
 )
-
-
 
 
 # ========== TEXT ELEMENTS ==========
@@ -610,7 +609,8 @@ class StyledLineSeriesChart(StyledChartView):
 # ========== SCROLL AREA ==========
 
 class ScrollableContainer(QScrollArea):
-    def __init__(self, parent=None, margins=(20, 20, 20, 20), spacing=20, bg_color="#F7F8FA", shadow_enabled=False, border_radius=0):
+    def __init__(self, parent=None, margins=(20, 20, 20, 20), spacing=20, bg_color="#F7F8FA", shadow_enabled=False,
+                 border_radius=0):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.NoFrame)
@@ -633,7 +633,7 @@ class ScrollableContainer(QScrollArea):
             }}
             QScrollBar:vertical {{
                 background: #E2E8F0;
-                width: 14px;
+                width: 8px;
                 margin: 0px;
                 border-radius: 7px;
             }}
@@ -671,7 +671,6 @@ class ScrollableContainer(QScrollArea):
         self.setGraphicsEffect(shadow_effect)
 
 
-
 # ========== LAYOUT HELPERS ==========
 
 def create_form_field(label_text, input_field, label_size=14, is_bold=True, color="#334155", margin_bottom=5):
@@ -699,43 +698,21 @@ def apply_shadow_effect(widget, blur_radius=20, color=QColor(15, 23, 42, 40), of
 
 
 # ========= IMG =========
+
 class CompanyIconView(QFrame):
-    """
-    A component that renders company icons from base64 strings.
-
-    Features:
-    - Fixed size display with proper scaling
-    - Default placeholder image
-    - Clean design with optional shadow
-    - Simple API for updating the image
-    """
-
-    def __init__(self,
-                 parent=None,
-                 size=48,
-                 shadow_enabled=True):
-        """
-        Initialize the company icon view.
-
-        Args:
-            parent: Parent widget
-            size: Size of the icon (width and height)
-            shadow_enabled: Whether to apply a shadow effect
-        """
+    def __init__(self, parent=None, size=48, shadow_enabled=True):
         super().__init__(parent)
+        self.size = size
 
-        # Set fixed size
-        # self.setFixedSize(size, size)
-        # Set fixed high
+        # Set fixed height and minimum width
         self.setFixedHeight(size)
-
-        # Self minimum length
         self.setMinimumWidth(size)
 
         # Create image label
         self.image_label = QLabel(self)
         self.image_label.setAlignment(Qt.AlignCenter)
-        self.image_label.setFixedSize(size, size)
+        self.image_label.setFixedHeight(size)
+        self.image_label.setMinimumWidth(size)
 
         # Create layout
         layout = QHBoxLayout(self)
@@ -754,106 +731,79 @@ class CompanyIconView(QFrame):
         if shadow_enabled:
             self.apply_shadow()
 
-        # Set default placeholder
-        # self._set_placeholder()
-
     def apply_shadow(self):
-        """Apply shadow effect to the icon"""
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(10)
         shadow.setColor(QColor(0, 0, 0, 50))
         shadow.setOffset(0, 2)
         self.image_label.setGraphicsEffect(shadow)
 
-    def _set_placeholder(self):
-        """Set a default placeholder image"""
-        # This creates a simple colored square as placeholder
-        # Could be replaced with a proper placeholder image path
-        placeholder = QPixmap(self.image_label.size())
-        placeholder.fill(Qt.lightGray)
-        self.image_label.setPixmap(placeholder)
-
     def set_icon_from_base64(self, base64_string):
-        """
-        Set the icon from a base64 encoded string.
-        
-        Args:
-            base64_string: Base64 encoded image string
-        """
         if not base64_string:
             self._set_placeholder()
             return
-            
+
         try:
-            # Convert base64 to bytes
             image_data = QByteArray.fromBase64(base64_string.encode())
-            
-            # Create image from data
             image = QImage()
             image.loadFromData(image_data)
-            
+
             if image.isNull():
                 self._set_placeholder()
                 return
-                
-            # Convert to pixmap and scale
+
+            # חישוב הרוחב באופן יחסי לגובה
+            original_width = image.width()
+            original_height = image.height()
+
+            if original_height == 0:
+                self._set_placeholder()
+                return
+
+            scale_factor = self.size / original_height  # בכמה צריך להקטין
+            new_width = int(original_width * scale_factor)  # חישוב הרוחב החדש
+
             pixmap = QPixmap.fromImage(image)
-            
-            # Scale maintaining aspect ratio
-            scaled_pixmap = pixmap.scaled(
-                self.image_label.size(),
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
-            )
-            
-            # Set the pixmap
+            scaled_pixmap = pixmap.scaled(new_width, self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
             self.image_label.setPixmap(scaled_pixmap)
-            
+            self.image_label.setFixedWidth(scaled_pixmap.width())  # עדכון הרוחב לפי הגודל החדש
+
         except Exception as e:
             print(f"Error loading image from base64: {e}")
             self._set_placeholder()
 
-def load_image_from_base64(base64_string, parent=None):
-    # Remove data URL prefix if present
-    if "," in base64_string:
-        base64_string = base64_string.split(",")[1]
+    def _set_placeholder(self):
+        placeholder = QPixmap(self.image_label.size())
+        placeholder.fill(Qt.lightGray)
+        self.image_label.setPixmap(placeholder)
 
-    # Decode base64 to raw bytes
-    image_data = base64.b64decode(base64_string)
+    def load_image_from_base64(base64_string, parent=None):
+        # Remove data URL prefix if present
+        if "," in base64_string:
+            base64_string = base64_string.split(",")[1]
 
-    # Try loading as a raster image (PNG, JPEG, etc.)
-    pixmap = QPixmap()
-    if pixmap.loadFromData(image_data):
-        label = QLabel(parent)
-        label.setPixmap(pixmap)
-        return label  # Return QLabel with pixmap
+        # Decode base64 to raw bytes
+        image_data = base64.b64decode(base64_string)
 
-    # If raster loading failed, assume it is an SVG
-    svg_widget = QSvgWidget(parent)
-    svg_widget.load(image_data)
-    return svg_widget  # Return QSvgWidget for SVG images
+        # Try loading as a raster image (PNG, JPEG, etc.)
+        pixmap = QPixmap()
+        if pixmap.loadFromData(image_data):
+            label = QLabel(parent)
+            label.setPixmap(pixmap)
+            return label  # Return QLabel with pixmap
 
-    def apply_shadow(self, blur_radius=10, offset=2, opacity=20):
-        """
-        Apply a shadow effect to the icon.
-
-        Args:
-            blur_radius: Radius of the shadow blur
-            offset: Shadow offset in pixels
-            opacity: Shadow opacity percentage
-        """
-
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(blur_radius)
-        shadow.setOffset(offset)
-        shadow.setColor(QColor(0, 0, 0, opacity * 255 // 100))
-        self.setGraphicsEffect(shadow)
+        # If raster loading failed, assume it is an SVG
+        svg_widget = QSvgWidget(parent)
+        svg_widget.load(image_data)
+        return svg_widget  # Return QSvgWidget for SVG images
 
 
 # ========== COMBO BOXES ==========
 
 class FilterComboBox(QComboBox):
     onTextChanged = Signal(str)
+
     def __init__(self,
                  parent=None,
                  placeholder="Filter by...",

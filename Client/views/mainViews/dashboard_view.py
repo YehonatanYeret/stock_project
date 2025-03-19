@@ -1,7 +1,8 @@
 import datetime
 import sys
-from PySide6.QtCore import Signal
+
 from PySide6.QtCharts import QAreaSeries
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QBrush, QColor, QPen
 from functools import partial
 
@@ -53,14 +54,14 @@ class HoldingsTable(StyledTable):
             "Total Value", "Total Gain", "Gain %", "Actions"
         ])
 
-        self.setColumnWidth(0, 30)   # ID
+        self.setColumnWidth(0, 30)  # ID
         self.setColumnWidth(1, 150)  # Symbol
         self.setColumnWidth(2, 100)  # Quantity
         self.setColumnWidth(3, 140)  # Current Price
         self.setColumnWidth(4, 140)  # Total Value
         self.setColumnWidth(5, 140)  # Total Gain
         self.setColumnWidth(6, 120)  # Gain %
-        self.setColumnWidth(7, 80)   # Actions
+        self.setColumnWidth(7, 80)  # Actions
 
         header = self.horizontalHeader()
         for i in range(7):
@@ -200,6 +201,7 @@ class PortfolioChart(StyledLineSeriesChart):
         padding = (max_value - min_value) * 0.1
         self.axisX.setRange(first_date, datetime.datetime.now())
         self.axisY.setRange(min_value - padding, max_value + padding)
+
 
 class DashboardView(QWidget):
     add_money_clicked = Signal()

@@ -1,7 +1,6 @@
 import datetime
 import json
 
-from PySide6.QtCore import QDate
 from PySide6.QtCore import QObject, Slot, QDate
 
 class StockPresenter(QObject):

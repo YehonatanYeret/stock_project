@@ -257,6 +257,7 @@ class Main_view(QMainWindow):
         """Show the chatbot screen"""
         self.chatbot_presenter = ChatbotPresenter(ChatbotModel(), self.chatbot_widget, self.user_id)
         self.content_stack.setCurrentWidget(self.chatbot_widget)
+        self.chatbot_widget.wellcome_message()
         self.sidebar.set_active_button("chatbot")
 
     def show_settings(self):
