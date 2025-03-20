@@ -12,8 +12,7 @@ public class StockContext(DbContextOptions<StockContext> options) : DbContext(op
 {
     // dbsets for the models
     public DbSet<User> Users { get; set; } = default!;
-    public DbSet<Holding> Holdings { get; set; } = default!;
-    public DbSet<Trade> Trades { get; set; } = default!;
+    public DbSet<Log> Logs { get; set; } = default!;
 
     /// <summary>
     /// When the model is created, the configurations for the models are applied.

@@ -13,7 +13,7 @@ public static class SeedData
                    serviceProvider.GetRequiredService<
                        DbContextOptions<StockContext>>()))
         {
-            if (context == null || context.Users == null || context.Holdings == null || context.Trades == null)
+            if (context == null || context.Users == null || context.Logs == null)
             {
                 throw new ArgumentNullException("Null UserContext");
             }
@@ -32,43 +32,27 @@ public static class SeedData
                 Console.WriteLine("✅ Seeded Users");
             }
 
-            // ✅ Seed Holdings
-            if (!context.Holdings.Any())
-            {
-                var holdings = new List<Holding>
-                {
-                    new Holding { UserId = 1, Symbol = "AAPL", Quantity = 15 },
-                    new Holding { UserId = 1, Symbol = "GOOGL", Quantity = 10 },
-                    new Holding { UserId = 2, Symbol = "TSLA", Quantity = 8 },
-                    new Holding { UserId = 2, Symbol = "AMZN", Quantity = 5 },
-                };
-
-                context.Holdings.AddRange(holdings);
-                context.SaveChanges();
-                Console.WriteLine("✅ Seeded Holdings");
-            }
-
             // ✅ Seed Trades (Over a Year with Buys & Sells)
-            if (!context.Trades.Any())
+            if (!context.Logs.Any())
             {
-                var trades = new List<Trade>
+                var logs = new List<Log>
                 {
                     // Yehonatan (User 1)
-                    new Trade { UserId = 1, Symbol = "AAPL", Date = DateTime.Now.AddMonths(-12), Type = Enums.historyType.Buy, Quantity = 10, Price = 150 },
-                    new Trade { UserId = 1, Symbol = "GOOGL", Date = DateTime.Now.AddMonths(-10), Type = Enums.historyType.Buy, Quantity = 5, Price = 2500 },
-                    new Trade { UserId = 1, Symbol = "AAPL", Date = DateTime.Now.AddMonths(-8), Type = Enums.historyType.Sell, Quantity = 5, Price = 180 },
-                    new Trade { UserId = 1, Symbol = "GOOGL", Date = DateTime.Now.AddMonths(-5), Type = Enums.historyType.Sell, Quantity = 2, Price = 2600 },
-                    new Trade { UserId = 1, Symbol = "AAPL", Date = DateTime.Now.AddMonths(-3), Type = Enums.historyType.Buy, Quantity = 10, Price = 170 },
-
+                    new Log { UserId = 1, Symbol = "AAPL", Date = DateTime.Now.AddMonths(-12), Type = Enums.historyType.Buy, Quantity = 10, Price = 150 },
+                    new Log { UserId = 1, Symbol = "GOOGL", Date = DateTime.Now.AddMonths(-10), Type = Enums.historyType.Buy, Quantity = 5, Price = 2500 },
+                    new Log { UserId = 1, Symbol = "AAPL", Date = DateTime.Now.AddMonths(-8), Type = Enums.historyType.Sell, Quantity = 5, Price = 180 },
+                    new Log { UserId = 1, Symbol = "GOOGL", Date = DateTime.Now.AddMonths(-5), Type = Enums.historyType.Sell, Quantity = 2, Price = 2600 },
+                    new Log { UserId = 1, Symbol = "AAPL", Date = DateTime.Now.AddMonths(-3), Type = Enums.historyType.Buy, Quantity = 10, Price = 170 },
+                        
                     // Maor (User 2)
-                    new Trade { UserId = 2, Symbol = "TSLA", Date = DateTime.Now.AddMonths(-11), Type = Enums.historyType.Buy, Quantity = 5, Price = 700 },
-                    new Trade { UserId = 2, Symbol = "AMZN", Date = DateTime.Now.AddMonths(-9), Type = Enums.historyType.Buy, Quantity = 3, Price = 3200 },
-                    new Trade { UserId = 2, Symbol = "TSLA", Date = DateTime.Now.AddMonths(-7), Type = Enums.historyType.Sell, Quantity = 2, Price = 750 },
-                    new Trade { UserId = 2, Symbol = "AMZN", Date = DateTime.Now.AddMonths(-6), Type = Enums.historyType.Sell, Quantity = 1, Price = 3400 },
-                    new Trade { UserId = 2, Symbol = "TSLA", Date = DateTime.Now.AddMonths(-2), Type = Enums.historyType.Buy, Quantity = 3, Price = 720 },
+                    new Log { UserId = 2, Symbol = "TSLA", Date = DateTime.Now.AddMonths(-11), Type = Enums.historyType.Buy, Quantity = 5, Price = 700 },
+                    new Log { UserId = 2, Symbol = "AMZN", Date = DateTime.Now.AddMonths(-9), Type = Enums.historyType.Buy, Quantity = 3, Price = 3200 },
+                    new Log { UserId = 2, Symbol = "TSLA", Date = DateTime.Now.AddMonths(-7), Type = Enums.historyType.Sell, Quantity = 2, Price = 750 },
+                    new Log { UserId = 2, Symbol = "AMZN", Date = DateTime.Now.AddMonths(-6), Type = Enums.historyType.Sell, Quantity = 1, Price = 3400 },
+                    new Log { UserId = 2, Symbol = "TSLA", Date = DateTime.Now.AddMonths(-2), Type = Enums.historyType.Buy, Quantity = 3, Price = 720 },
                 };
 
-                context.Trades.AddRange(trades);
+                context.Logs.AddRange(logs);
                 context.SaveChanges();
                 Console.WriteLine("✅ Seeded Trades");
             }

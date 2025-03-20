@@ -72,6 +72,7 @@ class StockView(QWidget):
     search_stock_requested = Signal(str, QDate, QDate)
     buy_stock_requested = Signal(str, float)
     sell_stock_requested = Signal(str, float)
+    current_ticker=None
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -375,12 +376,12 @@ class StockView(QWidget):
 
     def on_search(self):
         """Handle search button click"""
-        symbol = self.symbol_input.text().strip().upper()
+        self.current_ticker = self.symbol_input.text().strip().upper()
         start_date = self.start_date.date()
         end_date = self.end_date.date()
 
-        if symbol:
-            self.search_stock_requested.emit(symbol, start_date, end_date)
+        if self.current_ticker:
+            self.search_stock_requested.emit(self.current_ticker, start_date, end_date)
 
     def on_order_type_changed(self):
         """Handle order type change"""
@@ -406,7 +407,7 @@ class StockView(QWidget):
     def on_action_button_clicked(self):
         """Handle buy/sell action"""
         try:
-            symbol = self.symbol_input.text().strip().upper()
+            symbol = self.current_ticker
             quantity = float(self.quantity_input.text())
 
             if self.buy_button.isChecked():
@@ -461,3 +462,4 @@ class StockView(QWidget):
     def set_search_ticker(self, symbol):
         """Set the search ticket"""
         self.symbol_input.setText(symbol)
+        self.current_ticker = symbol

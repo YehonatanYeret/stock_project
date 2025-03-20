@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Gateways.Interfaces;
+using Server.Models;
 using Server.Models.Domain;
 using Server.Models.DTOs.Queries;
 
@@ -21,28 +22,84 @@ public class TradingQueryController : ControllerBase
     }
 
     /// <summary>
-    /// Get all holdings for a specific user.
+    /// Get all holdings for a specific user reconstructed from trade logs.
     /// </summary>
     [HttpGet("holdings/{userId}")]
     public async Task<ActionResult<List<HoldingDto>>> GetUserHoldings(int userId)
     {
-        var holdings = await _context.Holdings
-            .Where(h => h.UserId == userId)
+        var trades = await _context.Logs
+            .Where(t => t.UserId == userId)
+            .OrderBy(t => t.Date) // Ensure chronological order
             .ToListAsync();
 
-        if (!holdings.Any())
+        if (!trades.Any())
         {
-            return NotFound(new { message = "No holdings found for this user." });
+            return NotFound(new { message = "No trades found for this user." });
         }
+
+        var holdings = trades
+            .GroupBy(t => t.Symbol)
+            .Select(g =>
+            {
+                var symbol = g.Key;
+                var totalQuantity = 0m;
+                var totalCost = 0m;
+
+                foreach (var trade in g)
+                {
+                    if (trade.Type == Enums.historyType.Buy)
+                    {
+                        totalQuantity += trade.Quantity;
+                        totalCost += trade.Quantity * trade.Price;
+                    }
+                    else if (trade.Type == Enums.historyType.Sell)
+                    {
+                        totalQuantity -= trade.Quantity;
+                        totalCost -= trade.Quantity * trade.Price; // Not used for cost basis, but useful for tracking
+                    }
+                }
+
+                var averageBuyPrice = totalQuantity > 0 ? totalCost / totalQuantity : 0;
+
+                return new
+                {
+                    Symbol = symbol,
+                    Quantity = totalQuantity,
+                    BuyPrice = averageBuyPrice
+                };
+            })
+            .Where(h => h.Quantity > 0) // Filter out fully sold stocks
+            .ToList();
 
         var holdingsDto = new List<HoldingDto>();
 
         foreach (var holding in holdings)
         {
-            holdingsDto.Add(await CalculateHoldingDto(holding));
+            holdingsDto.Add(await CalculateHoldingDto(holding.Symbol, holding.Quantity, holding.BuyPrice));
         }
 
         return Ok(holdingsDto);
+    }
+
+    /// <summary>
+    /// Helper method to calculate HoldingDto from trade logs.
+    /// </summary>
+    private async Task<HoldingDto> CalculateHoldingDto(string symbol, decimal quantity, decimal buyPrice)
+    {
+        decimal currentPrice = await _polygonGateway.GetSellPriceAsync(symbol) ?? 0;
+        decimal totalValue = quantity * currentPrice;
+        decimal totalGain = (currentPrice - buyPrice) * quantity;
+        decimal totalGainPercentage = buyPrice > 0 ? (totalGain / (buyPrice * quantity)) * 100 : 0;
+
+        return new HoldingDto
+        {
+            Symbol = symbol,
+            Quantity = quantity,
+            CurrentPrice = currentPrice,
+            TotalValue = totalValue,
+            TotalGain = totalGain,
+            TotalGainPercentage = totalGainPercentage
+        };
     }
 
     /// <summary>
@@ -51,7 +108,7 @@ public class TradingQueryController : ControllerBase
     [HttpGet("trades/{userId}")]
     public async Task<ActionResult<List<TradingDto>>> GetUserTrades(int userId)
     {
-        var trades = await _context.Trades
+        var trades = await _context.Logs
             .Where(t => t.UserId == userId)
             .Select(t => new TradingDto
             {
@@ -72,29 +129,7 @@ public class TradingQueryController : ControllerBase
     }
 
     /// <summary>
-    /// Helper method to calculate HoldingDto from Holding entity.
-    /// </summary>
-    private async Task<HoldingDto> CalculateHoldingDto(Holding holding)
-    {
-        decimal currentPrice = await _polygonGateway.GetSellPriceAsync(holding.Symbol) ?? 0;
-        decimal totalValue = holding.Quantity * currentPrice;
-        decimal totalGain = (currentPrice - holding.BuyPrice) * holding.Quantity;
-        decimal totalGainPercentage = holding.BuyPrice > 0 ? (totalGain / (holding.BuyPrice * holding.Quantity)) * 100 : 0;
-
-        return new HoldingDto
-        {
-            Id = holding.Id,
-            Symbol = holding.Symbol,
-            Quantity = holding.Quantity,
-            CurrentPrice = currentPrice,
-            TotalValue = totalValue,
-            TotalGain = totalGain,
-            TotalGainPercentage = totalGainPercentage
-        };
-    }
-
-    /// <summary>
-    /// return the amount of cashbalace for a specific user
+    /// Returns the cash balance for a specific user.
     /// </summary>
     [HttpGet("cashbalance/{userId}")]
     public async Task<ActionResult<decimal>> GetCashBalance(int userId)
@@ -105,12 +140,11 @@ public class TradingQueryController : ControllerBase
         {
             return NotFound(new { message = "User not found." });
         }
-        Console.WriteLine(user.CashBalance);
         return Ok(user.CashBalance);
     }
 
-    ///<summary>
-    ///return the profit and loss for a specific user
+    /// <summary>
+    /// Returns the profit and loss for a specific user.
     /// </summary>
     [HttpGet("profit/{userId}")]
     public async Task<ActionResult<decimal>> GetProfit(int userId)

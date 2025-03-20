@@ -102,6 +102,7 @@ class ApiService:
         if success:
             return True, response
         else:
+            print("bad request")
             return False, self._extract_backend_message(response, "Failed to buy stock. Please try again.")
 
     def search_stock(self, symbol, startDate, endDate):
@@ -158,6 +159,7 @@ class ApiService:
         - If validation errors exist, it extracts the first one.
         - Otherwise, it falls back to a default message.
         """
+        print(response)
         if isinstance(response, dict):
             if "message" in response:
                 return response["message"]

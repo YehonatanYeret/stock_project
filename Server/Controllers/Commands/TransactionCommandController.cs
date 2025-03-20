@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Server.Data;
-using Server.Models;
 using Microsoft.EntityFrameworkCore;
+using Server.Data;
 using Server.Gateways.Interfaces;
+using Server.Models;
 using Server.Models.Domain;
 using Server.Models.DTOs.Commands;
 using Server.Utils;
@@ -26,66 +26,77 @@ public class TransactionCommandController : Controller
     [HttpPost("sell/{userId}")]
     public async Task<ActionResult> Sell(int userId, [FromBody] TransactionRequest model)
     {
-        if (string.IsNullOrEmpty(model.Ticker) || model.Quantity == 0)
+        if (string.IsNullOrEmpty(model.Ticker) || model.Quantity <= 0)
         {
-            return BadRequest(new { message = "HoldingId and Quantity are required." });
+            return BadRequest(new { message = "Ticker and Quantity are required." });
         }
 
         try
         {
-            // Find the holding by HoldingId
-            Holding? holding = await _context.Holdings
-                .FirstOrDefaultAsync(h => h.Symbol == model.Ticker && h.UserId == userId);
+            // Get user's trade history for this stock
+            var tradeHistory = await _context.Logs
+                .Where(t => t.UserId == userId && t.Symbol == model.Ticker)
+                .ToListAsync();
 
-            if (holding is null)
+            if (!tradeHistory.Any())
             {
-                return BadRequest(new { message = "Holding not found." });
+                return BadRequest(new { message = "No holdings found for this stock." });
             }
 
-            // Check if the user has enough shares to sell
-            if (holding.Quantity < model.Quantity)
+            // Calculate available shares
+            decimal totalSharesOwned = tradeHistory
+                .Where(t => t.Type == Enums.historyType.Buy)
+                .Sum(t => t.Quantity) -
+                tradeHistory
+                .Where(t => t.Type == Enums.historyType.Sell)
+                .Sum(t => t.Quantity);
+
+            if (totalSharesOwned < model.Quantity)
             {
                 return BadRequest(new { message = "Not enough shares to sell." });
             }
 
-            // Fetch current price from Polygon API using the PolygonGateway
-            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(holding.Symbol) ?? 0;
-
-            // Calculate profit/loss
-            decimal profitLoss = (currentPrice - holding.BuyPrice) * model.Quantity;
-
-            // Update the holding quantity
-            holding.Quantity -= model.Quantity;
-
-            // If the holding quantity becomes 0, remove it from the holdings
-            if (holding.Quantity == 0)
+            // Fetch current price from Polygon API
+            decimal? currentPrice = await _polygonGateway.GetSellPriceAsync(model.Ticker);
+            if (currentPrice == null)
             {
-                _context.Holdings.Remove(holding);
+                return BadRequest(new { message = "Stock not found or Api limit exceeded" });
             }
 
-            // Log the trade in the Trades table as a sell
-            var trade = new Trade
+            // Calculate total cost of owned shares
+            decimal totalBuyCost = tradeHistory
+                .Where(t => t.Type == Enums.historyType.Buy)
+                .Sum(t => t.Quantity * t.Price);
+
+            decimal averageBuyPrice = totalSharesOwned > 0 ? totalBuyCost / totalSharesOwned : 0;
+            decimal profitLoss = ((decimal)currentPrice - averageBuyPrice) * model.Quantity;
+
+            // Log the sale
+            var sellTrade = new Log
             {
-                UserId = holding.UserId,
-                Symbol = holding.Symbol,
+                UserId = userId,
+                Symbol = model.Ticker,
                 Date = model.Date,
                 Type = Enums.historyType.Sell,
                 Quantity = model.Quantity,
-                Price = currentPrice
+                Price = (decimal)currentPrice
             };
 
-            _context.Trades.Add(trade);
+            _context.Logs.Add(sellTrade);
 
-            // Update the user's profit and portfolio value
-            User user = _context.Users.FirstOrDefault(u => u.Id == holding.UserId)!;
+            // Update user's cash balance and profit
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                return BadRequest(new { message = "User not found." });
+            }
 
-            // The profit/loss is added to the user's profit and the portfolio value is updated by the amount of the sale
+            user.CashBalance += model.Quantity * (decimal)currentPrice;
             user.Profit += profitLoss;
-            user.CashBalance = PortfolioValueUtils.CalculatePortfolioValue(user.CashBalance, currentPrice * model.Quantity);
 
             await _context.SaveChangesAsync();
 
-            return Ok(trade);
+            return Ok(new { message = "Sell trade completed successfully.", sellTrade });
         }
         catch (Exception ex)
         {
@@ -93,77 +104,60 @@ public class TransactionCommandController : Controller
         }
     }
 
-
     // POST: api/transaction/command/buy
     [HttpPost("buy/{userId}")]
     public async Task<ActionResult> Buy(int userId, [FromBody] TransactionRequest model)
     {
         if (string.IsNullOrWhiteSpace(model.Ticker) || model.Quantity <= 0)
         {
-            return BadRequest(new { message = "Symbol and Quantity are required." });
+            return BadRequest(new { message = "Ticker and Quantity are required." });
         }
 
         try
         {
             // Fetch the current stock price from Polygon API
-            decimal currentPrice = await _polygonGateway.GetSellPriceAsync(model.Ticker) ?? 0;
+            var currentPrice = await _polygonGateway.GetSellPriceAsync(model.Ticker);
+            if(currentPrice == null)
+            {
+                return BadRequest(new { message = "Stock not found or Api limit exceeded" });
+            }
 
-            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user is null)
+            // Fetch user
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
             {
                 return BadRequest(new { message = "User not found." });
             }
 
-            // Check if the user has enough funds to buy and update the portfolio value
-            decimal cost = model.Quantity * currentPrice;
-            user.CashBalance = PortfolioValueUtils.CalculatePortfolioValue(user.CashBalance, -cost);
-
-
-            // Find existing holding for the user and stock
-            Holding? holding = await _context.Holdings
-                .FirstOrDefaultAsync(h => h.UserId == userId && h.Symbol == model.Ticker);
-
-            if (holding is not null)
+            // Check if user has enough funds
+            decimal totalCost = model.Quantity * (decimal)currentPrice;
+            if (user.CashBalance < totalCost)
             {
-                // Update existing holding (average buy price)
-                decimal totalCost = holding.Quantity * holding.BuyPrice + cost;
-                holding.Quantity += model.Quantity;
-                holding.BuyPrice = totalCost / holding.Quantity; // New average price
-            }
-            else
-            {
-                // Create new holding
-                holding = new Holding
-                {
-                    UserId = userId,
-                    Symbol = model.Ticker,
-                    Quantity = model.Quantity,
-                    BuyPrice = currentPrice
-                };
-                _context.Holdings.Add(holding);
+                return BadRequest(new { message = "Insufficient funds." });
             }
 
-            // Log the trade in the Trades table as a buy
-            var trade = new Trade
+            // Deduct cash balance
+            user.CashBalance -= totalCost;
+
+            // Log the buy trade
+            var buyTrade = new Log
             {
                 UserId = userId,
                 Symbol = model.Ticker,
                 Date = model.Date,
                 Type = Enums.historyType.Buy,
                 Quantity = model.Quantity,
-                Price = currentPrice
+                Price = (decimal)currentPrice
             };
 
-            _context.Trades.Add(trade);
-
+            _context.Logs.Add(buyTrade);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Buy trade completed successfully.", holding, trade });
+            return Ok(new { message = "Buy trade completed successfully.", buyTrade });
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { message = $"An error occurred during buy transaction: {ex.Message}" });
         }
     }
-
 }
