@@ -52,6 +52,17 @@ class ChatbotModel:
         self.message_history.append(message)
         return message
 
+
+    def generate_ai_response(self, user_message: str):
+        """Generate AI response based on user message"""
+        # This is where you would integrate with an actual AI service
+        # For now, we'll use simple keyword matching
+        status, response = self.api_service.get_AI_response(user_message)
+        if status:
+            return self.add_message(response, is_user=False)
+        else:
+            return self.add_message("there is an error. please try again later", is_user=False)
+        
     def get_message_history(self) -> List[ChatMessage]:
         """Get the full message history"""
         return self.message_history
@@ -80,22 +91,3 @@ class ChatbotModel:
             "transactions": transactions,
             "cash_balance": cash_balance
         }
-
-    def save_conversation(self) -> bool:
-        """
-        Save the conversation history to backend
-        In a real implementation, this would store the conversation
-        """
-        # This would typically call an API endpoint to save the conversation
-        # For now, we'll just return True
-        return True
-
-    def load_conversation(self, conversation_id: int) -> bool:
-        """
-        Load a previous conversation from backend
-        In a real implementation, this would retrieve a stored conversation
-        """
-        # This would typically call an API endpoint to load a conversation
-        # For now, we'll just return False
-        return False
-
