@@ -7,8 +7,8 @@ from PySide6.QtWidgets import (
     QLineEdit, QDateEdit, QFrame, QSplitter, QScrollArea, QGridLayout,
     QGraphicsDropShadowEffect, QSizePolicy, QSpacerItem, QMainWindow
 )
-from views.components.chart import StockChartWidget
-from views.components.styled_widgets import (
+from components.chart import StockChartWidget
+from components.styled_widgets import (
     StyledLabel, StyledButton, StyledLineEdit, StyledDateEdit,
     PrimaryButton, Card, RoundedCard, GradientCard, ScrollableContainer,
     BuyToggleButton, SellToggleButton, PageTitleLabel, SectionTitleLabel,
@@ -83,8 +83,6 @@ class StockView(QWidget):
         """Initialize the UI components"""
         # Main layout
         self.main_layout = QVBoxLayout(self)
-        # self.setMinimumSize(1000, 700)
-        # self.main_layout.setSpacing(30)
 
         # Create scrollable content area
         self.scroll_area = ScrollableContainer(parent=self)
@@ -459,3 +457,7 @@ class StockView(QWidget):
             message_box.setWindowTitle("Success")
 
         message_box.exec()
+
+    def set_search_ticker(self, symbol):
+        """Set the search ticket"""
+        self.symbol_input.setText(symbol)

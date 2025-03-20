@@ -1,7 +1,9 @@
-from PySide6.QtCore import Qt
 import pandas as pd
-from lightweight_charts.widgets import QtChart  # Use QtChart for embedding
+from PySide6.QtCore import QDate
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
+from lightweight_charts.widgets import QtChart
+
 
 class StockChartWidget(QWidget):
     def __init__(self, parent=None):
@@ -23,7 +25,7 @@ class StockChartWidget(QWidget):
 
         # Set size policy for auto resizing
         self.chart.get_webview().setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.chart.get_webview().setMinimumSize(800, 400)
+        # self.chart.get_webview().setMinimumSize(680, 300)
 
         # Add the chart widget
         layout.addWidget(self.chart.get_webview(), stretch=1)
@@ -44,6 +46,7 @@ class StockChartWidget(QWidget):
             df['date'] = pd.to_datetime(df['t'], unit='ms')  # Convert timestamp
             df = df.rename(columns={'o': 'open', 'h': 'high', 'l': 'low', 'c': 'close', 'v': 'volume'})
             return df[['date', 'open', 'high', 'low', 'close', 'volume']]
+        print("⚠️ Error: Invalid stock data format!", data)
         return None
 
     def calculate_sma(self, df, period=50):
@@ -57,7 +60,7 @@ class StockChartWidget(QWidget):
         """Render the chart with existing stock data"""
         if self.data is not None:
             self.chart.set(self.data)  # Set new data
-            
+
             # Compute and display SMA line
             sma_data = self.calculate_sma(self.data, period=50)
             if sma_data is not None:
@@ -71,22 +74,24 @@ class StockChartWidget(QWidget):
         Update the chart dynamically with new stock data.
 
         :param ticker: Stock symbol
-        :param start_date: Start date
-        :param end_date: End date
+        :param start_date: Start date as a string in "yyyy-MM-dd" format
+        :param end_date: End date as a string in "yyyy-MM-dd" format
         :param data: Stock data in list format
         """
-        print(f"📈 Updating chart for {ticker} from {start_date} to {end_date}")
 
+        # self.clear_chart()  # Clear the chart before updating
         self.data = self.process_data(data)  # Convert to DataFrame
         if self.data is not None:
-            # self.auto_zoom_chart()
-            self.chart.set_visible_range(start_date, end_date)  # Set visible range
             self.display_chart()  # Display updated chart
+
+            self.chart.get_webview().page().runJavaScript("chart.timeScale().fitContent();")
+
+
         else:
             print("❌ Error: Unable to process stock data.")
 
-
     def clear_chart(self):
         """Clears the chart for new data."""
-        self.chart.clear()
+        self.chart.set(pd.DataFrame())  # Set an empty list to clear the chart data
+        self.chart.get_webview().update()  # Update the webview to reflect changes
         print("🧹 Chart cleared.")

@@ -1,7 +1,6 @@
 import base64
 import base64
 import os
-import this
 
 from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
 from PySide6.QtCore import Qt
@@ -755,7 +754,7 @@ class CompanyIconView(QFrame):
             # חישוב הרוחב באופן יחסי לגובה
             original_width = image.width()
             original_height = image.height()
-
+            
             if original_height == 0:
                 self._set_placeholder()
                 return

@@ -4,7 +4,7 @@
 )
 from PySide6.QtCore import Qt, Signal
 
-from views.components.styled_widgets import (
+from components.styled_widgets import (
     PrimaryButton, StyledLineEdit, StyledLabel, Card
 )
 

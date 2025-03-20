@@ -78,8 +78,7 @@ class StockPresenter(QObject):
             end_str = end_date.strftime("%Y-%m-%d") if isinstance(end_date, datetime.date) else end_date
             self.view.update_stock_data(symbol, start_str, end_str, formatted_data)
         else:
-            error_msg = stock_data.get("error", f"Failed to retrieve data for {symbol}")
-            self.view.show_message(error_msg, True)
+            self.view.show_message(stock_data, True)
 
     @Slot(str, int)
     def on_buy_stock(self, symbol, quantity):

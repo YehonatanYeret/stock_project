@@ -77,6 +77,8 @@ namespace Server.Controllers.Queries
                     AggregateData = aggregateData?.ToString(Newtonsoft.Json.Formatting.None)
                 };
 
+                Console.WriteLine(response);
+
                 return Ok(response);
             }
             catch (Exception ex)

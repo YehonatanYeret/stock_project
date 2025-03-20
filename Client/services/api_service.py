@@ -113,7 +113,7 @@ class ApiService:
         if seccess:
             return True, response
         else:
-            return False, self._extract_backend_message(response)
+            return False, self._extract_backend_message(response, "Failed to search stock. Please try again.")
 
     def get(self, endpoint, params=None, **kwargs):
         """Generic GET request handler"""

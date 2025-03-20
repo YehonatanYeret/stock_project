@@ -7,7 +7,7 @@ from PySide6.QtGui import QColor, QPalette, QFont, QIcon, QFontDatabase
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                                QFrame, QTextEdit, QLineEdit, QPushButton, QScrollArea,
                                QSizePolicy, QSpacerItem, QGraphicsOpacityEffect, QLabel)
-from views.components.styled_widgets import (
+from components.styled_widgets import (
     ScrollableContainer, StyledLineSeriesChart, StyledStatsCard, StyledTable,
     PageTitleLabel, SectionTitleLabel, StyledLabel, PrimaryButton, DangerButton,
     SellButton, Card, RoundedCard, StyledLineEdit

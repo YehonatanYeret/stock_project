@@ -19,7 +19,7 @@ from PySide6.QtCore import Qt, QDateTime
 # Import custom components
 from PySide6.QtCharts import QLineSeries, QDateTimeAxis, QValueAxis
 
-from views.components.styled_widgets import (
+from components.styled_widgets import (
     FilterComboBox, ScrollableContainer, StyledLineSeriesChart, StyledStatsCard, StyledTable,
     PageTitleLabel, SectionTitleLabel, StyledLabel, PrimaryButton, DangerButton,
     SellButton
