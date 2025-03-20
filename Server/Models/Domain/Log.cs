@@ -1,13 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
 namespace Server.Models.Domain;
 
-
-/// <summary>
-/// this class represent the holding of a user. the user can have multiple holdings
-/// </summary>
-public class Holding
+public class Log
 {
     [Key]
     public int Id { get; set; }
@@ -15,7 +10,8 @@ public class Holding
     [ForeignKey("User")]
     public required int UserId { get; set; }
     public required string Symbol { get; set; }
+    public required DateTime Date { get; set; }
+    public Enums.historyType Type { get; set; }
     public decimal Quantity { get; set; }
-    public decimal BuyPrice { get; set; }
-
+    public decimal Price { get; set; }
 }

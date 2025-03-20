@@ -1,14 +1,14 @@
 import sys
 
 from PySide6.QtCore import Qt, Signal, QDate, QPropertyAnimation, QEasingCurve, QSize
-from PySide6.QtGui import QColor, QFont, QIcon, QIntValidator, QPalette, QLinearGradient, QGradient
+from PySide6.QtGui import QColor, QFont, QIcon, QDoubleValidator, QPalette, QLinearGradient, QGradient
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QDateEdit, QFrame, QSplitter, QScrollArea, QGridLayout,
     QGraphicsDropShadowEffect, QSizePolicy, QSpacerItem, QMainWindow
 )
-from views.components.chart import StockChartWidget
-from views.components.styled_widgets import (
+from components.chart import StockChartWidget
+from components.styled_widgets import (
     StyledLabel, StyledButton, StyledLineEdit, StyledDateEdit,
     PrimaryButton, Card, RoundedCard, GradientCard, ScrollableContainer,
     BuyToggleButton, SellToggleButton, PageTitleLabel, SectionTitleLabel,
@@ -21,7 +21,7 @@ class StockChart(RoundedCard):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent, border_radius=12, shadow_enabled=True)
-        self.setMinimumHeight(350)
+        # self.setMinimumHeight(350)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
@@ -72,6 +72,7 @@ class StockView(QWidget):
     search_stock_requested = Signal(str, QDate, QDate)
     buy_stock_requested = Signal(str, float)
     sell_stock_requested = Signal(str, float)
+    current_ticker=None
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -83,8 +84,6 @@ class StockView(QWidget):
         """Initialize the UI components"""
         # Main layout
         self.main_layout = QVBoxLayout(self)
-        # self.setMinimumSize(1000, 700)
-        # self.main_layout.setSpacing(30)
 
         # Create scrollable content area
         self.scroll_area = ScrollableContainer(parent=self)
@@ -250,7 +249,7 @@ class StockView(QWidget):
         # Use StyledLineEdit instead
         self.quantity_input = StyledLineEdit(placeholder="Enter quantity", parent=order_panel)
         self.quantity_input.setText("1")
-        self.quantity_input.setValidator(QIntValidator(1, 10000))
+        self.quantity_input.setValidator(QDoubleValidator(1.00, 1000.00, 2))
 
         # Price info card
         price_info_card = self._create_price_info_card()
@@ -377,12 +376,12 @@ class StockView(QWidget):
 
     def on_search(self):
         """Handle search button click"""
-        symbol = self.symbol_input.text().strip().upper()
+        self.current_ticker = self.symbol_input.text().strip().upper()
         start_date = self.start_date.date()
         end_date = self.end_date.date()
 
-        if symbol:
-            self.search_stock_requested.emit(symbol, start_date, end_date)
+        if self.current_ticker:
+            self.search_stock_requested.emit(self.current_ticker, start_date, end_date)
 
     def on_order_type_changed(self):
         """Handle order type change"""
@@ -398,7 +397,7 @@ class StockView(QWidget):
     def update_total_value(self):
         """Update total value based on quantity"""
         try:
-            quantity = int(self.quantity_input.text()) if self.quantity_input.text() else 0
+            quantity = float(self.quantity_input.text()) if self.quantity_input.text() else 0
             price = float(self.price_value.text().replace('$', ''))
             total = quantity * price
             self.total_value.setText(f"${total:.2f}")
@@ -408,8 +407,8 @@ class StockView(QWidget):
     def on_action_button_clicked(self):
         """Handle buy/sell action"""
         try:
-            symbol = self.symbol_input.text().strip().upper()
-            quantity = int(self.quantity_input.text())
+            symbol = self.current_ticker
+            quantity = float(self.quantity_input.text())
 
             if self.buy_button.isChecked():
                 self.buy_stock_requested.emit(symbol, quantity)
@@ -459,3 +458,8 @@ class StockView(QWidget):
             message_box.setWindowTitle("Success")
 
         message_box.exec()
+
+    def set_search_ticker(self, symbol):
+        """Set the search ticket"""
+        self.symbol_input.setText(symbol)
+        self.current_ticker = symbol

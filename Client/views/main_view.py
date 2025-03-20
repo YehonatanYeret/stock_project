@@ -284,4 +284,5 @@ class Main_view(QMainWindow):
         self.show_stocks()
         # Emit the signal with the symbol and date parameters (ensure your signal expects QDate types)
         self.stock_widget.search_stock_requested.emit(symbol, startDate, endDate)
+        self.stock_widget.set_search_ticker(symbol)
         

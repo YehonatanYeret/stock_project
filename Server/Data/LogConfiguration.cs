@@ -4,9 +4,9 @@ using Server.Models.Domain;
 
 namespace Server.Data;
 
-public class TradeConfiguration : IEntityTypeConfiguration<Trade>
+public class LogConfiguration : IEntityTypeConfiguration<Log>
 {
-    public void Configure(EntityTypeBuilder<Trade> builder)
+    public void Configure(EntityTypeBuilder<Log> builder)
     {
         builder.HasKey(t => t.Id);
 

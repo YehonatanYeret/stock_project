@@ -78,8 +78,7 @@ class StockPresenter(QObject):
             end_str = end_date.strftime("%Y-%m-%d") if isinstance(end_date, datetime.date) else end_date
             self.view.update_stock_data(symbol, start_str, end_str, formatted_data)
         else:
-            error_msg = stock_data.get("error", f"Failed to retrieve data for {symbol}")
-            self.view.show_message(error_msg, True)
+            self.view.show_message(stock_data, True)
 
     @Slot(str, int)
     def on_buy_stock(self, symbol, quantity):
@@ -92,7 +91,7 @@ class StockPresenter(QObject):
         """
         # Execute sell order through model
         success, result = self.model.execute_buy_order(symbol, quantity)
-
+        print(success, result)
         if success:
             self.view.show_message(f"Successfully bought {quantity} shares of {symbol}!")
         else:
@@ -135,7 +134,7 @@ class StockPresenter(QObject):
                     "description": api_data.get("description", "No description available"),
                     "chart_data": aggregate_data.get("results", []),  # Default to empty list
                     "img": api_data.get("logoBase64", None),
-                    "price": api_data.get("sellPrice", 0),
+                    "price": float(api_data.get("sellPrice", 0)),
                 }
 
             except Exception as e:

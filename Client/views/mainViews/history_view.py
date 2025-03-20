@@ -2,7 +2,7 @@ import sys
 
 sys.path.append('..')
 
-from Client.views.components.styled_widgets import (
+from components.styled_widgets import (
     PageTitleLabel, StyledTable, ScrollableContainer,
     StyledLineEdit, StyledLabel, StyledDateEdit,
     PrimaryButton, Card, SectionTitleLabel, create_form_field,

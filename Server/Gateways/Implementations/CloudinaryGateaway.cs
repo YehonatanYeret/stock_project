@@ -41,7 +41,7 @@ namespace Server.Gateways.Implementations
             {
                 var getResourceParams = new GetResourceParams(publicId);
                 var getResourceResult = _cloudinary.GetResource(getResourceParams);
-
+                Console.WriteLine(getResourceResult.SecureUrl);
                 return getResourceResult?.SecureUrl;
             }
             catch
