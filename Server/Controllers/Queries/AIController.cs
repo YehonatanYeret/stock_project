@@ -109,7 +109,7 @@ public class AIController : ControllerBase
             string contextText = string.Join("\n", context);
             string response = await _llmService.GenerateAnswerAsync(query, contextText);
 
-            return Ok(new QueryResponse { Answer = response });
+            return Ok(response);
         }
         catch (Exception ex)
         {

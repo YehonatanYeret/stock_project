@@ -8,7 +8,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Constants
 PDF_PATH = "MI_PDF_Economic_Dynamics_2025_10_Key_Trends_and_Forecasts.pdf"
-API_BASE_URL = "http://localhost:5039/api/queries/PdfEmbedding"  # Update to match your ASP.NET server port
+API_BASE_URL = "http://localhost:5039/api/AI/query"  # Update to match your ASP.NET server port
 CHUNK_SIZE = 1500
 CHUNK_OVERLAP = 150
 
@@ -64,9 +64,9 @@ def query_model(question):
     """Send a query to the API and return the model's answer."""
 
     url = f"{API_BASE_URL}/process-pdf"
-    requests.post(url)
+    # requests.post(url)
 
-    url = f"{API_BASE_URL}/answer"
+    url = f"{API_BASE_URL}/response"
     params = {"query": question}
 
     print(f"Sending query: '{question}'")
@@ -122,7 +122,8 @@ def main():
         # Query examples
         questions = [
             "Why are national inflation dynamics expected to diverge in 2025? What are the key drivers?",
-            "What are the 3 main economic trends for 2025?"
+            "What are the 3 main economic trends for 2025?",
+            "If I had $10,000 to invest right now, which stocks would you recommend based on current market trends, and why?"
         ]
 
         for question in questions:

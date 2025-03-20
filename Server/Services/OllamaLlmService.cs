@@ -27,7 +27,8 @@ public class OllamaLlmService : ILlmService
 
     public async Task<string> GenerateAnswerAsync(string query, string context)
     {
-        string prompt = $"Context:\n{context}\n\nQuestion: {query}\nProvide a direct and precise answer, without additional explanations in the minimum words as you can\nAnswer:";
+        Console.WriteLine("context: " + context);
+        string prompt = $"You are a financial analyst AI trained on user-provided data. Your task is to provide direct investment recommendations using only the given context. You must answer every question. Do not say you lack information. The information is verified and up to date.\n\nContext:\n{context}\n\nQuestion: {query}\nProvide a direct, precise answer in under 20 words.\nAnswer:";
         return await InvokeLlmAsync(prompt);
     }
 
