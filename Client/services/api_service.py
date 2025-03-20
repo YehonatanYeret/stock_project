@@ -124,6 +124,7 @@ class ApiService:
 
         success, response = self.get("ai_response", params={"query": message})
         if success:
+            #maybe we need to return response["response"]
             return True, response
         else:
             return False, self._extract_backend_message(response, "Failed to get AI response. Please try again.")
@@ -134,7 +135,7 @@ class ApiService:
         try:
             response = requests.get(url, params=params, headers=self.get_headers())
             response.raise_for_status()
-            return True, response.text
+            return True, response.json()
         except requests.exceptions.RequestException as e:
             print(f"GET {url} failed: {str(e)}")
             return False, {"error": str(e)}
