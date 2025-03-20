@@ -43,6 +43,7 @@ def split_text(text, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
 def process_pdf():
     """Process the PDF and store embeddings through the API."""
     url = f"{API_BASE_URL}/process-pdf"
+
     headers = {"Content-Type": "application/json"}
 
     print(f"Sending process-pdf request to {url}...")
@@ -60,14 +61,19 @@ def process_pdf():
         return False
 
 
+
+
 def query_model(question):
     """Send a query to the API and return the model's answer."""
 
-    url = f"{API_BASE_URL}/process-pdf"
-    # requests.post(url)
+    url = "http://localhost:5039/api/AI/query/process-pdf"
+    requests.post(url)
 
-    url = f"{API_BASE_URL}/response"
+
+    url = "http://localhost:5039/api/AI/query/response"
     params = {"query": question}
+
+
 
     print(f"Sending query: '{question}'")
     start_time = time.time()
@@ -75,14 +81,8 @@ def query_model(question):
     response = requests.get(url, params=params)
 
     if response.status_code == 200:
-        elapsed_time = time.time() - start_time
-        result = response.json()
-        print(f"Query processed in {elapsed_time:.2f} seconds")
 
-        # The C# API returns a JSON object with an "answer" field
-        if isinstance(result, dict) and "answer" in result:
-            return result.get("answer")
-        return result
+        print(f"Response content: {response.text}")
     else:
         print(f"Error querying model: {response.status_code}")
         print(f"Response: {response.text}")
@@ -121,19 +121,12 @@ def main():
     if success:
         # Query examples
         questions = [
-            "Why are national inflation dynamics expected to diverge in 2025? What are the key drivers?",
-            "What are the 3 main economic trends for 2025?",
-            "If I had $10,000 to invest right now, which stocks would you recommend based on current market trends, and why?"
+            "What are some common technical indicators used in stock trading?",
+            "hi whats up?"
         ]
-
         for question in questions:
             print("\n" + "=" * 50)
-            answer = query_model(question)
-
-            print("\nQuestion:")
-            print(question)
-            print("\nAnswer:")
-            print(answer if answer else "No answer received")
+            query_model(question)
 
     print("\n" + "=" * 50)
     print("Process completed")

@@ -149,7 +149,8 @@ public class QdrantVectorDbService : IVectorDbService
         var searchRequest = new
         {
             vector = queryVector,
-            limit = _options.TopK
+            limit = _options.TopK,
+            with_payload = true
         };
 
         var response = await _httpClient.PostAsJsonAsync(

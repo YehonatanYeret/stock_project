@@ -117,6 +117,11 @@ class ApiService:
             return False, self._extract_backend_message(response, "Failed to search stock. Please try again.")
 
     def get_AI_response(self, message):
+
+        # Process the PDF before querying the model
+        url = "http://localhost:5039/api/AI/query/process-pdf"
+        requests.post(url)
+
         success, response = self.get("ai_response", params={"query": message})
         if success:
             return True, response
@@ -129,7 +134,7 @@ class ApiService:
         try:
             response = requests.get(url, params=params, headers=self.get_headers())
             response.raise_for_status()
-            return True, response.json()
+            return True, response.text
         except requests.exceptions.RequestException as e:
             print(f"GET {url} failed: {str(e)}")
             return False, {"error": str(e)}
@@ -174,3 +179,11 @@ class ApiService:
                 for _, errors in response["errors"].items():
                     return errors[0]
         return default_message
+
+    def process_pdf(self):
+        """Process the PDF through the API"""
+        success, response = self.post("process_pdf", data={})
+        if success:
+            return True, response
+        else:
+            return False, self._extract_backend_message(response, "Failed to process PDF. Please try again.")

@@ -20,7 +20,6 @@ class Worker(QRunnable):
         self.signals.result.emit(result)
 
 
-
 class ChatbotPresenter(QObject):
     def __init__(self, model, view, user_id=None):
         super().__init__()

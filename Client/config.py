@@ -23,6 +23,7 @@ ENDPOINTS = {
     "sell_stock": "/transaction/command/sell/{user_id}",
 
     "ai_response": "/ai/query/response",
+    "process_pdf": "/api/query/process-pdf"
 }
 
 # UI Configuration
