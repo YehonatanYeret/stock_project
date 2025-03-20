@@ -16,6 +16,8 @@
 	<ItemGroup>
 		<PackageReference Include="CloudinaryDotNet" Version="1.27.4" />
 		<PackageReference Include="dotenv.net" Version="3.2.1" />
+		<PackageReference Include="itext7" Version="9.1.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.3" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1" />
@@ -24,6 +26,8 @@
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 		<PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
+		<PackageReference Include="PDFsharp" Version="6.1.1" />
+		<PackageReference Include="Qdrant.Client" Version="1.13.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
 	</ItemGroup>
 </Project>

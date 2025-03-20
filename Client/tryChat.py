@@ -1,104 +1,142 @@
-import logging
+import json
 import os
+import time
 
-import numpy as np
 import pdfplumber
+import requests
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_ollama import OllamaEmbeddings, OllamaLLM
-from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct, Distance, VectorParams
-
-# docker run -d --name qdrant -p 6333:6333 qdrant/qdrant
-#
 
 # Constants
-QDRANT_HOST = "localhost"
-QDRANT_PORT = 6333
-COLLECTION_NAME = "pdf_vectors2"
-EMBEDDING_DIM = 2048
 PDF_PATH = "MI_PDF_Economic_Dynamics_2025_10_Key_Trends_and_Forecasts.pdf"
-TOP_K = 5  # Number of top results to retrieve
-
-# Setup logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
-# Initialize Qdrant client
-client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+API_BASE_URL = "http://localhost:5039/api/queries/PdfEmbedding"  # Update to match your ASP.NET server port
+CHUNK_SIZE = 1500
+CHUNK_OVERLAP = 150
 
 
 def extract_text_from_pdf(pdf_path):
-    """Extracts text from a PDF file."""
+    """Extract text from a PDF file."""
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+
+    print(f"Extracting text from: {pdf_path}")
     text = ""
     with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
+        total_pages = len(pdf.pages)
+        for i, page in enumerate(pdf.pages):
+            print(f"Processing page {i + 1}/{total_pages}...", end="\r")
             page_text = page.extract_text()
             if page_text:
                 text += page_text + "\n"
+    print(f"\nExtracted {len(text)} characters from {total_pages} pages")
     return text
 
 
-def split_text(text, chunk_size=1500, chunk_overlap=150):
-    """Splits text into manageable chunks for embedding."""
+def split_text(text, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
+    """Split text into manageable chunks."""
+    print(f"Splitting text into chunks (size={chunk_size}, overlap={chunk_overlap})...")
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    return text_splitter.split_text(text)
+    chunks = text_splitter.split_text(text)
+    print(f"Text split into {len(chunks)} chunks")
+    return chunks
 
 
-def store_embeddings(chunks, embeddings_model):
-    """Stores text embeddings in Qdrant."""
-    if client.collection_exists(COLLECTION_NAME):
-        logging.info("Collection already exists. Skipping embedding storage.")
-        return
+def process_pdf():
+    """Process the PDF and store embeddings through the API."""
+    url = f"{API_BASE_URL}/process-pdf"
+    headers = {"Content-Type": "application/json"}
 
-    logging.info("Creating Qdrant collection...")
-    client.recreate_collection(
-        collection_name=COLLECTION_NAME,
-        vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
-    )
+    print(f"Sending process-pdf request to {url}...")
+    start_time = time.time()
 
-    logging.info("Computing embeddings and storing in Qdrant...")
-    points = []
-    for i, chunk in enumerate(chunks):
-        vector = embeddings_model.embed_query(chunk)
-        points.append(PointStruct(id=i, vector=vector, payload={"text": chunk}))
+    response = requests.post(url, headers=headers)
 
-    client.upsert(collection_name=COLLECTION_NAME, points=points)
-    logging.info("Embeddings stored successfully.")
+    if response.status_code == 200:
+        elapsed_time = time.time() - start_time
+        print(f"PDF processed successfully in {elapsed_time:.2f} seconds")
+        return True
+    else:
+        print(f"Error processing PDF: {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
 
 
-def search_similar_text(query, embeddings_model, top_k=TOP_K):
-    """Searches for the most relevant text chunks in Qdrant."""
-    query_vector = embeddings_model.embed_query(query)
-    search_results = client.search(
-        collection_name=COLLECTION_NAME,
-        query_vector=query_vector,
-        limit=top_k
-    )
-    return [hit.payload["text"] for hit in search_results]
+def query_model(question):
+    """Send a query to the API and return the model's answer."""
+
+    url = f"{API_BASE_URL}/process-pdf"
+    # requests.post(url)
+
+    url = f"{API_BASE_URL}/answer"
+    params = {"query": question}
+
+    print(f"Sending query: '{question}'")
+    start_time = time.time()
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        elapsed_time = time.time() - start_time
+        result = response.json()
+        print(f"Query processed in {elapsed_time:.2f} seconds")
+
+        # The C# API returns a JSON object with an "answer" field
+        if isinstance(result, dict) and "answer" in result:
+            return result.get("answer")
+        return result
+    else:
+        print(f"Error querying model: {response.status_code}")
+        print(f"Response: {response.text}")
+        return None
 
 
-def answer_query(query, model, embeddings_model):
-    """Retrieves relevant context and generates an answer using the LLM."""
-    context = search_similar_text(query, embeddings_model)
-    context_text = "\n".join(context)
-    prompt = f"Context:\n{context_text}\n\nQuestion: {query}\nAnswer:"
-    return model.invoke(prompt)
+def local_process_and_store():
+    """Process the PDF locally and then store it through the API."""
+    # Extract text from PDF locally
+    text = extract_text_from_pdf(PDF_PATH)
+
+    # Split text into chunks locally
+    chunks = split_text(text)
+
+    # At this point, you would need to implement a custom endpoint in your C# API
+    # to accept these chunks, but for now, we'll just use the existing process-pdf endpoint
+    print("Note: Your C# API doesn't have a specific endpoint to accept chunks directly.")
+    print("Using the process-pdf endpoint instead, which will read the PDF file directly.")
+
+    return process_pdf()
+
+
+def main():
+    print("=" * 50)
+    print("PDF Processing and Query Client")
+    print("=" * 50)
+
+    # Option 1: Let the server handle everything (recommended)
+    # success = process_pdf
+    # success =True
+
+    # Option 2: Process locally and send to server (would require API modification)
+    # Uncomment the following line if you modify your C# API to accept chunks
+    # success = local_process_and_store()
+    success = True
+    if success:
+        # Query examples
+        questions = [
+            "Why are national inflation dynamics expected to diverge in 2025? What are the key drivers?",
+            "What are the 3 main economic trends for 2025?"
+        ]
+
+        for question in questions:
+            print("\n" + "=" * 50)
+            answer = query_model(question)
+
+            print("\nQuestion:")
+            print(question)
+            print("\nAnswer:")
+            print(answer if answer else "No answer received")
+
+    print("\n" + "=" * 50)
+    print("Process completed")
 
 
 if __name__ == "__main__":
-    # Initialize embeddings and LLM model
-    embeddings_model = OllamaEmbeddings(model="gemma:2b")
-    llm = OllamaLLM(model="gemma:2b")
-
-    # Extract and process text
-    if not client.collection_exists(COLLECTION_NAME):
-        logging.info("Processing PDF...")
-        text = extract_text_from_pdf(PDF_PATH)
-        chunks = split_text(text)
-        store_embeddings(chunks, embeddings_model)
-    else:
-        logging.info("Embeddings already exist. Skipping PDF processing.")
-
-    # Run a sample query
-    query = "Why are national inflation dynamics expected to diverge in 2025? What are the key drivers? answer in 1 short paragraph"
-    response = answer_query(query, llm, embeddings_model)
-    logging.info(f"Model response: {response}")
+    main()
