@@ -109,6 +109,7 @@ public class AIController : ControllerBase
             string contextText = string.Join("\n", context);
             string response = await _llmService.GenerateAnswerAsync(query, contextText);
 
+            //string response = "This is a placeholder response. The AI is not yet implemented.";
             return Ok(new { response });
         }
         catch (Exception ex)

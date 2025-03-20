@@ -118,14 +118,13 @@ class ApiService:
 
     def get_AI_response(self, message):
 
-        # Process the PDF before querying the model
-        url = "http://localhost:5039/api/AI/query/process-pdf"
-        requests.post(url)
+        # # Process the PDF before querying the model
+        # url = "http://localhost:5039/api/AI/query/process-pdf"
+        # requests.post(url)
 
         success, response = self.get("ai_response", params={"query": message})
         if success:
-            #maybe we need to return response["response"]
-            return True, response
+            return True, response["response"]
         else:
             return False, self._extract_backend_message(response, "Failed to get AI response. Please try again.")
 
