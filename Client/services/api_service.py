@@ -116,6 +116,13 @@ class ApiService:
         else:
             return False, self._extract_backend_message(response, "Failed to search stock. Please try again.")
 
+    def get_AI_response(self, message):
+        success, response = self.get("ai_response", params={"query": message})
+        if success:
+            return True, response
+        else:
+            return False, self._extract_backend_message(response, "Failed to get AI response. Please try again.")
+
     def get(self, endpoint, params=None, **kwargs):
         """Generic GET request handler"""
         url = self.get_url(endpoint, **kwargs)

@@ -21,6 +21,8 @@ ENDPOINTS = {
 
     "buy_stock": "/transaction/command/buy/{user_id}",
     "sell_stock": "/transaction/command/sell/{user_id}",
+
+    "ai_response": "/ai/query/response",
 }
 
 # UI Configuration

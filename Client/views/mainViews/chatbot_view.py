@@ -13,7 +13,6 @@ from components.styled_widgets import (
     SellButton, Card, RoundedCard, StyledLineEdit
 )
 
-
 class AnimatedMessageBubble(RoundedCard):
     """An elegant message bubble with improved animation effects"""
 
@@ -45,13 +44,16 @@ class AnimatedMessageBubble(RoundedCard):
         self.message_label.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.message_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.message_label.setMinimumHeight(10)
-        self.message_label.document().contentsChanged.connect(self._adjust_height)
+        self.message_label.setLineWrapMode(QTextEdit.WidgetWidth)  # Ensure text wraps to the widget's width
 
         # Improved text styling
         font = QFont()
         font.setPointSize(14)
         font.setFamily("Segoe UI")  # More modern font
         self.message_label.setFont(font)
+
+        # Connect content change to height adjustment
+        self.message_label.document().contentsChanged.connect(self._adjust_height)
 
         # Enhanced timestamp display
         time_str = timestamp.toString("HH:mm")
@@ -64,7 +66,6 @@ class AnimatedMessageBubble(RoundedCard):
 
         # Style based on user or assistant
         if is_user:
-            # Use the requested color scheme
             self.setStyleSheet("""
                 #messageBubble {
                     background-color: #a0a6e8;
@@ -80,7 +81,6 @@ class AnimatedMessageBubble(RoundedCard):
             """)
             self.time_label.setStyleSheet("color: rgba(255, 255, 255, 0.7); background: transparent;")
         else:
-            # Light color for assistant
             self.setStyleSheet("""
                 #messageBubble {
                     background-color: #F5F5F7;
@@ -103,19 +103,21 @@ class AnimatedMessageBubble(RoundedCard):
         QTimer.singleShot(50, self._start_animations)
 
     def _adjust_height(self):
-        """Adjust height of text area to fit content dynamically"""
+        """Adjust height of text area to fit content dynamically."""
         document = self.message_label.document()
-        document_height = int(document.size().height())
+        # Use documentLayout to get a more precise document size.
+        document_size = document.documentLayout().documentSize()
+        document_height = int(document_size.height())
 
-        # Add some padding for better appearance
-        self.message_label.setFixedHeight(document_height + 12)
+        # Add padding for better appearance
+        new_height = document_height + 12
+        self.message_label.setFixedHeight(new_height)
 
-        # Update the widget
+        # Update the widget's geometry
         self.updateGeometry()
 
     def _start_animations(self):
-        """Start combined animations for more attractive appearance"""
-        # Create animation group for parallel animations
+        """Start combined animations for more attractive appearance."""
         self.animation_group = QParallelAnimationGroup()
 
         # Fade-in animation
@@ -134,7 +136,7 @@ class AnimatedMessageBubble(RoundedCard):
         slide_anim.setEndValue(current_pos)
         slide_anim.setEasingCurve(QEasingCurve.OutBack)
 
-        # Add animations to group
+        # Add animations to the group
         self.animation_group.addAnimation(fade_anim)
         self.animation_group.addAnimation(slide_anim)
 
