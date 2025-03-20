@@ -64,7 +64,7 @@ def query_model(question):
     """Send a query to the API and return the model's answer."""
 
     url = f"{API_BASE_URL}/process-pdf"
-    # requests.post(url)
+    requests.post(url)
 
     url = f"{API_BASE_URL}/answer"
     params = {"query": question}
