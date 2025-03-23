@@ -25,9 +25,6 @@ builder.Services.AddScoped<IImageGateaway, CloudinaryGateway>();
 builder.Services.Configure<PdfEmbeddingOptions>(builder.Configuration.GetSection("PdfEmbedding"));
 
 
-
-builder.Services.Configure<PdfEmbeddingOptions>(builder.Configuration.GetSection("PdfEmbedding"));
-
 // Register HttpClient service
 builder.Services.AddHttpClient();
 
