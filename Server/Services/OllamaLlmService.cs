@@ -1,11 +1,16 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CloudinaryDotNet.Actions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using PdfSharp.Drawing;
 using Server.IServices;
 using Server.Models;
 using Server.Models.DTOs.Queries;
+using System;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using YamlDotNet.Core;
 
 namespace Server.Services;
 
@@ -28,7 +33,7 @@ public class OllamaLlmService : ILlmService
     public async Task<string> GenerateAnswerAsync(string query, string context)
     {
         Console.WriteLine("context: " + context);
-        string prompt = $"You are a financial analyst AI trained on user-provided data. Your task is to provide direct investment recommendations using only the given context. You must answer every question. Do not say you lack information. The information is verified and up to date.\n\nContext:\n{context}\n\nQuestion: {query}\nProvide a direct, precise answer in under 20 words.\nAnswer:";
+        string prompt = $"You are a financial analyst AI trained on user-provided data. Your task is to provide direct investment recommendations based only on verified and up-to-date information. Do not mention sources or reference any provided data.  Be clear, nice, and funny in your answers.  Here is the relevant market information:\n{context}\n\nQuestion: {query}\n\nProvide a direct, precise answer in under 40 words, without mentioning where the information comes from. Answer:";
         return await InvokeLlmAsync(prompt);
     }
 
