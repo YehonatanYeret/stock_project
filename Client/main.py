@@ -2,11 +2,13 @@ import sys
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QStackedWidget
 )
+from PySide6.QtGui import QIcon
 
 from views.auth_view import Auth_view
 from presenters.auth_presenter import AuthPresenter
 from models.auth_model import AuthModel
 from views.main_view import Main_view
+
 
 from services.api_service import ApiService
 
@@ -17,6 +19,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Stock Portfolio Manager")
+        # Set the icon to "icons/app.png"
+        self.setWindowIcon(QIcon("icons/app.png"))
 
         # Create central widget and main layout
         self.central_widget = QWidget()
